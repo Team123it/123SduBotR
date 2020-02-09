@@ -144,25 +144,25 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			int j = (new Random()).nextInt(1000);
 			// 将j与i相减，赋值给k
 			int k = j - i;
-			if (k < -950) //如果k小于950
+			if (k < -997) //如果k小于997
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[0]); //发送滑稽数组第1个消息
-			} else if ((k > -510) & (k < -490)) //如果k在-490~-510
+			} else if ((k >= -502) & (k <= -500)) //如果k在-500~-502
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[1]); //发送滑稽数组第2个消息
-			} else if ((k > -260) & (k < -240))  //如果k在-240~-260
+			} else if ((k >= -241) & (k <= -239))  //如果k在-239~-241
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[2]);  //发送滑稽数组第3个消息
-			} else if ((k > -10) & (k < 10)) //如果k在-10~10
+			} else if ((k >= -1) & (k <= 1)) //如果k在-1~1
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[3]);  //发送滑稽数组第4个消息
-			} else if ((k > 290) & (k < 310)) //如果k在290~310
+			} else if ((k >= 299) & (k <= 301)) //如果k在299~301
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[4]);  //发送滑稽数组第5个消息
-			} else if ((k > 590) & (k < 610)) //如果k在590~610
+			} else if ((k >= 499) & (k <= 501)) //如果k在499~501
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[5]);  //发送滑稽数组第6个消息
-			} else if ((k > 950)) //如果k大于950
+			} else if ((k > 997)) //如果k大于997
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[6]);  //发送滑稽数组第7个消息
 			}
