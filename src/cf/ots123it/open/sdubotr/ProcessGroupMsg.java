@@ -1,6 +1,7 @@
 package cf.ots123it.open.sdubotr;
 
 import java.io.File;
+import java.util.Random;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
@@ -9,6 +10,8 @@ import com.sun.javafx.scene.EnteredExitedHandler;
 
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
+import sun.misc.GC;
+
 import static cf.ots123it.open.sdubotr.Global.*;
 /**
  * 123 SduBotR 群聊消息处理类<br>
@@ -48,6 +51,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					"详细信息:\n" +
 					ExceptionHelper.getStackTrace(e));
 		}
+		Part_Spec.Funny_EasterEgg(CQ, groupId, qqId, msg); //调用滑稽彩蛋方法
 	}
 	/**
 	 * 主功能1
@@ -58,7 +62,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 	{
 		/**
 		 * 功能1-1:特别监视违禁词提醒功能
-		 * @param CQ CQ实例，详见本类注释
+		 * @param CQ CQ实例，详见本大类注释
 		 * @param groupId 消息来源群号
 		 * @param qqId 消息来源成员QQ号
 		 * @param msg 消息内容
@@ -88,6 +92,64 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					break;
 				}
 			}
+			return;
+		}
+	}
+
+	/**
+	 * 特殊模块
+	 * @author 御坂12456
+	 *
+	 */
+	static class Part_Spec
+	{
+		/**
+		 * 特殊功能:滑稽（斜眼笑）彩蛋
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源QQ号
+		 * @param msg 消息内容
+		 */
+		static void Funny_EasterEgg(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			String[] funnyStrings = {"[CQ:face,id=178]", //滑稽
+					"[CQ:face,id=178][CQ:emoji,id=127166]", //滑稽+水滴
+					"[CQ:face,id=178][CQ:face,id=66]", //滑稽+爱心
+					"[CQ:face,id=178][CQ:face,id=147]", //滑稽+棒棒糖
+					"[CQ:face,id=178][CQ:emoji,id=10068]", //滑稽+问号
+					"[CQ:face,id=178][CQ:emoji,id=10069]", //滑稽+叹号
+					"[CQ:face,id=178][CQ:face,id=67]" //滑稽+心碎
+			};
+			// 获取一个0到1000的整数并存储到变量i中
+			Double d = Math.random();
+			int i = (int)(d*1000);
+			// 获取一个0到1000的整数并存储到变量j中
+			int j = (new Random()).nextInt(1000);
+			// 将j与i相减，赋值给k
+			int k = j - i;
+			if (k < -950) //如果k小于950
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[0]); //发送滑稽数组第1个消息
+			} else if ((k > -510) & (k < -490)) //如果k在-490~-510
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[1]); //发送滑稽数组第2个消息
+			} else if ((k > -260) & (k < -240))  //如果k在-240~-260
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[2]);  //发送滑稽数组第3个消息
+			} else if ((k > -10) & (k < 10)) //如果k在-10~10
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[3]);  //发送滑稽数组第4个消息
+			} else if ((k > 290) & (k < 310)) //如果k在290~310
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[4]);  //发送滑稽数组第5个消息
+			} else if ((k > 590) & (k < 610)) //如果k在590~610
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[5]);  //发送滑稽数组第6个消息
+			} else if ((k > 950)) //如果k大于950
+			{
+				CQ.sendGroupMsg(groupId, funnyStrings[6]);  //发送滑稽数组第7个消息
+			}
+			System.gc(); //执行垃圾收集器
 			return;
 		}
 	}

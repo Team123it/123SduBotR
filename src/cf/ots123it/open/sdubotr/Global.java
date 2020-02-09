@@ -35,11 +35,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.0.1";
+	public final static String Version = "0.0.2";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "1";
+	public final static String AppVersionNumber = "2";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
