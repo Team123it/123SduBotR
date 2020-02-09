@@ -45,7 +45,9 @@
 <code>[CQ:face,id=178][CQ:face,id=147] //滑稽+棒棒糖</code><br>
 <code>[CQ:face,id=178][CQ:emoji,id=10068] //滑稽+问号</code><br>
 <code>[CQ:face,id=178][CQ:emoji,id=10069] //滑稽+叹号</code><br>
-<code>[CQ:face,id=178][CQ:face,id=67] //滑稽+心碎</code>
+<code>[CQ:face,id=178][CQ:face,id=67] //滑稽+心碎</code><br>
+对于不需要触发彩蛋的群聊（如工作群），请:<br>
+在\group\list\funnyWL.txt中添加你想要让机器永不触发滑稽彩蛋的群聊（一行一个，不能有注释）
 
 ###### 本项目由御坂12456(Misaka12456)开发并发布至Github.
 ###### 感谢名单:

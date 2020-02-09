@@ -129,6 +129,11 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         		 CQ.logWarning("123 SduBotR", "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
         	 }
+        	 if(!(new File(appDirectory + "/group/list/funnyWL.txt")).exists()) //[功能S-1]判断滑稽彩蛋白名单文件是否存在
+        	 { //若不存在
+        		 CQ.logWarning("123 SduBotR", "功能S-1:滑稽彩蛋群聊白名单文件不存在，可能会在不需要应用彩蛋的群聊意外触发彩蛋导致意外情况出现。\n" +
+        			    "请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+        	 }
         }
         return 0;
     }

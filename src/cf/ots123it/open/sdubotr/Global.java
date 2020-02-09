@@ -35,11 +35,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.0.2";
+	public final static String Version = "0.0.3";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "2";
+	public final static String AppVersionNumber = "3";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -87,6 +87,10 @@ public abstract class Global extends JcqAppAbstract
 		init5.createNewFile();
 		CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + "\\group\\list\\iMGBan.txt建立成功");
 		System.gc();
+		// 初始化6(功能S-1):创建\group\list\funnyWL.txt
+		File init6 = new File(appDirectory + "/group/list/funnyWL.txt");
+		init6.createNewFile();
+		CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + "\\group\\list\\funnyWL.txt建立成功");
 		// 初始化结尾:创建\firstopen.stat
 		File initEnd = new File(appDirectory + "/firstopen.stat");
 		initEnd.createNewFile();

@@ -52,6 +52,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					ExceptionHelper.getStackTrace(e));
 		}
 		Part_Spec.Funny_EasterEgg(CQ, groupId, qqId, msg); //调用滑稽彩蛋方法
+		return;
 	}
 	/**
 	 * 主功能1
@@ -112,6 +113,22 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 */
 		static void Funny_EasterEgg(CoolQ CQ,long groupId,long qqId,String msg)
 		{
+			//若滑稽彩蛋白名单文件存在
+			if ((new File(Global.appDirectory + "/group/list/funnyWL.txt").exists()))
+			{
+				//读取滑稽彩蛋白名单群列表
+				String[] funnyWhiteList = IOHelper.ReadAllLines(Global.appDirectory + "/group/list/funnyWL.txt");
+				//若白名单列表不为空
+				if (funnyWhiteList != null) {
+					for (String funnyWhiteGroup : funnyWhiteList) {
+						if (String.valueOf(groupId).equals(funnyWhiteGroup)) //若此群为白名单群
+						{
+							CQ.logDebug("123 SduBotR", "当前群聊:" + groupId + "属于滑稽彩蛋白名单群聊,已跳过处理");
+							return; //不执行后续代码，直接返回
+						}
+					}
+				}
+			}
 			String[] funnyStrings = {"[CQ:face,id=178]", //滑稽
 					"[CQ:face,id=178][CQ:emoji,id=127166]", //滑稽+水滴
 					"[CQ:face,id=178][CQ:face,id=66]", //滑稽+爱心
