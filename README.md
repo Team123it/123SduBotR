@@ -35,6 +35,18 @@
 <code>[CQ:face,id=107] //快哭了</code><br>
 <code>[CQ:emoji,id=128116] //Emoji:爷</code>
 
+### 特殊功能
+#### S-1.滑稽彩蛋(作者:御坂12456,灵感来源:Sugar 404,更新版本:Alpha 0.0.2)
+说明：该功能会随机发送滑稽或滑稽+特殊表情（见下）<br>
+会发送的表情包括：<br>
+<code>[CQ:face,id=178] //滑稽</code><br>
+<code>[CQ:face,id=178][CQ:emoji,id=127166] //滑稽+水滴</code><br>
+<code>[CQ:face,id=178][CQ:face,id=66] //滑稽+爱心</code><br>
+<code>[CQ:face,id=178][CQ:face,id=147] //滑稽+棒棒糖</code><br>
+<code>[CQ:face,id=178][CQ:emoji,id=10068] //滑稽+问号</code><br>
+<code>[CQ:face,id=178][CQ:emoji,id=10069] //滑稽+叹号</code><br>
+<code>[CQ:face,id=178][CQ:face,id=67] //滑稽+心碎</code>
+
 ###### 本项目由御坂12456(Misaka12456)开发并发布至Github.
 ###### 感谢名单:
 ###### Sugar 404(16840824)
