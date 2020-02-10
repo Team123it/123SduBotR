@@ -13,7 +13,7 @@
 ## 1.项目使用的库
 包括下列Java库:<br>
 1.JCQ CoolQ Java Developing Plugin (by:Sobte南荒)<br>
-2.123 Java Helper (by:御坂12456)
+2.123 Java Helper (by:御坂12456)<br>
 如果你想要帮助增加模块，可以pull your request，看到后会在此处写上你的名字
 
 ## 2.项目运行环境
