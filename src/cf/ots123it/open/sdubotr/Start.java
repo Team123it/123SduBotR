@@ -192,7 +192,10 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
             @SuppressWarnings("unused")
 			Anonymous anonymous = CQ.getAnonymous(fromAnonymous);
         }
-        if ((msg.substring(0, 1).equals("#")) & (fromQQ == Global.masterQQ)) //若是管理命令前缀且为机器人主人发送的
+        //======================
+        //将QQ号判定放在前面可提高一定的效率
+        //======================
+        if (fromQQ==Global.masterQQ&&msg.startsWith("#")) //若是管理命令前缀且为机器人主人发送的
         	{ //转到ProcessGroupManageMsg类处理
         		ProcessGroupManageMsg.main(CQ, fromGroup, fromQQ, msg);
         	} else
