@@ -78,12 +78,12 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract
 			// 对分钟和秒补零并把时、分、秒赋值给upTimeStr数组
 			String upHour,upMinute,upSecond;
 			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY) - 8);
-			if (upTime.get(upTime.MINUTE) < 10) { //分补零
+			if (upTime.get(Calendar.MINUTE) < 10) { //分补零
 				upMinute = "0" + String.valueOf(upTime.get(Calendar.MINUTE));
 			} else {
 				upMinute = String.valueOf(upTime.get(Calendar.MINUTE));
 			}
-			if (upTime.get(upTime.SECOND) < 10) { //秒补零
+			if (upTime.get(Calendar.SECOND) < 10) { //秒补零
 				upSecond = "0" + String.valueOf(upTime.get(Calendar.SECOND));
 			} else {
 				upSecond = String.valueOf(upTime.get(Calendar.SECOND));

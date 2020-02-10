@@ -187,12 +187,12 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 	public int groupMsg(int subType, int msgId, long fromGroup, long fromQQ, String fromAnonymous, String msg,
                         int font) {
         // 如果消息来自匿名者
-        if (fromQQ == 80000000L && !fromAnonymous.equals("")) {
+        if (fromQQ == 80000000L && !fromAnonymous.isEmpty()) {
             // 将匿名用户信息放到 anonymous 变量中
             @SuppressWarnings("unused")
 			Anonymous anonymous = CQ.getAnonymous(fromAnonymous);
         }
-        if ((msg.substring(0, 1).equals("#")) & (fromQQ == Global.masterQQ)) //若是管理命令前缀且为机器人主人发送的
+        if (fromQQ==Global.masterQQ&&msg.startsWith("#")) //若是管理命令前缀且为机器人主人发送的
         	{ //转到ProcessGroupManageMsg类处理
         		ProcessGroupManageMsg.main(CQ, fromGroup, fromQQ, msg);
         	} else
@@ -304,7 +304,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     public int groupBan(int subType, int sendTime, long fromGroup, long fromQQ, long beingOperateQQ, long duration) {
         // 这里处理消息
 
-        return 0;
+        return MSG_IGNORE;
     }
 
     /**
