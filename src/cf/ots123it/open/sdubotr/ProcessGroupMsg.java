@@ -1,7 +1,10 @@
 package cf.ots123it.open.sdubotr;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
@@ -80,18 +83,23 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			} // 否则
 			System.gc(); //通知Java进行垃圾收集
 			String[] iMGBans = IOHelper.ReadAllLines(Global.appDirectory + "/group/list/iMGBan.txt");
+			List<String> bans = new ArrayList<>();
 			for (String iMGBanString : iMGBans) {
 				if (msg.indexOf(iMGBanString) != -1) { // 若消息内容包含违禁词
-					CQ.sendPrivateMsg(Global.masterQQ, 
-							Global.FriendlyName + "\n" +
-							"检测到有人发布违禁词，请尽快查看\n" +
-							"来源群号:" + Global.getGroupName(CQ, groupId) + "(" + String.valueOf(groupId) + ")\n" +
-							"来源QQ:" + CQ.getGroupMemberInfo(groupId, qqId).getNick() + "(" + String.valueOf(qqId) + ")\n" + 
-							"检测到的违禁词:" + iMGBanString + "\n" +
-							"完整消息内容:\n" + 
-							msg);
-					break;
+					bans.add(iMGBanString);
 				}
+			}
+			if (!bans.isEmpty()) {
+				StringBuilder b = new StringBuilder();
+				b.append(Global.FriendlyName).append("\n检测到有人发布违禁词，请尽快查看\n来源群号:")
+				.append(Global.getGroupName(CQ, groupId)).append('(').append(groupId).append(")\n来源QQ:")
+				.append(CQ.getGroupMemberInfo(groupId, qqId).getNick()).append('(').append(qqId)
+				.append(")\n检测到的违禁词:");
+				for (String iMGBanString:bans) {
+					b.append(iMGBanString).append('.');
+				}
+				b.append("\n完整消息内容:\n").append(msg);
+				CQ.sendPrivateMsg(Global.masterQQ,b.toString());
 			}
 			return;
 		}
@@ -138,10 +146,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					"[CQ:face,id=178][CQ:face,id=67]" //滑稽+心碎
 			};
 			// 获取一个0到1000的整数并存储到变量i中
-			Double d = Math.random();
-			int i = (int)(d*1000);
+			int i = ThreadLocalRandom.current().nextInt(1000);
 			// 获取一个0到1000的整数并存储到变量j中
-			int j = (new Random()).nextInt(1000);
+			int j = ThreadLocalRandom.current().nextInt(1000);
 			// 将j与i相减，赋值给k
 			int k = j - i;
 			if (k < -997) //如果k小于997

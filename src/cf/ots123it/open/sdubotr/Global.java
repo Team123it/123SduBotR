@@ -62,39 +62,18 @@ public abstract class Global extends JcqAppAbstract
 		initReady1.delete();
 		File initReady2 = new File(appDirectory + "/private");
 		initReady2.delete();
-		// 初始化1:创建\group
-		File init1 = new File(appDirectory + "/group");
-		init1.mkdir();
-		System.gc(); //提示系统垃圾收集
-		CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + "\\group建立成功");
-		// 初始化2:创建\private
-		File init2 = new File(appDirectory + "/private");
-		init2.mkdir();
-		System.gc(); //同上,本方法之后不在注释同样的语句
-		CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + "\\private建立成功");
-		// 初始化3:创建\group\list
-		File init3 = new File(appDirectory + "/group/list");
-		init3.mkdir();
-		CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + "\\group\\list建立成功");
-		System.gc(); 
-		// 初始化4(功能1-1):创建\group\list\iMG.txt
-		File init4 = new File(appDirectory + "/group/list/iMG.txt");
-		init4.createNewFile();
-		CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + "\\group\\list\\iMG.txt建立成功");
-		System.gc();
-		// 初始化5(功能1-1):创建\group\list\iMGBan.txt
-		File init5 = new File(appDirectory + "/group/list/iMGBan.txt");
-		init5.createNewFile();
-		CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + "\\group\\list\\iMGBan.txt建立成功");
-		System.gc();
-		// 初始化6(功能S-1):创建\group\list\funnyWL.txt
-		File init6 = new File(appDirectory + "/group/list/funnyWL.txt");
-		init6.createNewFile();
-		CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + "\\group\\list\\funnyWL.txt建立成功");
-		// 初始化结尾:创建\firstopen.stat
-		File initEnd = new File(appDirectory + "/firstopen.stat");
-		initEnd.createNewFile();
-		CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + "\\firstopen.stat建立成功");
+		String[] files = {"/group","/private","/group/list","/group/list/iMG.txt",
+				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/firstopen.stat"};
+		for (String f:files) {
+			File init = new File(appDirectory + f);
+			if (f.contains(".")) {
+				init.createNewFile();
+			}else {
+				init.mkdir();
+			}
+			CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + f + "建立成功");
+			System.gc();
+		}
 		} catch (IOException e) {
 			CQ.logFatal("123 SduBotR", "初始化时出现严重错误,详细信息:\n" + 
 					ExceptionHelper.getStackTrace(e));
