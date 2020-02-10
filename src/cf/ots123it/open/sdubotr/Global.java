@@ -68,10 +68,12 @@ public abstract class Global extends JcqAppAbstract
 			File init = new File(appDirectory + f);
 			if (f.contains(".")) {
 				init.createNewFile();
+                                CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + f + "建立成功");
 			}else {
 				init.mkdir();
+                                CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + f + "建立成功");
 			}
-			CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + f + "建立成功");
+		
 			System.gc();
 		}
 		} catch (IOException e) {
