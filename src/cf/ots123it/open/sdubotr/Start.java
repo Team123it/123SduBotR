@@ -360,7 +360,10 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     public int requestAddGroup(int subtype, int sendTime, long fromGroup, long fromQQ, String msg,
                                String responseFlag) {
         // 这里处理消息
-
+    	// 若是机器人主人拉入群，则同意
+    	if((subtype == 2) && (fromQQ == Global.masterQQ)){
+			CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_ADOPT, null); 
+		}
         /**
          * REQUEST_ADOPT 通过
          * REQUEST_REFUSE 拒绝
@@ -370,9 +373,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 		/*if(subtype == 1){ // 本号为群管理，判断是否为他人申请入群
 			CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_ADD, REQUEST_ADOPT, null);// 同意入群
 		}
-		if(subtype == 2){
-			CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_ADOPT, null);// 同意进受邀群
-		}*/
+		*/
         return MSG_IGNORE;
     }
 
