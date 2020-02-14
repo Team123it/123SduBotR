@@ -223,7 +223,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 					String banPersonQQ;
 					if (arg2.startsWith("[")) 
 					{ //如果是at
-						banPersonQQ = arg2.substring(10, arg2.length() - 2); //读取CQ码中的QQ号
+						banPersonQQ = arg2.substring(10, arg2.length() - 1); //读取CQ码中的QQ号
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}
@@ -275,7 +275,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 					String banPersonQQ;
 					if (arg2.startsWith("[")) 
 					{ //如果是at
-						banPersonQQ = arg2.substring(10, arg2.length() - 2); //读取CQ码中的QQ号
+						banPersonQQ = arg2.substring(10, arg2.length() - 1); //读取CQ码中的QQ号
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}

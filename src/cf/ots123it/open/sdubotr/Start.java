@@ -109,10 +109,10 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      */
     public int enable() {
         enable = true;
-        CQ.logInfo("123 SduBotR", "获取应用数据目录成功:\n" + "设置目录:" + appDirectory);
+        CQ.logInfo(Global.AppName, "获取应用数据目录成功:\n" + "设置目录:" + appDirectory);
         if(!(new File(appDirectory + "/firstopen.stat")).exists()) //若无firstopen.stat文件（即首次打开）
         {
-        	CQ.logInfo("123 SduBotR", "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
+        	CQ.logInfo(Global.AppName, "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
         	Initialize(CQ); //调用初始化方法
         	CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" +
         				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，您可以正常使用了\n");
@@ -120,17 +120,27 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         } else { //存在firstopen.stat文件（非首次打开）
         	 if(!(new File(appDirectory + "/group/list/iMG.txt")).exists()) //[功能1-1]判断重点监视群聊列表文件是否存在
              { //若不存在
-             	CQ.logWarning("123 SduBotR", "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
+             	CQ.logWarning(Global.AppName, "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
              }
         	 if(!(new File(appDirectory + "/group/list/iMGBan.txt")).exists()) //[功能1-1]判断违禁词列表是否存在
         	 { //若不存在
-        		 CQ.logWarning("123 SduBotR", "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
+        		 CQ.logWarning(Global.AppName, "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
+              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+        	 }
+        	 if(!(new File(appDirectory + "/group/list/AllBan.txt")).exists()) //[功能1-1]判断违禁词列表是否存在
+        	 { //若不存在
+        		 CQ.logWarning(Global.AppName, "功能M-3:机器人黑名单列表文件不存在,可能会影响到该功能的正常使用。\n" +
+              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+        	 }
+        	 if(!(new File(appDirectory + "/group/list/AllGBan.txt")).exists()) //[功能1-1]判断违禁词列表是否存在
+        	 { //若不存在
+        		 CQ.logWarning(Global.AppName, "功能M-4:机器人群聊黑名单列表文件不存在,可能会影响到该功能的正常使用。\n" +
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
         	 }
         	 if(!(new File(appDirectory + "/group/list/funnyWL.txt")).exists()) //[功能S-1]判断滑稽彩蛋白名单文件是否存在
         	 { //若不存在
-        		 CQ.logWarning("123 SduBotR", "功能S-1:滑稽彩蛋群聊白名单文件不存在，可能会在不需要应用彩蛋的群聊意外触发彩蛋导致意外情况出现。\n" +
+        		 CQ.logWarning(Global.AppName, "功能S-1:滑稽彩蛋群聊白名单文件不存在，可能会在不需要应用彩蛋的群聊意外触发彩蛋导致意外情况出现。\n" +
         			    "请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
         	 }
         }
@@ -196,6 +206,26 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         		ProcessGroupManageMsg.main(CQ, fromGroup, fromQQ, msg);
         	} else
         	{
+        		// 读取机器人黑名单列表文件(功能M-3)
+    			File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
+    			if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
+    				for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
+    					if (String.valueOf(fromQQ).equals(BanPerson)) //如果消息来源成员为机器人黑名单人员
+    					{
+    						return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
+    					}
+    				}
+    			}
+    			// 读取机器人群聊黑名单列表文件(功能M-4)
+    			File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
+    			if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
+    				for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
+    					if (String.valueOf(fromGroup ).equals(BanGroup)) //如果消息来源群聊为机器人黑名单群聊
+    					{
+    						return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
+    					}
+    				}
+    			}
         		ProcessGroupMsg.main(CQ, fromGroup, fromQQ, msg);
         	}
         return MSG_IGNORE;

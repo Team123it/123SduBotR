@@ -35,11 +35,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.1.2";
+	public final static String Version = "0.1.3";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-12";
+	public final static String AppVersionNumber = "Alpha-13";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -63,21 +63,21 @@ public abstract class Global extends JcqAppAbstract
 		File initReady2 = new File(appDirectory + "/private");
 		initReady2.delete();
 		String[] files = {"/temp","/group","/private","/group/list","/group/list/iMG.txt",
-				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/firstopen.stat"};
+				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/group/list/AllGBan.txt","/firstopen.stat"};
 		for (String f:files) {
 			File init = new File(appDirectory + f);
 			if (f.contains(".")) {
 				init.createNewFile();
-                                CQ.logDebug("123 SduBotR", "初始化:文件" + appDirectory + f + "建立成功");
+                                CQ.logDebug(Global.AppName , "初始化:文件" + appDirectory + f + "建立成功");
 			}else {
 				init.mkdir();
-                                CQ.logDebug("123 SduBotR", "初始化:路径" + appDirectory + f + "建立成功");
+                                CQ.logDebug(Global.AppName, "初始化:路径" + appDirectory + f + "建立成功");
 			}
 		
 			System.gc();
 		}
 		} catch (IOException e) {
-			CQ.logFatal("123 SduBotR", "初始化时出现严重错误,详细信息:\n" + 
+			CQ.logFatal(Global.AppName, "初始化时出现严重错误,详细信息:\n" + 
 					ExceptionHelper.getStackTrace(e));
 		} finally {
 		}
