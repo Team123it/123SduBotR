@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
+import java.util.Iterator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -266,7 +267,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				try {
 					String arg2 = msg.split(" ", 2)[1]; //获取参数2（要删除的成员QQ号或at）
 					String banPersonQQ;
-					if (arg2.substring(0, 6).equals("[CQ:at,")) 
+					if (arg2.substring(0, 1).equals("[")) 
 					{ //如果是at
 						banPersonQQ = String.valueOf(new CQCode().getAt(arg2)); //读取CQ码中的QQ号
 					} else { //否则
@@ -282,7 +283,17 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 								if (banPersonQQ.equals(banPerson)) { //如果该成员在列表里
 									ArrayList<String> AllBanPersons = new ArrayList<String>(); //新建一个ArrayList对象
 									Collections.addAll(AllBanPersons, IOHelper.ReadAllLines(AllBanPersonsFile)); //读取原列表所有成员
-									AllBanPersons.remove(banPersonQQ); //从列表中移除该成员
+									/* 由于直接remove(Object o)判断的是地址导致无法remove成功
+									 * 故此处直接使用ArrayList的父类迭代器的remove方法来remove掉要移除的成员QQ号
+									 * （确定的ArrayList对应的迭代器若发生更改，该ArrayList也会发生更改）
+									 * Author:御坂12456 于 2020-2-15 0:36 */
+									Iterator<String> it = AllBanPersons.iterator(); //获取迭代器对象
+									while (it.hasNext()) { //如果它存在下一个值
+										String tmpbanPerson = it.next(); //获取下一个值（下一个黑名单成员QQ号）
+										if (tmpbanPerson.equals(banPerson)) { //如果此黑名单成员即当前要移除的成员
+											it.remove(); //移除该成员
+										}
+									}
 									System.gc(); //调用一次垃圾收集器
 									for (int i = 1; i < AllBanPersons.size(); i++) { //通过for循环将新列表AllBanPersons覆盖写入原列表文件
 										AllBanPersonsFile.delete(); //先删除原列表文件
