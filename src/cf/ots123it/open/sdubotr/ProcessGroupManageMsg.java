@@ -294,9 +294,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 											it.remove(); //移除该成员
 										}
 									}
-									System.gc(); //调用一次垃圾收集器
+									AllBanPersonsFile.delete(); //先删除原列表文件
+									IOHelper.WriteStr(AllBanPersonsFile, ""); //重新创建该文件
 									for (int i = 1; i < AllBanPersons.size(); i++) { //通过for循环将新列表AllBanPersons覆盖写入原列表文件
-										AllBanPersonsFile.delete(); //先删除原列表文件
 										if (i == AllBanPersons.size()) { // 如果当前循环临时变量i等于数组大小（最后一个QQ号）
 											IOHelper.AppendWriteStr(AllBanPersonsFile, AllBanPersons.get(i - 1)); //直接写入最后一个QQ号
 										} else {
