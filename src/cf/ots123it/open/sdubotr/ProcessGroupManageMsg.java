@@ -83,8 +83,8 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract
 			String upYear,upMonth,upDay,upHour,upMinute,upSecond;
 			upYear = String.valueOf(upTime.get(Calendar.YEAR) - 1970);
 			upMonth = String.valueOf(upTime.get(Calendar.MONTH));
-			upDay = String.valueOf(upTime.get(Calendar.DAY_OF_MONTH - 1));
-			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY - 1));
+			upDay = String.valueOf(upTime.get(Calendar.DAY_OF_MONTH) - 1);
+			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY));
 			if (upTime.get(Calendar.MINUTE) < 10) { //分补零
 				upMinute = "0" + String.valueOf(upTime.get(Calendar.MINUTE));
 			} else {
