@@ -222,7 +222,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}
-					File AllBanPersonsFile = new File(Global.appDirectory + "/data/list/AllBan.txt");
+					File AllBanPersonsFile = new File(Global.appDirectory + "/group/list/AllBan.txt");
 					if (AllBanPersonsFile.exists()) { //如果列表文件存在
 						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
 							IOHelper.WriteStr(AllBanPersonsFile, banPersonQQ); //直接写入QQ号
@@ -268,7 +268,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}
-					File AllBanPersonsFile = new File(Global.appDirectory + "/data/list/AllBan.txt");
+					File AllBanPersonsFile = new File(Global.appDirectory + "/group/list/AllBan.txt");
 					if (AllBanPersonsFile.exists()) { //如果列表文件存在
 						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
 							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
