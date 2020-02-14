@@ -81,10 +81,10 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract
 			upTime.setTime(upTimeDate);
 			// 对分钟和秒补零并把年、月、日、时、分、秒赋值给upTimeStr数组
 			String upYear,upMonth,upDay,upHour,upMinute,upSecond;
-			upYear = String.valueOf(upTime.get(Calendar.YEAR));
+			upYear = String.valueOf(upTime.get(Calendar.YEAR) - 1970);
 			upMonth = String.valueOf(upTime.get(Calendar.MONTH));
-			upDay = String.valueOf(upTime.get(Calendar.DAY_OF_MONTH));
-			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY));
+			upDay = String.valueOf(upTime.get(Calendar.DAY_OF_MONTH - 1));
+			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY - 1));
 			if (upTime.get(Calendar.MINUTE) < 10) { //分补零
 				upMinute = "0" + String.valueOf(upTime.get(Calendar.MINUTE));
 			} else {
