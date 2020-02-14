@@ -35,11 +35,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.1.0";
+	public final static String Version = "0.1.1";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-10";
+	public final static String AppVersionNumber = "Alpha-11";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -51,7 +51,7 @@ public abstract class Global extends JcqAppAbstract
 	public final static String appDirectory = Start.appDirectory;
 	/**
 	 * 123 SduBotR 首次启动初始化方法
-	 * @author 御坂12456
+	 * @author 御坂12456(优化:Sugar 404)
 	 * @param CQ 方法调用来源的CQ实例
 	 */
 	public static void Initialize(CoolQ CQ)
@@ -62,8 +62,8 @@ public abstract class Global extends JcqAppAbstract
 		initReady1.delete();
 		File initReady2 = new File(appDirectory + "/private");
 		initReady2.delete();
-		String[] files = {"/group","/private","/group/list","/group/list/iMG.txt",
-				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/firstopen.stat"};
+		String[] files = {"/temp","/group","/private","/group/list","/group/list/iMG.txt",
+				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/firstopen.stat"};
 		for (String f:files) {
 			File init = new File(appDirectory + f);
 			if (f.contains(".")) {

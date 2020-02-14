@@ -8,7 +8,9 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.TimeZone;
 
 import javax.imageio.ImageIO;
@@ -27,6 +29,7 @@ import com.sun.prism.Graphics;
 import com.sun.prism.Image;
 
 import cf.ots123it.jhlper.ExceptionHelper;
+import cf.ots123it.jhlper.IOHelper;
 import sun.misc.OSEnvironment;
 import sun.security.krb5.internal.ccache.CCacheInputStream;
 /**
@@ -38,6 +41,7 @@ import sun.security.krb5.internal.ccache.CCacheInputStream;
  * @author 御坂12456
  *
  */
+@SuppressWarnings("deprecation")
 public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IMsg,IRequest
 {
 	/**
@@ -54,22 +58,29 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 		//去除管理指令前的"#"标记
 		msg = msg.substring(1, msg.length());
 		try {
-			//获得所有参数组成的数组
-			String[] arguments = msg.split(" ");
+			//获得所有参数组成的字符串
+			String arguments = msg;
 			//获得第一个参数
-			String arg1 = arguments[0];
+			String arg1 = arguments.split(arguments, 2)[0];
 			switch (arg1) //判断第一个参数
 			{
 			case "stat": //功能M-1:输出123 SduBotR运行状态
-				Standalone_Funcs.getRunningStatus(CQ, groupId, qqId, msg);
+				Standalone_Funcs.getRunningStatus(CQ, groupId, qqId, arguments);
 				break;
 			case "testpic": //功能M-2:用图片测试是否能使用123 SduBotR的全部功能
-				Standalone_Funcs.testSendPic(CQ, groupId, qqId, msg);
+				Standalone_Funcs.testSendPic(CQ, groupId, qqId, arguments);
+				break;
+				/* 功能M-3:机器人黑名单添加/删除功能 */
+			case "banadd": //功能M-3-1:机器人黑名单添加
+				Standalone_Funcs.allBan.addBanPerson(CQ, groupId, qqId, arguments);
+				break;
+			case "bandel": //功能M-3-2:机器人黑名单删除
+				Standalone_Funcs.allBan.delBanPerson(CQ, groupId, qqId, arguments );
 				break;
 			default:
 				break;
 			}
-		} catch (ArrayIndexOutOfBoundsException e) { //指令格式错误
+		} catch (IndexOutOfBoundsException e) { //指令格式错误
 			CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
 							  "指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
 							  "来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
@@ -158,11 +169,13 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				int width = 300,height = 150; //设置测试图片宽高(300x150)
 				BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR); //创建图片对象
 				Graphics2D g2 = image.createGraphics(); //使用G2D创建绘图对象
+				g2.setColor(Color.white); //将画笔设置为白色
+				g2.fillRect(0, 0, width, height); //填充白色（背景色）
 				g2.setColor(new Color(0, 128, 255)); //将画笔设置成浅蓝色(R:0,G:128,B:255)
 				g2.setFont(new Font("Comic Sans MS", Font.PLAIN, 20)); //设置字体(Comic Sans MS,常规,字号20)
-				g2.drawString("123 SduBotR", 72, 14); //在72*14起始处绘制测试文字第一行
+				g2.drawString("123 SduBotR", 72,30); //在72*30起始处绘制测试文字第一行
 				g2.setColor(Color.BLACK); //将画笔设置成黑色(R:0,G:0,B:0)
-				g2.drawString("This is a test image", 24, 48); //在24*48起始处绘制测试文字第二行
+				g2.drawString("This is a test image", 50,70); //在50*70起始处绘制测试文字第二行
 				g2.dispose(); //保存绘图对象
 				// 创建临时图片文件对象（路径:\temp\[yyyyMMddHHmmss].png）
 				File tmptestImageFile = new File(Global.appDirectory + "/temp/" + new SimpleDateFormat("yyyyMMddHHmmss")
@@ -175,12 +188,125 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				CQ.sendGroupMsg(groupId,new CQCode().image(test));
 				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "已发送测试图片,若接收到则证明可以使用123 SduBotR的全部功能\n" +
 									"若未接收到则有可能是您运行的是酷Q Air,请使用酷Q Pro后再试");
+				tmptestImageFile.delete(); // 删除临时图片文件
 				System.gc(); //执行垃圾收集器
 				return;
 			} catch (Exception e) {
 				CQ.logError(Global.AppName, "测试图片发送失败,发生异常:\n" + ExceptionHelper.getStackTrace(e));
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n测试图片发送失败,请查看日志以获取详细信息");
 				return;
+			}
+		}
+		/**
+		 * 功能M-3:机器人黑名单功能
+		 * @author 御坂12456
+		 *
+		 */
+		static class allBan{
+			/**
+			 * 功能M-3-1:机器人黑名单添加人员
+			 * @param  CQ CQ实例，详见本大类注释
+			 * @param groupId 消息来源群号
+			 * @param qqId 消息来源成员QQ号
+			 * @param msg 消息内容
+			 * @author 御坂12456
+			 */
+			public static void addBanPerson(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					String arg2 = msg.split(" ", 2)[1]; //获取参数2（要添加的成员QQ号或at）
+					String banPersonQQ;
+					if (arg2.substring(0, 6).equals("[CQ:at,")) 
+					{ //如果是at
+						banPersonQQ = String.valueOf(new CQCode().getAt(arg2)); //读取CQ码中的QQ号
+					} else { //否则
+						banPersonQQ = arg2; //直接读取输入的QQ号
+					}
+					File AllBanPersonsFile = new File(Global.appDirectory + "/data/list/AllBan.txt");
+					if (AllBanPersonsFile.exists()) { //如果列表文件存在
+						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
+							IOHelper.WriteStr(AllBanPersonsFile, banPersonQQ); //直接写入QQ号
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+									"按照主人的意愿,已成功将" + banPersonQQ + "加入黑名单!");
+						} else { //否则（不为空）
+							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
+								if (banPersonQQ.equals(banPerson)) { //如果黑名单成员已经在列表里了
+									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+											"这个人已经在黑名单里了QwQ");
+									return; //直接返回
+								}
+							}
+							IOHelper.AppendWriteStr(AllBanPersonsFile, "\n" + banPersonQQ); //追加写入QQ号(回车符+QQ号)
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+									"按照主人的意愿,已成功将" + banPersonQQ + "加入黑名单!");
+						}
+					}
+				} catch(Exception e)
+				{
+					CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
+							  "指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
+							  "来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
+							  "您输入的指令:" + msg);
+				}
+			}
+			/**
+			 * 功能M-3-2:机器人黑名单删除人员
+			 * @param  CQ CQ实例，详见本大类注释
+			 * @param groupId 消息来源群号
+			 * @param qqId 消息来源成员QQ号
+			 * @param msg 消息内容
+			 * @author 御坂12456
+			 */
+			public static void delBanPerson(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					String arg2 = msg.split(" ", 2)[1]; //获取参数2（要删除的成员QQ号或at）
+					String banPersonQQ;
+					if (arg2.substring(0, 6).equals("[CQ:at,")) 
+					{ //如果是at
+						banPersonQQ = String.valueOf(new CQCode().getAt(arg2)); //读取CQ码中的QQ号
+					} else { //否则
+						banPersonQQ = arg2; //直接读取输入的QQ号
+					}
+					File AllBanPersonsFile = new File(Global.appDirectory + "/data/list/AllBan.txt");
+					if (AllBanPersonsFile.exists()) { //如果列表文件存在
+						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+										"黑名单列表是空的w");
+						} else { //否则（不为空）
+							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
+								if (banPersonQQ.equals(banPerson)) { //如果该成员在列表里
+									ArrayList<String> AllBanPersons = new ArrayList<String>(); //新建一个ArrayList对象
+									Collections.addAll(AllBanPersons, IOHelper.ReadAllLines(AllBanPersonsFile)); //读取原列表所有成员
+									AllBanPersons.remove(banPersonQQ); //从列表中移除该成员
+									System.gc(); //调用一次垃圾收集器
+									for (int i = 1; i < AllBanPersons.size(); i++) { //通过for循环将新列表AllBanPersons覆盖写入原列表文件
+										AllBanPersonsFile.delete(); //先删除原列表文件
+										if (i == AllBanPersons.size()) { // 如果当前循环临时变量i等于数组大小（最后一个QQ号）
+											IOHelper.AppendWriteStr(AllBanPersonsFile, AllBanPersons.get(i - 1)); //直接写入最后一个QQ号
+										} else {
+											IOHelper.AppendWriteStr(AllBanPersonsFile, AllBanPersons.get(i - 1) + "\n"); //写入后来个换行
+										}
+									}
+									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+												"好啦好啦," + banPersonQQ + "已经被我删啦xd");
+									return; //返回
+								}
+							}
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+									"这人没在列表中xxx");
+						}
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.logError("123 SduBotR","Oops!数组下标居然越界了!看看是哪里出错了:(\n" +
+							ExceptionHelper.getStackTrace(e));
+				} catch(Exception e)
+				{
+					CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
+							"指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
+							"来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
+							"您输入的指令:" + msg);
+				}
 			}
 		}
 	}

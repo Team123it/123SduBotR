@@ -49,6 +49,16 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					}
 				}
 			}
+			// 读取机器人黑名单列表文件(功能M-3)
+			File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
+			if (AllBanPersons.exists()) { //如果列表文件存在
+				for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
+					if (String.valueOf(qqId).equals(BanPerson)) //如果消息来源成员为机器人黑名单人员
+					{
+						return; //不多废话，直接返回（拜拜了您嘞）
+					}
+				}
+			}
 		} catch (Exception e) {
 			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 					"详细信息:\n" +
@@ -70,8 +80,6 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
 					break;
 				default:
-					CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
-							"您输入的指令:");
 					break;
 				}
 			}

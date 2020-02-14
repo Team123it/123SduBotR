@@ -52,7 +52,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         test.startup();// 程序运行开始 调用应用初始化方法
         test.enable();// 程序初始化完成后，启用应用，让应用正常工作
         // 开始模拟发送消息
-        test.groupMsg(0, 555, 123L, 770296414L, null, "#stat", 0);
+        test.groupMsg(0, 555, 123L, 770296414L, null, "#testpic", 0);
         // 以下是收尾触发函数
         // demo.disable();// 实际过程中程序结束不会触发disable，只有用户关闭了此插件才会触发
         test.exit();// 最后程序运行结束，调用exit方法
@@ -114,8 +114,6 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         {
         	CQ.logInfo("123 SduBotR", "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
         	Initialize(CQ); //调用初始化方法
-        	UserInterfaceHelper.MsgBox("123 SduBotR - 首次启动", "程序将向Global.java中机器人主人QQ号变量masterQQ(" + masterQQ + ")发送测试信息\n" + 
-        	"若未接收到消息请注意Global.java中masterQQ的值是否正确(由于是强制Long类型所以数值后需要加L)", UserInterfaceHelper.MsgBoxButtons.Info);
         	CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" +
         				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，您可以正常使用了\n");
         	
@@ -197,7 +195,8 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         	{ //转到ProcessGroupManageMsg类处理
         		ProcessGroupManageMsg.main(CQ, fromGroup, fromQQ, msg);
         	} else
-        	{ // 转到ProcessGroupMsg类处理
+        	{
+        		
         		ProcessGroupMsg.main(CQ, fromGroup, fromQQ, msg);
         		
         	}
