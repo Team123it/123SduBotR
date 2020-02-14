@@ -1,13 +1,15 @@
 # 123 SduBotR
-**Tips:This is a chinese repository.**<br>
-**The javadocs and comments in the source file are all chinese.**<br>
+**Tips:This is a Chinese repository.**<br>
+**The javadocs and comments in the source file are all Chinese.**<br>
 **If you want to help us translate this repository to your own language, you can create a new branch, called master-(your language).**<br>
 <br>
-*'R' means Resuurection!*<br>
+*'R' means Resurrection!*<br>
 <br>
+<a href="https://996.icu"><img src=https://img.shields.io/badge/link-996.icu-red.svg" alt="996.icu" /></a>
+[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
 <p><b><font color="red">注意：本程序最佳运行环境为酷Q Pro，您可以通过功能M-3测试是否可以使用所有功能。</font></b></p>
 这是一个酷Q的开源QQ机器人项目。<br>
-使用时请遵守相关法律法规和GNU 3.0开源协议。<br>
+使用时请遵守相关法律法规和MIT开源协议。<br>
 ###### 以下用“CQP”简称酷Q Pro，用“CQA”简称酷Q Air，用“CQ”简称酷Q(CQ码除外)。
 ###### 以下所使用的路径均为相对于程序数据目录的路径。
 
