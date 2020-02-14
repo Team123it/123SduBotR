@@ -61,7 +61,8 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 			//获得所有参数组成的字符串
 			String arguments = msg;
 			//获得第一个参数
-			String arg1 = arguments.split(arguments, 2)[0];
+			String arg1 = arguments.split(" ", 2)[0];
+			System.out.println(arg1);
 			switch (arg1) //判断第一个参数
 			{
 			case "stat": //功能M-1:输出123 SduBotR运行状态
@@ -85,6 +86,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 							  "指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
 							  "来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
 							  "您输入的指令:" + msg);
+		} catch (Exception e)
+		{
+			e.printStackTrace();
 		}
 		return;
 	}
