@@ -221,9 +221,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				try {
 					String arg2 = msg.split(" ", 2)[1]; //获取参数2（要添加的成员QQ号或at）
 					String banPersonQQ;
-					if (arg2.substring(0, 6).equals("[CQ:at,")) 
+					if (arg2.startsWith("[")) 
 					{ //如果是at
-						banPersonQQ = String.valueOf(new CQCode().getAt(arg2)); //读取CQ码中的QQ号
+						banPersonQQ = arg2.substring(10, arg2.length() - 2); //读取CQ码中的QQ号
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}
@@ -232,7 +232,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
 							IOHelper.WriteStr(AllBanPersonsFile, banPersonQQ); //直接写入QQ号
 							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-									"按照主人的意愿,已成功将" + banPersonQQ + "加入黑名单!");
+									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
 						} else { //否则（不为空）
 							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
 								if (banPersonQQ.equals(banPerson)) { //如果黑名单成员已经在列表里了
@@ -243,7 +243,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 							}
 							IOHelper.AppendWriteStr(AllBanPersonsFile, "\n" + banPersonQQ); //追加写入QQ号(回车符+QQ号)
 							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-									"按照主人的意愿,已成功将" + banPersonQQ + "加入黑名单!");
+									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
 						}
 					}
 				} catch(Exception e)
@@ -267,9 +267,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				try {
 					String arg2 = msg.split(" ", 2)[1]; //获取参数2（要删除的成员QQ号或at）
 					String banPersonQQ;
-					if (arg2.substring(0, 1).equals("[")) 
+					if (arg2.startsWith("[")) 
 					{ //如果是at
-						banPersonQQ = String.valueOf(new CQCode().getAt(arg2)); //读取CQ码中的QQ号
+						banPersonQQ = arg2.substring(10, arg2.length() - 2); //读取CQ码中的QQ号
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}
@@ -304,7 +304,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 										}
 									}
 									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-												"好啦好啦," + banPersonQQ + "已经被我删啦xd");
+												"好啦好啦," + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")"  + "已经被我删啦xd");
 									return; //返回
 								}
 							}
