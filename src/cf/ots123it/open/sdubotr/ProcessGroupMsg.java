@@ -71,7 +71,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 * @param qqId 消息来源成员QQ号
 		 * @param msg 消息内容
 		 * @see ProcessGroupMsg
-		 * @author 御坂12456
+		 * @author 御坂12456(优化: Sugar 404)
 		 */
 		public static void Func1_1(CoolQ CQ,long groupId,long qqId,String msg)
 		{

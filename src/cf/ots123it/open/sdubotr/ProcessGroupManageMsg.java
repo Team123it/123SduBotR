@@ -3,6 +3,7 @@ package cf.ots123it.open.sdubotr;
 import java.lang.management.ManagementFactory;
 import java.sql.Date;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
@@ -70,14 +71,20 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract
 	 */
 		public static void getRunningStatus(CoolQ CQ,long groupId,long qqId,String msg)
 		{
+			// 设置时区为GMT-8（解决多出8小时的Bug）
+			TimeZone tz = TimeZone.getTimeZone("ETC/GMT-8");
+			TimeZone.setDefault(tz);
 			// 获取已启动时长
 			Date upTimeDate = new Date(ManagementFactory.getRuntimeMXBean().getUptime());
 			// 转化为Calendar对象
 			Calendar upTime = Calendar.getInstance();
 			upTime.setTime(upTimeDate);
-			// 对分钟和秒补零并把时、分、秒赋值给upTimeStr数组
-			String upHour,upMinute,upSecond;
-			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY) - 8);
+			// 对分钟和秒补零并把年、月、日、时、分、秒赋值给upTimeStr数组
+			String upYear,upMonth,upDay,upHour,upMinute,upSecond;
+			upYear = String.valueOf(upTime.get(Calendar.YEAR));
+			upMonth = String.valueOf(upTime.get(Calendar.MONTH));
+			upDay = String.valueOf(upTime.get(Calendar.DAY_OF_MONTH));
+			upHour = String.valueOf(upTime.get(Calendar.HOUR_OF_DAY));
 			if (upTime.get(Calendar.MINUTE) < 10) { //分补零
 				upMinute = "0" + String.valueOf(upTime.get(Calendar.MINUTE));
 			} else {
@@ -88,7 +95,11 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract
 			} else {
 				upSecond = String.valueOf(upTime.get(Calendar.SECOND));
 			}
-			String[] upTimeStr = {upHour,upMinute,upSecond}; //赋值
+			String[] upTimeStr = {upYear,upMonth,upDay,upHour,upMinute,upSecond}; //赋值
+			// 使用upTimeBuilder合并字符串
+			StringBuilder upTimeBuilder = new StringBuilder();
+			upTimeBuilder.append(upYear).append("y").append(" ").append(upMonth).append("m").append(" ").append(upDay)
+			.append("d").append(" ").append(upHour).append(":").append(upMinute).append(":").append(upSecond);
 			System.gc(); //通知系统进行垃圾收集
 			CQ.sendGroupMsg(groupId, Global.AppName + "\n" + 
 					"运行状态\n" + 
@@ -105,7 +116,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract
 					"操作系统版本:" + System.getProperty("os.version") + "\n" + 
 					"Java运行时（JRE）版本:" + System.getProperty("java.runtime.version") + "\n" + 
 					"数据目录:" + Global.appDirectory + "\n" +
-					"程序已正常运行时间:" + upTimeStr[0] + ":" + upTimeStr[1] + ":" + upTimeStr[2]);
+					"程序已正常运行时间:" + upTimeBuilder.toString());
 		}
 	}
 }
