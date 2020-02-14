@@ -48,6 +48,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         Start test = new Start();
         // 获取当前酷Q操作对象
         CoolQ CQ = test.getCoolQ();
+        
         test.startup();// 程序运行开始 调用应用初始化方法
         test.enable();// 程序初始化完成后，启用应用，让应用正常工作
         // 开始模拟发送消息
@@ -198,6 +199,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         	} else
         	{ // 转到ProcessGroupMsg类处理
         		ProcessGroupMsg.main(CQ, fromGroup, fromQQ, msg);
+        		
         	}
         return MSG_IGNORE;
     }

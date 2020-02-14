@@ -50,12 +50,36 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 			}
 		} catch (Exception e) {
-			CQ.logError("123 SduBotR", "发生异常,请及时处理\n" +
+			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 					"详细信息:\n" +
 					ExceptionHelper.getStackTrace(e));
 		}
 		Part_Spec.Funny_EasterEgg(CQ, groupId, qqId, msg); //调用滑稽彩蛋方法
-		return;
+		if ((msg.startsWith("!")) ||  (msg.startsWith("！"))) // 如果消息开头是"!"或中文"！"
+		{
+			//去除指令前的"!"标记
+			msg = msg.substring(1, msg.length()); 
+			try {
+				//获得所有参数组成的数组
+				String[] arguments = msg.split(" ");
+				//获得第一个参数
+				String arg1 = arguments[0];
+				switch (arg1) // //判断第一个参数
+				{
+				case "about": //功能O-1:关于
+					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
+					break;
+				default:
+					CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
+							"您输入的指令:");
+					break;
+				}
+			}
+			catch (ArrayIndexOutOfBoundsException e) { //指令格式错误
+				CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
+							"您输入的指令:");
+			}
+		}
 	}
 	/**
 	 * 主功能1
@@ -106,6 +130,46 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 	}
 
 	/**
+	 * 其它功能（注意与"特殊模块"区分开）
+	 * @author 御坂12456
+	 *
+	 */
+	static class Part_Other{
+		/**
+		 * 功能O-1:关于123 SduBotR
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源成员QQ号
+		 * @param msg 消息内容
+		 * @author 御坂12456
+		 */
+		public static void FuncO_About(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			// 创建"关于"字符串生成器（可变字符串）对象
+			StringBuilder aboutStrBuilder = new StringBuilder();
+			/*
+			 * "关于"内容:
+			 * 123 SduBotR
+			 * 一个完全开源的酷Q QQ bot程序
+			 * 原作者:御坂12456(QQ:770296414)
+			 * 官方群:812655602
+			 * 当前登录账号:[昵称]([QQ])
+			 * Github仓库:https://github.com/Misaka12456/123SduBotR
+			 * 建议使用酷Q Pro运行本程序
+			 */
+			aboutStrBuilder.append("123 SduBotR\n")
+					.append("一个完全开源的酷Q QQ bot程序\n")
+					.append("原作者:御坂12456(QQ:770296414)\n")
+					.append("官方群:812655602\n")
+					.append("当前登录账号:").append(CQ.getLoginNick()).append("(").append(String.valueOf(CQ.getLoginQQ())).append(")\n")
+					.append("Github仓库:https://github.com/Misaka12456/123SduBotR\n")
+					.append("建议使用酷Q Pro运行本程序");
+			// 发送消息
+			CQ.sendGroupMsg(groupId, aboutStrBuilder.toString());
+			return;
+		}
+	}
+	/**
 	 * 特殊模块
 	 * @author 御坂12456
 	 *
@@ -131,7 +195,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					for (String funnyWhiteGroup : funnyWhiteList) {
 						if (String.valueOf(groupId).equals(funnyWhiteGroup)) //若此群为白名单群
 						{
-							CQ.logDebug("123 SduBotR", "当前群聊:" + groupId + "属于滑稽彩蛋白名单群聊,已跳过处理");
+							CQ.logDebug(Global.AppName, "当前群聊:" + groupId + "属于滑稽彩蛋白名单群聊,已跳过处理");
 							return; //不执行后续代码，直接返回
 						}
 					}
