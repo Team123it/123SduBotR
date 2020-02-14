@@ -5,7 +5,7 @@
 <br>
 *'R' means Resurrection!*<br>
 <br>
-<a href="https://996.icu"><img src=https://img.shields.io/badge/link-996.icu-red.svg" alt="996.icu" /></a>
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
 <p><b><font color="red">注意：本程序最佳运行环境为酷Q Pro，您可以通过功能M-3测试是否可以使用所有功能。</font></b></p>
 这是一个酷Q的开源QQ机器人项目。<br>
