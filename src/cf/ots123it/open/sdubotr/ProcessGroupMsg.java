@@ -502,9 +502,22 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 */
 		public static void FuncO_Menu(CoolQ CQ,long groupId,long qqId,String msg)
 		{
-			CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-					"功能菜单已发送至私聊(若接收不到请尝试重新发送指令)");
-			CQ.sendPrivateMsg(qqId, menuStr); //私聊发送功能菜单
+			int result = CQ.sendPrivateMsg(qqId, menuStr); //私聊发送功能菜单
+			switch (result) //判断功能菜单发送结果
+			{
+			case -36: //群主禁止临时会话
+				CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
+						"群主设置禁止临时会话了……去https://github.com/Misaka12456/123SduBotR/blob/master/README.md看菜单吧(501:-36)");
+				break;
+			case -30: //消息被服务器拒绝
+				CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
+						"TX拒绝了bot发送消息的请求……我也没办法啊(500:-30)");
+				break;
+			default: //正常情况
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+						"功能菜单已发送至私聊(若接收不到请尝试重新发送指令)");
+				break;
+			}
 			return;
 		}
 	}
