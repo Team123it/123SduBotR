@@ -220,7 +220,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     			File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
     			if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
     				for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
-    					if (String.valueOf(fromGroup ).equals(BanGroup)) //如果消息来源群聊为机器人黑名单群聊
+    					if (String.valueOf(fromGroup).equals(BanGroup)) //如果消息来源群聊为机器人黑名单群聊
     					{
     						return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
     					}
@@ -286,23 +286,23 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 		case 1: //被取消管理员
 			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						"bot被取消管理员，部分功能已关闭."
+						"bot被群主取消管理员身份，部分功能已关闭."
 						/* 以下代码将在未来版本:Alpha 0.1.6（功能3-1.成员活跃排行榜）中启用
 						 + "\n本群成员活跃排行榜已清空." 
 						 */
 						);
 			} else {
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被取消管理员.");
+						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被群主取消管理员.");
 			}
 			break;
 		case 2: //被设置管理员
 			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						"bot被设置成管理员，所有功能已启用.");
+						"bot被群主设置成管理员，所有功能已启用.");
 			} else {
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被设置成管理员.");
+						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被群主设置成管理员.");
 			}
 		}
         return MSG_IGNORE;
