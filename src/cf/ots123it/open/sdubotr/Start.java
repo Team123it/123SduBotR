@@ -287,7 +287,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
 						"bot被群主取消管理员身份，部分功能已关闭."
-						/* 以下代码将在未来版本:Alpha 0.1.6（功能3-1.成员活跃排行榜）中启用
+						/* 以下代码将在未来版本:Alpha 0.1.7（功能3-1.成员活跃排行榜）中启用
 						 + "\n本群成员活跃排行榜已清空." 
 						 */
 						);
@@ -387,12 +387,22 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      */
     public int requestAddFriend(int subtype, int sendTime, long fromQQ, String msg, String responseFlag) {
         // 这里处理消息
-
+    	// 读取机器人黑名单列表文件(功能M-3)
+    	File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
+		if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
+			for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
+				if (String.valueOf(fromQQ).equals(BanPerson)) //如果好友添加请求来源人员为机器人黑名单人员
+				{
+					// 拒绝添加好友
+					CQ.setFriendAddRequest(responseFlag, REQUEST_REFUSE);
+					return MSG_INTERCEPT;
+				}
+			}
+		}
         /**
          * REQUEST_ADOPT 通过
          * REQUEST_REFUSE 拒绝
          */
-
         // CQ.setFriendAddRequest(responseFlag, REQUEST_ADOPT, null); // 同意好友添加请求
         return MSG_IGNORE;
     }
@@ -412,10 +422,41 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     public int requestAddGroup(int subtype, int sendTime, long fromGroup, long fromQQ, String msg,
                                String responseFlag) {
         // 这里处理消息
-    	// 若是机器人主人拉入群，则同意
-    	if((subtype == 2) && (fromQQ == Global.masterQQ)){
-			CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_ADOPT, null); 
-		}
+    	switch (subtype)
+		{
+    	case 1: //他人申请入群
+    		
+    		break;
+		case 2: //机器人QQ受邀入群
+			// 若是机器人主人邀请入群，则同意
+	    	if(fromQQ == Global.masterQQ){
+				CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_ADOPT, null);
+				return MSG_INTERCEPT;
+			}
+	    	// 读取机器人黑名单列表文件(功能M-3)
+	    	File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
+			if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
+				for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
+					if (String.valueOf(fromQQ).equals(BanPerson)) //如果邀请人员为机器人黑名单人员
+					{
+						// 拒绝邀请
+						CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_REFUSE, "您是机器人黑名单人员，无法邀请机器人入群!");
+					}
+				}
+			}
+			// 读取机器人群聊黑名单列表文件(功能M-4)
+			File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
+			if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
+				for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
+					if (String.valueOf(fromGroup).equals(BanGroup)) //如果消息来源群聊为机器人黑名单群聊
+					{
+						// 拒绝邀请
+						CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_REFUSE, "该群是机器人黑名单群，无法邀请机器人入群!");
+					}
+				}
+			}
+			break;
+		}  	
         /**
          * REQUEST_ADOPT 通过
          * REQUEST_REFUSE 拒绝

@@ -7,7 +7,7 @@
 <br>
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
-<p><b><font color="red">注意：本程序最佳运行环境为酷Q Pro，您可以通过功能M-3测试是否可以使用所有功能。</font></b></p>
+<p><b><font color="red">注意：本程序最佳运行环境为酷Q Pro，您可以通过功能M-2测试是否可以使用所有功能。</font></b></p>
 这是一个酷Q的开源QQ机器人项目。<br>
 使用时请遵守相关法律法规和MIT开源协议。<br>
 ##### 以下用“CQP”简称酷Q Pro，用“CQA”简称酷Q Air，用“CQ”简称酷Q(CQ码除外)。
@@ -94,7 +94,11 @@
 机器人主人在群内发送<br>
 <code>#banadd [@/QQ号] //添加黑名单人员</code><br>
 <code>#bandel [@/QQ号] //删除黑名单人员</code><br>
-<b>注意：机器人主人无法添加自己进入黑名单</b>
+<b>注意：<br>
+<ol>
+<li>机器人主人无法添加自己进入黑名单</li>
+<li>黑名单人员若试图邀请机器人入群或添加机器人为好友均将被拒绝(Alpha 0.1.6添加)</li>
+</ol></b>
 #### M-4:机器人群聊黑名单(作者:御坂12456,更新版本:Alpha 0.1.3)
 说明：该功能可以将某些乱玩机器人的群聊加入机器人黑名单当中，对应群聊除主人外的所有其它人均无法继续使用机器人，从而防止机器人被滥用<br>
 使用方法：<br>
