@@ -509,13 +509,22 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
 						"群主设置禁止临时会话了……去https://github.com/Misaka12456/123SduBotR/blob/master/README.md看菜单吧(501:-36)");
 				break;
+			case -35: //权限不足，可能解除了与对方的好友关系
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+						"bot被屏蔽了呀……怎么发功能菜单啊QAQ(500:-35)");
+				break;
 			case -30: //消息被服务器拒绝
 				CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
 						"TX拒绝了bot发送消息的请求……我也没办法啊(500:-30)");
 				break;
-			default: //正常情况
+			default: //其它情况
+				if (String.valueOf(result).startsWith("-")) { //发送消息失败，未知原因
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"TX又炸了，功能发不出去orz(500:" + String.valueOf(result) + ")");
+				} else {
 				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 						"功能菜单已发送至私聊(若接收不到请尝试重新发送指令)");
+				}
 				break;
 			}
 			return;
