@@ -299,7 +299,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 		case 2: //被设置管理员
 			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						"bot被取消管理员，所有功能已启用.");
+						"bot被设置成管理员，所有功能已启用.");
 			} else {
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
 						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被设置成管理员.");
