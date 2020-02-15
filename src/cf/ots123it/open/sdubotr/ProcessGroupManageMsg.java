@@ -88,7 +88,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 							  "您输入的指令:" + msg);
 		} catch (Exception e)
 		{
-			e.printStackTrace();
+			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+					"详细信息:\n" +
+					ExceptionHelper.getStackTrace(e));
 		}
 		return;
 	}
@@ -251,12 +253,16 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
 						}
 					}
-				} catch(Exception e)
+				} catch(IndexOutOfBoundsException e)
 				{
 					CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
 							  "指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
 							  "来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
 							  "您输入的指令:" + msg);
+				} catch (Exception e) {
+					CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+							"详细信息:\n" +
+							ExceptionHelper.getStackTrace(e));
 				}
 			}
 			/**
