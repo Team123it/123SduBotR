@@ -301,12 +301,12 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 									}
 									AllBanPersonsFile.delete(); //先删除原列表文件
 									IOHelper.WriteStr(AllBanPersonsFile, ""); //重新创建该文件
-									for (int i = 0; i < AllBanPersons.size(); i++) { //通过for循环将新列表AllBanPersons覆盖写入原列表文件
-										if ((i +1) == AllBanPersons.size()) { // 如果当前循环临时变量i+1等于数组大小（最后一个QQ号）
-											IOHelper.AppendWriteStr(AllBanPersonsFile, AllBanPersons.get(i)); //直接写入最后一个QQ号
+									for (String newBanPerson : AllBanPersons) {
+										if (newBanPerson.equals(AllBanPersons.get(AllBanPersons.size() - 1))) { //如果当前循环到的newBanPerson是最后一个
+											IOHelper.AppendWriteStr(AllBanPersonsFile, newBanPerson); //直接写入最后一个QQ号
 											break; //跳出for循环
 										} else {
-											IOHelper.AppendWriteStr(AllBanPersonsFile, AllBanPersons.get(i) + "\n"); //写入后来个换行
+											IOHelper.AppendWriteStr(AllBanPersonsFile, newBanPerson  + "\n"); //写入后来个换行
 										}
 									}
 									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
