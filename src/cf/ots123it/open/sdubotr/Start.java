@@ -280,8 +280,31 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * @return 关于返回值说明, 见 {@link #privateMsg 私聊消息} 的方法
      */
     public int groupAdmin(int subtype, int sendTime, long fromGroup, long beingOperateQQ) {
-        // 这里处理消息
-
+    	// 功能2-A1:群管理员变动提醒
+    	switch (subtype) //判断事件类型
+		{
+		case 1: //被取消管理员
+			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
+				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+						"bot被取消管理员，部分功能已关闭."
+						/* 以下代码将在未来版本:Alpha 0.1.6（功能3-1.成员活跃排行榜）中启用
+						 + "\n本群成员活跃排行榜已清空." 
+						 */
+						);
+			} else {
+				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被取消管理员.");
+			}
+			break;
+		case 2: //被设置管理员
+			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
+				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+						"bot被取消管理员，所有功能已启用.");
+			} else {
+				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被设置成管理员.");
+			}
+		}
         return MSG_IGNORE;
     }
 
