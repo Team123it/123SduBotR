@@ -48,7 +48,6 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         Start test = new Start();
         // 获取当前酷Q操作对象
         CoolQ CQ = test.getCoolQ();
-        
         test.startup();// 程序运行开始 调用应用初始化方法
         test.enable();// 程序初始化完成后，启用应用，让应用正常工作
         // 开始模拟发送消息
@@ -64,6 +63,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * @return 返回应用的ApiVer、Appid
      */
     public String appInfo() {
+    	// 123 SduBotR的AppID（如需自行定制请务必更改AppID）
         String AppID = "cf.ots123it.open.sdubotr";
         /**
          * 本函数【禁止】处理其他任何代码，以免发生异常情况。

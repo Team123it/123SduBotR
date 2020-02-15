@@ -82,7 +82,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				break;
 			}
 		} catch (IndexOutOfBoundsException e) { //指令格式错误
-			CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
+			CQ.logError(Global.AppName, "您输入的指令格式有误,请检查后再试\n" +
 							  "指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
 							  "来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
 							  "您输入的指令:" + msg);
