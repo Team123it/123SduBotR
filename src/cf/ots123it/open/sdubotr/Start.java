@@ -3,8 +3,8 @@ package cf.ots123it.open.sdubotr;
 import org.meowy.cqp.jcq.entity.*;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
+import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
-import cf.ots123it.jhlper.UserInterfaceHelper;
 
 import static cf.ots123it.open.sdubotr.Global.*;
 
@@ -84,7 +84,6 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         // 获取应用数据目录(无需储存数据时，请将此行注释)
         appDirectory = CQ.getAppDirectory().substring(0, CQ.getAppDirectory().length());
         // 返回如：D:\CoolQ\data\app\org.meowy.cqp.jcq\data\app\cf.ots123it.open.sdubotr\
-
         return 0;
     }
 
@@ -108,7 +107,6 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * @return 请固定返回0。
      */
     public int enable() {
-        enable = true;
         CQ.logInfo(Global.AppName, "获取应用数据目录成功:\n" + "设置目录:" + appDirectory);
         if(!(new File(appDirectory + "/firstopen.stat")).exists()) //若无firstopen.stat文件（即首次打开）
         {
@@ -116,32 +114,43 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         	Initialize(CQ); //调用初始化方法
         	CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" +
         				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，您可以正常使用了\n");
-        	
+        	enable = true;
         } else { //存在firstopen.stat文件（非首次打开）
         	 if(!(new File(appDirectory + "/group/list/iMG.txt")).exists()) //[功能1-1]判断重点监视群聊列表文件是否存在
              { //若不存在
              	CQ.logWarning(Global.AppName, "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+             	enable = false;
              }
         	 if(!(new File(appDirectory + "/group/list/iMGBan.txt")).exists()) //[功能1-1]判断违禁词列表是否存在
         	 { //若不存在
         		 CQ.logWarning(Global.AppName, "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
         	 }
-        	 if(!(new File(appDirectory + "/group/list/AllBan.txt")).exists()) //[功能1-1]判断违禁词列表是否存在
+        	 if(!(new File(appDirectory + "/group/ranking/speaking")).exists()) //[功能3-1]判断群成员日发言排行榜文件夹是否存在
+        	 { //若不存在
+        		 CQ.logWarning(Global.AppName, "功能3-1:群成员日发言排行榜数据文件夹不存在,可能会影响到该功能的正常使用。\n" +
+              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需目录。");
+            	 enable = false;
+        	 }
+        	 if(!(new File(appDirectory + "/group/list/AllBan.txt")).exists()) //[功能M-3]判断机器人黑名单列表是否存在
         	 { //若不存在
         		 CQ.logWarning(Global.AppName, "功能M-3:机器人黑名单列表文件不存在,可能会影响到该功能的正常使用。\n" +
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
         	 }
-        	 if(!(new File(appDirectory + "/group/list/AllGBan.txt")).exists()) //[功能1-1]判断违禁词列表是否存在
+        	 if(!(new File(appDirectory + "/group/list/AllGBan.txt")).exists()) //[功能M-4]判断机器人群聊黑名单列表是否存在
         	 { //若不存在
         		 CQ.logWarning(Global.AppName, "功能M-4:机器人群聊黑名单列表文件不存在,可能会影响到该功能的正常使用。\n" +
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
         	 }
         	 if(!(new File(appDirectory + "/group/list/funnyWL.txt")).exists()) //[功能S-1]判断滑稽彩蛋白名单文件是否存在
         	 { //若不存在
         		 CQ.logWarning(Global.AppName, "功能S-1:滑稽彩蛋群聊白名单文件不存在，可能会在不需要应用彩蛋的群聊意外触发彩蛋导致意外情况出现。\n" +
         			    "请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
         	 }
         }
         return 0;
@@ -195,6 +204,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 
 	public int groupMsg(int subType, int msgId, long fromGroup, long fromQQ, String fromAnonymous, String msg,
                         int font) {
+		try {
         // 如果消息来自匿名者
         if (fromQQ == 80000000L && !fromAnonymous.isEmpty()) {
             // 将匿名用户信息放到 anonymous 变量中
@@ -226,8 +236,13 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     					}
     				}
     			}
-        		ProcessGroupMsg.main(CQ, fromGroup, fromQQ, msg);
+        		ProcessGroupMsg.main(CQ, fromGroup, fromQQ, msg); //转到ProcessGroupMsg类处理
         	}
+		} catch (Exception e) {
+			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+					"详细信息:\n" +
+					ExceptionHelper.getStackTrace(e));
+		}
         return MSG_IGNORE;
     }
 
@@ -285,12 +300,16 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 		{
 		case 1: //被取消管理员
 			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
+				File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(fromGroup));
+				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在（功能3-1）
+					IOHelper.DeleteAllFiles(speakRanking); //删除数据目录下所有文件
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						"bot被群主取消管理员身份，部分功能已关闭."
-						/* 以下代码将在未来版本:Alpha 0.1.7（功能3-1.成员活跃排行榜）中启用
-						 + "\n本群成员活跃排行榜已清空." 
-						 */
-						);
+						"bot被群主取消管理员身份，部分功能已关闭." + "\n" + 
+						"本群成员日发言排行榜已清空.");
+				} else { //否则
+					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+							"bot被群主取消管理员身份，部分功能已关闭.");
+				}
 			} else {
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
 						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被群主取消管理员.");

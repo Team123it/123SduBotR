@@ -20,19 +20,11 @@ import org.meowy.cqp.jcq.entity.*;
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.IMsg;
 import org.meowy.cqp.jcq.entity.IRequest;
-import org.meowy.cqp.jcq.event.JcqApp;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
-import org.meowy.cqp.jcq.message.CoolQCode;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import com.sun.prism.Graphics;
-import com.sun.prism.Image;
 
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
-import sun.misc.OSEnvironment;
-import sun.security.krb5.internal.ccache.CCacheInputStream;
 /**
  * 123 SduBot 群管理代码调用类(以#开始，在群聊中使用)<br>
  * 当前暂时仅Global.java中设置的机器人主人可调用

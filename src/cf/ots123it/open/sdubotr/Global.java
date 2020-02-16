@@ -35,11 +35,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.1.6";
+	public final static String Version = "0.1.7";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-16";
+	public final static String AppVersionNumber = "Alpha-17";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -64,6 +64,10 @@ public abstract class Global extends JcqAppAbstract
 			"!k [@/QQ号]\n" + 
 			"1-4.永踢人（慎用）\n" + 
 			"!fk [@/QQ号]\n" + 
+			"2.群管理辅助功能(详见Github)\n" +
+			"3.群增强功能\n" +
+			"3-1.查看群成员日发言排行榜(Top10)" +
+			"!rk" +
 			"O.其它功能\n" + 
 			"O-1.关于\n" + 
 			"!about\n" + 
@@ -82,7 +86,7 @@ public abstract class Global extends JcqAppAbstract
 		initReady1.delete();
 		File initReady2 = new File(appDirectory + "/private");
 		initReady2.delete();
-		String[] files = {"/temp","/group","/private","/group/list","/group/list/iMG.txt",
+		String[] files = {"/temp","/group","/private","/group/ranking","/group/ranking/speaking","/group/list","/group/list/iMG.txt",
 				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/group/list/AllGBan.txt","/firstopen.stat"};
 		for (String f:files) {
 			File init = new File(appDirectory + f);

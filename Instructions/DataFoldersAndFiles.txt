@@ -1,0 +1,19 @@
+123 SduBotR 完整数据目录结构
+/lib 所使用的Java库文件（请自行新建，如需修改，请一并修改json文件）
+	需要的库文件(核心运行环境“[JCQ]开发工具”插件的开发时库文件不要放到此处):
+	123 Java Helper库文件（123jhlper.jar）
+/temp 临时缓存数据（用于发送图片的临时缓存等）
+/group 群聊数据
+	/group/ranking 群聊排行榜数据
+		/group/ranking/speaking 功能3-1:群成员发言日排行榜
+			/group/ranking/speaking/[群号] （指定群的成员发言日排行榜）
+				/group/ranking/speaking/[群号]/[日期编号(YYYYmmdd)] （指定群、指定日期的成员发言排行榜）
+					/group/ranking/speaking/[群号]/[日期编号]/[QQ号] （指定群、指定日期的该成员当日发送消息条数文件[纯文本,无文件后缀名]）
+	/group/list 群聊相关名单数据
+		/group/list/iMG.txt 功能2-1:重点监视群聊列表文件
+		/group/list/iMGBan.txt 功能2-1:违禁词名单
+		/group/list/funnyWL.txt 功能S-1.滑稽彩蛋群聊白名单（群聊忽略名单）文件
+		/group/list/AllBan.txt 功能M-3:机器人黑名单文件
+		/group/list/AllGBan.txt 功能M-4:机器人群聊黑名单文件
+/private 私聊数据
+/firstopen.stat 首次启用判断文件（若该文件不存在则代表是首次启用程序）

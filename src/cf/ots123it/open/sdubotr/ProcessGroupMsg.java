@@ -1,11 +1,16 @@
 package cf.ots123it.open.sdubotr;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
+import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
 import cf.ots123it.jhlper.CommonHelper;
@@ -46,7 +51,27 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					}
 				}
 			}
-			
+			/* 读取并写入成员发言次数(功能3-1) */
+			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
+			// 获取今日（时区等以系统时间为准）日期（格式:yyyyMMdd)
+			String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
+			File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
+			if (!speakRanking.exists()) { //如果群聊日发言排行榜数据目录不存在（功能3-1）
+				speakRanking.mkdir();
+			}
+			if (!todaySpeakRanking.exists()) { //如果今日群聊日发言排行榜数据目录不存在（功能3-1）
+				todaySpeakRanking.mkdir();
+			}
+			File todaySpeakPerson = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today 
+					+ "/" + String.valueOf(qqId));
+			if (!todaySpeakPerson.exists()) { //如果对应成员今日群聊日发言记录文件不存在（功能3-1）
+				todaySpeakPerson.createNewFile();
+				IOHelper.WriteStr(todaySpeakPerson, "1"); //记录当前成员今日发言次数为1
+			} else { //如果对应成员今日群聊日发言记录文件存在（功能3-1）
+				long previousSpeakTimes = Long.parseLong(IOHelper.ReadToEnd(todaySpeakPerson)); //获取当前记录次数
+				long nowSpeakTimes = previousSpeakTimes + 1; //在当前记录次数上+1
+				IOHelper.WriteStr(todaySpeakPerson, String.valueOf(nowSpeakTimes)); //覆盖记录当前成员今日发言次数
+				}
 		} catch (Exception e) {
 			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 					"详细信息:\n" +
@@ -77,6 +102,10 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				case "fk": //功能1-4:永踢人（慎用）
 					Part1.Func1_4(CQ, groupId, qqId, msg);
 					break;
+				/* 主功能3:群增强功能 */
+				case "rk": //功能3-1:查看群成员日发言排行榜
+					Part3.Func3_1(CQ, groupId, qqId, msg);
+					break;
 				/* 其它功能 */
 				case "about": //功能O-1:关于
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
@@ -96,6 +125,38 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
 							"您输入的指令:");
 			}
+		} else {
+			/* 本部分代码只是为了保留中文指令兼容性，请勿直接在此处增加新功能 */
+			switch (msg) 
+			{
+			case "禁言": //功能1-1:禁言
+				Part1.Func1_1(CQ, groupId, qqId, msg);
+				break;
+			case "解禁": //功能1-2:解禁
+				Part1.Func1_2(CQ, groupId, qqId, msg);
+				break;
+			case "踢": //功能1-3:踢人
+				Part1.Func1_3(CQ, groupId, qqId, msg);
+				break;
+			case "永踢": //功能1-4:永踢人（慎用）
+				Part1.Func1_4(CQ, groupId, qqId, msg);
+				break;
+			/* 主功能3:群增强功能 */
+			case "成员排行榜": //功能3-1:查看群成员日发言排行榜
+				Part3.Func3_1(CQ, groupId, qqId, msg);
+				break;
+			/* 其它功能 */
+			case "关于": //功能O-1:关于
+				Part_Other.FuncO_About(CQ, groupId, qqId, msg);
+				break;
+			case "菜单": //功能O-2:功能菜单
+			case "帮助":
+			case "功能":
+				Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 	/**
@@ -111,6 +172,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 * @param groupId 消息来源群号
 		 * @param qqId 消息来源QQ号
 		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
 		 */
 		public static void Func1_1(CoolQ CQ,long groupId,long qqId,String msg)
 		{
@@ -195,6 +257,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 * @param groupId 消息来源群号
 		 * @param qqId 消息来源QQ号
 		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
 		 */
 		public static void Func1_2(CoolQ CQ,long groupId,long qqId,String msg)
 		{
@@ -267,6 +330,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 * @param groupId 消息来源群号
 		 * @param qqId 消息来源QQ号
 		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
 		 */
 		public static void Func1_3(CoolQ CQ,long groupId,long qqId,String msg)
 		{
@@ -338,6 +402,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 * @param groupId 消息来源群号
 		 * @param qqId 消息来源QQ号
 		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
 		 */
 		public static void Func1_4(CoolQ CQ,long groupId,long qqId,String msg)
 		{
@@ -453,6 +518,104 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 
 	}
 
+	/**
+	 * 主功能3:群增强功能
+	 * @author 御坂12456
+	 *
+	 */
+	static class Part3{
+		/**
+		 * 功能3-1:查看群日发言排行榜
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源成员QQ号
+		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
+		 * @author 御坂12456
+		 */
+		public static void Func3_1(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			try {
+				// 获取群聊日发言排行榜数据目录
+				File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
+				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在
+					System.gc(); //执行垃圾收集器
+					// 获取今日（时区等以系统时间为准，下同）日期（格式:yyyyMMdd)
+					String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
+					// 获取今日的群聊日发言排行榜数据目录
+					File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
+					if (todaySpeakRanking.exists()) { //如果今日的数据目录存在
+						String[] todaySpeakPersons = todaySpeakRanking.list(); //获取今日发过言的所有成员QQ号字符串（数据目录中的所有发言条数记录文件的文件名）
+						if (todaySpeakPersons.length != 0) { //如果今日有人发过言（数据目录中有记录文件）
+							String[] todaySpeakCounts = new String[todaySpeakPersons.length]; //定义今日发言次数数组
+							for (int i = 0; i < todaySpeakCounts.length; i++) {
+								//将今日发言数组中的索引为i的值赋值为"记录文件名" + "," + "记录文件内容(发言次数)"
+								todaySpeakCounts[i] = todaySpeakPersons[i] + "," + IOHelper.ReadToEnd(todaySpeakRanking.getAbsolutePath() + "/" + todaySpeakPersons[i]);
+							}
+							 	//通过匿名的Comparator使数组按照每个值中","后面的数字的顺序进行数组降序排序
+							Arrays.sort(todaySpeakCounts, new Comparator<String>() {
+								@Override
+								public int compare(String o1, String o2)
+								{
+									//如果o1的值>o2
+									if(Long.parseLong(o1.substring(o1.indexOf(",") +1)) > (Long.parseLong((o2.substring(o2.indexOf(",") + 1)))))
+										return -1; //返回-1（使Arrays.sort进行降序排序，下同）
+										else return 1; //否则返回1
+								}
+							});
+							StringBuilder todaySpeakRankingStr = new StringBuilder();
+							todaySpeakRankingStr.append(FriendlyName).append("\n")
+															 .append("群成员日发言排行榜(").append(groupId).append(")").append("\n");
+							//定义for循环(初始i=0,当i小于今日发言人数且当i小于10（排行榜仅显示top10时就循环）
+							for (int i = 0; ((i < todaySpeakCounts.length) && (i < 10)); i++) {
+								//定义当前遍历到的QQ号
+								long currentSpeakQQNo = Long.parseLong(todaySpeakCounts[i].split(",", 2)[0]);
+								//定义当前遍历到的QQ号的发言次数
+								long currentSpeakTimes = Long.parseLong(todaySpeakCounts[i].split(",", 2)[1]);
+								//定义当前遍历到的QQ号的昵称
+								String currentSpeakQQNick;
+								Member currentSpeakQQ = CQ.getGroupMemberInfo(groupId, currentSpeakQQNo,true);
+								if (currentSpeakQQ != null) //如果获取成功（成员在群内）
+								{
+									currentSpeakQQNick = currentSpeakQQ.getCard();
+								} else { //否则（成员已不在群内）
+									currentSpeakQQNick = "已退出群员";
+								}
+								if (i == (todaySpeakCounts.length - 1)) { //如果i等于今日发言人数-1（最后一个发言人）
+									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append("(").append(currentSpeakQQNo)
+																	 .append(")").append(":").append(currentSpeakTimes).append("条");
+								} else if (i == 9) //否则如果i等于9（top10最后一名）
+								{
+									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append("(").append(currentSpeakQQNo)
+									 .append(")").append(":").append(currentSpeakTimes).append("条");
+								} else  //否则
+								{
+									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append("(").append(currentSpeakQQNo)
+									 .append(")").append(":").append(currentSpeakTimes).append("条").append("\n");
+								}
+							}
+							System.gc(); //执行垃圾收集器
+							CQ.sendGroupMsg(groupId, todaySpeakRankingStr.toString()); //发送群成员日发言排行榜
+						} else { //否则
+							CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
+									"今日本群的群聊日发言排行榜为空~");
+						}
+					} else { //否则
+						todaySpeakRanking.mkdir(); //创建
+						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
+									"今日本群的群聊日发言排行榜为空~");
+					}
+				} else { //如果群聊日发言排行榜数据目录不存在
+					speakRanking.mkdir(); //创建
+					CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
+								"今日本群的群聊日发言排行榜为空~");
+				}
+			} catch (Exception e) {
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+						"获取失败(" + e.getClass().getName() + ")");
+			}
+		}
+	}
 	/**
 	 * 其它功能（注意与"特殊模块"区分开）
 	 * @author 御坂12456
