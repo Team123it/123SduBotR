@@ -66,8 +66,8 @@ public abstract class Global extends JcqAppAbstract
 			"!fk [@/QQ号]\n" + 
 			"2.群管理辅助功能(详见Github)\n" +
 			"3.群增强功能\n" +
-			"3-1.查看群成员日发言排行榜(Top10)" +
-			"!rk" +
+			"3-1.查看群成员日发言排行榜(Top10)\n" +
+			"!rk\n" +
 			"O.其它功能\n" + 
 			"O-1.关于\n" + 
 			"!about\n" + 
