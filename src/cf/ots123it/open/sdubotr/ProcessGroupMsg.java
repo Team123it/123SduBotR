@@ -577,21 +577,23 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								Member currentSpeakQQ = CQ.getGroupMemberInfo(groupId, currentSpeakQQNo,true);
 								if (currentSpeakQQ != null) //如果获取成功（成员在群内）
 								{
-									currentSpeakQQNick = currentSpeakQQ.getCard();
+									if (!currentSpeakQQ.getCard().equals("")) //如果成员群内昵称不为空
+									{
+										currentSpeakQQNick = currentSpeakQQ.getCard();
+									} else { //否则（成员群内昵称为空）
+										currentSpeakQQNick = currentSpeakQQ.getNick();
+									}
 								} else { //否则（成员已不在群内）
 									currentSpeakQQNick = "已退出群员";
 								}
 								if (i == (todaySpeakCounts.length - 1)) { //如果i等于今日发言人数-1（最后一个发言人）
-									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append("(").append(currentSpeakQQNo)
-																	 .append(")").append(":").append(currentSpeakTimes).append("条");
+									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条");
 								} else if (i == 9) //否则如果i等于9（top10最后一名）
 								{
-									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append("(").append(currentSpeakQQNo)
-									 .append(")").append(":").append(currentSpeakTimes).append("条");
+									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条");
 								} else  //否则
 								{
-									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append("(").append(currentSpeakQQNo)
-									 .append(")").append(":").append(currentSpeakTimes).append("条").append("\n");
+									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条").append("\n");
 								}
 							}
 							System.gc(); //执行垃圾收集器
