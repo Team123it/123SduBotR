@@ -142,7 +142,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				Part1.Func1_4(CQ, groupId, qqId, msg);
 				break;
 			/* 主功能3:群增强功能 */
-			case "成员排行榜": //功能3-1:查看群成员日发言排行榜
+			case "成员活跃榜": //功能3-1:查看群成员日发言排行榜
 				Part3.Func3_1(CQ, groupId, qqId, msg);
 				break;
 			/* 其它功能 */
