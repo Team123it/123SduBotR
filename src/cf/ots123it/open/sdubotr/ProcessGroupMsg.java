@@ -565,9 +565,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									/* 你家JVM不判断null心里难受（java.lang.IllegalArgumentException）*/
 									if ((!(o1 == null)) && (!(o2 == null))) {
 										//如果o1的值>o2
-										if(Long.parseLong(o1.substring(o1.indexOf(",") +1)) > (Long.parseLong((o2.substring(o2.indexOf(",") + 1)))))
+										if(Long.parseLong(o1.substring(o1.indexOf(",") +1)) > (Long.parseLong((o2.substring(o2.indexOf(",") + 1))))) {
 											return -1; //返回-1（使Arrays.sort进行降序排序，下同）
-											else return 1; //否则返回1
+										} else if (Long.parseLong(o1.substring(o1.indexOf(",") +1)) == (Long.parseLong((o2.substring(o2.indexOf(",") + 1))))) {
+											return 1; // o1<o2返回1
+										} else {
+											return 0; // o1=o2返回0
+										}
 									} else if (!(o1 == null)) {
 										return 1;
 									} else if (!(o2 == null)) {
