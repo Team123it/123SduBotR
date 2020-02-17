@@ -598,7 +598,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 										currentSpeakQQNick = currentSpeakQQ.getNick();
 									}
 								} else { //否则（成员已不在群内）
-									currentSpeakQQNick = "已退出群员";
+									currentSpeakQQNick = "*已退出群员";
 								}
 								if (i == (todaySpeakCounts.length - 1)) { //如果i等于今日发言人数-1（最后一个发言人）
 									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条");
@@ -609,7 +609,38 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								{
 									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条").append("\n");
 								}
+								
 							}
+							//定义消息发送人员的发言次数和发言名次
+							long mySpeakTimes = 0,mySpeakNo = 9999;
+							//定义消息发送人员的昵称
+							String mySpeakQQNick;
+							Member mySpeakQQ = CQ.getGroupMemberInfo(groupId, qqId,true);
+							if (mySpeakQQ != null) //如果获取成功（成员在群内）
+							{
+								if (!mySpeakQQ.getCard().equals("")) //如果成员群内昵称不为空
+								{
+									mySpeakQQNick = mySpeakQQ.getCard();
+								} else { //否则（成员群内昵称为空）
+									mySpeakQQNick = mySpeakQQ.getNick();
+								}
+							} else {
+									mySpeakQQNick = "未知昵称";
+							}
+							//再次遍历循环，得到消息发送人员的发言次数
+							long i = 1; //定义循环次数i
+							for (String todayMySpeakCount : todaySpeakCounts) {
+								if (todayMySpeakCount.split(",", 2)[0].equals(String.valueOf(qqId))) { //如果todayMySpeakCount中的前半部分（QQ号）为消息发送者QQ号
+									mySpeakTimes = Long.parseLong(todayMySpeakCount.split(",",2)[1]);
+									mySpeakNo = i;
+									break; //跳出循环
+								} else { //否则
+									i++; //循环次数+1
+									continue; //进行下一次循环
+								}
+							}
+							todaySpeakRankingStr.append("\n").append("[").append(mySpeakNo).append("]").append(mySpeakQQNick).append(":")
+											.append(mySpeakTimes).append("条");
 							System.gc(); //执行垃圾收集器
 							CQ.sendGroupMsg(groupId, todaySpeakRankingStr.toString()); //发送群成员日发言排行榜
 						} else { //否则
