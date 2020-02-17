@@ -132,10 +132,18 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 			upTimeBuilder.append(upYear).append("y").append(" ").append(upMonth).append("m").append(" ").append(upDay)
 			.append("d").append(" ").append(upHour).append(":").append(upMinute).append(":").append(upSecond);
 			System.gc(); //通知系统进行垃圾收集
-			CQ.sendGroupMsg(groupId, Global.AppName + "\n" + 
+			// 获取数据目录
+			File appDirectoryFile = new File(Global.appDirectory);
+			// 总空间(单位:B)
+			double totalSpace = (double) appDirectoryFile.getTotalSpace();
+			// 总空间字符串(单位:GB,2位小数)
+			String totalSpaceStr = String.format("%.2f", totalSpace / 1024 / 1024 / 1024);
+			// 已用空间(单位:B)
+			double usedSpace = (totalSpace - (double) appDirectoryFile.getUsableSpace());
+			// 已用空间(单位:GB,2位小数)
+			String usedSpaceStr = String.format("%.2f", usedSpace / 1024 / 1024 / 1024);
+			CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
 					"运行状态\n" + 
-					"*本程序完全开源,项目链接:\n" + 
-					"https://github.com/Misaka12456/123SduBotR\n" +
 					"1.版本信息\n" +
 					"程序名:" + Global.AppName + "\n" +
 					"版本:" + Global.Version + "(" + Global.AppVersionNumber + ")\n" +
@@ -146,7 +154,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 					"操作系统:" + System.getProperty("os.name") + "\n" +
 					"操作系统版本:" + System.getProperty("os.version") + "\n" + 
 					"Java运行时（JRE）版本:" + System.getProperty("java.runtime.version") + "\n" + 
-					"数据目录:" + Global.appDirectory + "\n" +
+					"数据目录空间状态:" + usedSpaceStr + "/" + totalSpaceStr + "GB" + "\n" +
 					"程序已正常运行时间:" + upTimeBuilder.toString());
 		}
 		

@@ -699,20 +699,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			/*
 			 * "关于"内容:
 			 * 123 SduBotR
-			 * 一个完全开源的酷Q QQ bot程序
-			 * 原作者:御坂12456(QQ:770296414)
-			 * 官方群:812655602
+			 * 版本 [版本]
 			 * 当前登录账号:[昵称]([QQ])
-			 * Github仓库:https://github.com/Misaka12456/123SduBotR
-			 * 建议使用酷Q Pro运行本程序
 			 */
 			aboutStrBuilder.append("123 SduBotR\n")
-			.append("一个完全开源的酷Q QQ bot程序\n")
-			.append("原作者:御坂12456(QQ:770296414)\n")
-			.append("官方群:812655602\n")
-			.append("当前登录账号:").append(CQ.getLoginNick()).append("(").append(String.valueOf(CQ.getLoginQQ())).append(")\n")
-			.append("Github仓库:https://github.com/Misaka12456/123SduBotR\n")
-			.append("建议使用酷Q Pro运行本程序");
+			.append("版本 ").append(Global.Version).append("\n")
+			.append("当前登录账号:").append(CQ.getLoginNick()).append("(").append(String.valueOf(CQ.getLoginQQ())).append(")\n");
 			// 发送消息
 			CQ.sendGroupMsg(groupId, aboutStrBuilder.toString());
 			return;
