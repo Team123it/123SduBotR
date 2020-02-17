@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -14,6 +15,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
+
+import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import cf.ots123it.jhlper.CommonHelper;
 import cf.ots123it.jhlper.ExceptionHelper;
@@ -44,8 +47,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		try {
 			/* 读取并写入成员发言次数(功能3-1) */
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
-			// 获取今日（时区等以系统时间为准，下同）日期（格式:yyyyMMdd)
-			String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
+			// 获取今日日期（格式:yyyyMMdd)
+			Date todayDate = new Date(System.currentTimeMillis());
+			String today = new SimpleDateFormat("yyyyMMdd").format(todayDate);;
 			File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
 			if (!speakRanking.exists()) { //如果群聊日发言排行榜数据目录不存在（功能3-1）
 				speakRanking.mkdir();
@@ -539,15 +543,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func3_1(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-				// 设置时区为GMT-8（解决多出8小时的Bug）
-				TimeZone tz = TimeZone.getTimeZone("ETC/GMT-8");
-				TimeZone.setDefault(tz);
 				// 获取群聊日发言排行榜数据目录
 				File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在
 					System.gc(); //执行垃圾收集器
-					// 获取今日（时区等以系统时间为准，下同）日期（格式:yyyyMMdd)
-					String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
+					// 获取今日日期（格式:yyyyMMdd)
+					Date todayDate = new Date(System.currentTimeMillis());
+					String today = new SimpleDateFormat("yyyyMMdd").format(todayDate);;
 					// 获取今日的群聊日发言排行榜数据目录
 					File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
 					if (todaySpeakRanking.exists()) { //如果今日的数据目录存在
