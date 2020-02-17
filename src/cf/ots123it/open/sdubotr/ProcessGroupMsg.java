@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
@@ -53,7 +55,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 			/* 读取并写入成员发言次数(功能3-1) */
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
-			// 获取今日（时区等以系统时间为准）日期（格式:yyyyMMdd)
+			// 获取今日（时区等以系统时间为准，下同）日期（格式:yyyyMMdd)
 			String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
 			File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
 			if (!speakRanking.exists()) { //如果群聊日发言排行榜数据目录不存在（功能3-1）
@@ -536,6 +538,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func3_1(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
+				// 设置时区为GMT-8（解决多出8小时的Bug）
+				TimeZone tz = TimeZone.getTimeZone("ETC/GMT-8");
+				TimeZone.setDefault(tz);
 				// 获取群聊日发言排行榜数据目录
 				File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在
@@ -557,10 +562,19 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								@Override
 								public int compare(String o1, String o2)
 								{
-									//如果o1的值>o2
-									if(Long.parseLong(o1.substring(o1.indexOf(",") +1)) > (Long.parseLong((o2.substring(o2.indexOf(",") + 1)))))
-										return -1; //返回-1（使Arrays.sort进行降序排序，下同）
-										else return 1; //否则返回1
+									/* 你家JVM不判断null心里难受（java.lang.IllegalArgumentException）*/
+									if ((!(o1 == null)) && (!(o2 == null))) {
+										//如果o1的值>o2
+										if(Long.parseLong(o1.substring(o1.indexOf(",") +1)) > (Long.parseLong((o2.substring(o2.indexOf(",") + 1)))))
+											return -1; //返回-1（使Arrays.sort进行降序排序，下同）
+											else return 1; //否则返回1
+									} else if (!(o1 == null)) {
+										return 1;
+									} else if (!(o2 == null)) {
+										return -1;
+									} else {
+										return 0;
+									}
 								}
 							});
 							StringBuilder todaySpeakRankingStr = new StringBuilder();
@@ -615,6 +629,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			} catch (Exception e) {
 				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
 						"获取失败(" + e.getClass().getName() + ")");
+				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+						"详细信息:\n" +
+						ExceptionHelper.getStackTrace(e));
 			}
 		}
 	}
