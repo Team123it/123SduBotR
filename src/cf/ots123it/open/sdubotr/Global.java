@@ -12,6 +12,7 @@ import org.meowy.cqp.jcq.entity.Group;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
 import cf.ots123it.jhlper.ExceptionHelper;
+import cf.ots123it.jhlper.IOHelper;
 
 /**
  * 
@@ -27,7 +28,7 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 机器人主人QQ号，如需自定义机器人请改成自己所需要的，默认为本人（御坂12456）的
 	 */
-	public final static long masterQQ = 770296414L;
+	public static long masterQQ;
 	/**
 	 * 123 SduBotR 程序名（若自定义机器人请务必更改此名称）
 	 */
@@ -35,11 +36,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.1.9";
+	public final static String Version = "0.2.0";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-19";
+	public final static String AppVersionNumber = "Alpha-20";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -83,9 +84,9 @@ public abstract class Global extends JcqAppAbstract
 		try {
 		// 初始化准备:删除数据目录所有文件夹
 		File initReady1 = new File(appDirectory + "/group");
-		initReady1.delete();
+		IOHelper.DeleteAllFiles(initReady1);
 		File initReady2 = new File(appDirectory + "/private");
-		initReady2.delete();
+		IOHelper.DeleteAllFiles(initReady2);
 		String[] files = {"/temp","/group","/private","/group/ranking","/group/ranking/speaking","/group/list","/group/list/iMG.txt",
 				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/group/list/AllGBan.txt","/firstopen.stat"};
 		for (String f:files) {

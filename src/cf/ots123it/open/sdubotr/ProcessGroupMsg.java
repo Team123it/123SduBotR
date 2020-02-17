@@ -42,17 +42,6 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 	public static void main(CoolQ CQ,long groupId,long qqId,String msg)
 	{
 		try {
-	        // 读取特别监视群聊列表文件(功能2-1)
-			File imMonitGroups = new File(Start.appDirectory + "/group/list/iMG.txt");
-			if (imMonitGroups.exists()) { //如果列表文件存在
-				for (String imMonitGroup : IOHelper.ReadAllLines(imMonitGroups)) {
-					if (String.valueOf(groupId).equals(imMonitGroup)) //如果消息来源群为特别监视群
-					{
-						Part2.Func2_1(CQ,groupId,qqId,msg); //转到功能2-1处理
-						break;
-					}
-				}
-			}
 			/* 读取并写入成员发言次数(功能3-1) */
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 			// 获取今日（时区等以系统时间为准，下同）日期（格式:yyyyMMdd)
@@ -129,35 +118,47 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 		} else {
 			/* 本部分代码只是为了保留中文指令兼容性，请勿直接在此处增加新功能 */
-			switch (msg) 
-			{
-			case "禁言": //功能1-1:禁言
-				Part1.Func1_1(CQ, groupId, qqId, msg);
-				break;
-			case "解禁": //功能1-2:解禁
-				Part1.Func1_2(CQ, groupId, qqId, msg);
-				break;
-			case "踢": //功能1-3:踢人
-				Part1.Func1_3(CQ, groupId, qqId, msg);
-				break;
-			case "永踢": //功能1-4:永踢人（慎用）
-				Part1.Func1_4(CQ, groupId, qqId, msg);
-				break;
-			/* 主功能3:群增强功能 */
-			case "成员活跃榜": //功能3-1:查看群成员日发言排行榜
-				Part3.Func3_1(CQ, groupId, qqId, msg);
-				break;
-			/* 其它功能 */
-			case "关于": //功能O-1:关于
-				Part_Other.FuncO_About(CQ, groupId, qqId, msg);
-				break;
-			case "菜单": //功能O-2:功能菜单
-			case "帮助":
-			case "功能":
-				Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
-				break;
-			default:
-				break;
+			try {
+				//获得所有参数组成的数组
+				String[] arguments = msg.split(" ");
+				//获得第一个参数
+				String arg1 = arguments[0];
+				switch (arg1) // //判断第一个参数
+				{
+				case "禁言": 
+					Part1.Func1_1(CQ, groupId, qqId, msg);
+					break;
+				case "解禁":
+					Part1.Func1_2(CQ, groupId, qqId, msg);
+					break;
+				case "踢":
+					Part1.Func1_3(CQ, groupId, qqId, msg);
+					break;
+				case "永踢": 
+					Part1.Func1_4(CQ, groupId, qqId, msg);
+					break;
+				case "成员活跃榜":
+					Part3.Func3_1(CQ, groupId, qqId, msg);
+					break;
+				case "关于":
+					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
+					break;
+				case "菜单":
+				case "帮助":
+				case "功能":
+					Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
+					break;
+				default:
+					break;
+				}
+			}
+			catch (Exception e) { //指令格式错误(1)
+				/* CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
+							"您输入的指令:");
+			}
+			catch (IndexOutOfBoundsException e) { //指令格式错误(2)
+				// CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
+							"您输入的指令:"); */
 			}
 		}
 	}
@@ -207,7 +208,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 										muteDuration = Long.parseLong(arg3); //将禁言时长字符串转成长整型
 										CQ.setGroupBan(groupId, muteQQ,muteDuration * 60); //执行禁言操作
 										CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-												"操作完成(200)");
+												"处理完成(200)");
 									}
 								} else { //否则（指令执行者不是管理组成员）
 									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
@@ -289,7 +290,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								} else { //否则（被解禁对象不是机器人QQ）
 									CQ.setGroupBan(groupId, unMuteQQ,0); //执行解禁操作
 									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-											"操作完成(200)");
+											"处理完成(200)");
 								}
 							} else { //否则（指令执行者不是管理组成员）
 								CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
@@ -362,7 +363,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								} else { //否则（被踢对象不是机器人QQ）
 									CQ.setGroupKick(groupId, kickedQQ, false); //执行踢出操作
 									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-											"操作完成(200)");
+											"处理完成(200)");
 								}
 							} else { //否则（指令执行者不是管理组成员）
 								CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
@@ -434,7 +435,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								} else { //否则（被踢对象不是机器人QQ）
 									CQ.setGroupKick(groupId, foreverKickedQQ, true); //执行永踢操作
 									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-											"操作完成(200)");
+											"处理完成(200)");
 								}
 							} else { //否则（指令执行者不是管理组成员）
 								CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
@@ -562,22 +563,26 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								@Override
 								public int compare(String o1, String o2)
 								{
-									/* 你家JVM不判断null心里难受（java.lang.IllegalArgumentException）*/
-									if ((!(o1 == null)) && (!(o2 == null))) {
-										//如果o1的值>o2
-										if(Long.parseLong(o1.substring(o1.indexOf(",") +1)) > (Long.parseLong((o2.substring(o2.indexOf(",") + 1))))) {
-											return -1; //返回-1（使Arrays.sort进行降序排序，下同）
-										} else if (Long.parseLong(o1.substring(o1.indexOf(",") +1)) == (Long.parseLong((o2.substring(o2.indexOf(",") + 1))))) {
-											return 1; // o1<o2返回1
-										} else {
-											return 0; // o1=o2返回0
-										}
-									} else if (!(o1 == null)) {
+									/* 你家JVM不判断null心里难受(java.lang.IllegalArgumentException) */
+									if (o1 == null)
+									{
 										return 1;
-									} else if (!(o2 == null)) {
+									} else if (o2 == null) {
 										return -1;
-									} else {
-										return 0;
+									} else
+									{
+										//进行反向排序
+										switch (Long.compare(Long.parseLong(o1.substring(o1.indexOf(",") +1)),(Long.parseLong((o2.substring(o2.indexOf(",") + 1))))))
+										{
+										case 1: 
+											return -1;
+										case -1:
+											return 1;
+										case 0:
+											return 0;
+										default:
+											return 0;
+										}
 									}
 								}
 							});
@@ -606,10 +611,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								}
 								if (i == (todaySpeakCounts.length - 1)) { //如果i等于今日发言人数-1（最后一个发言人）
 									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条");
-								} else if (i == 9) //否则如果i等于9（top10最后一名）
+								} else if (i == 9) //否则如果i等于9（top10最后一名(Rank:10)）
 								{
 									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条");
-								} else  //否则
+								} else if (i == 0) //否则如果i等于0（龙王(Rank:1)）
+								{
+									todaySpeakRankingStr.append("[").append("1/龙王").append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条").append("\n");
+								}else  //否则
 								{
 									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条").append("\n");
 								}
@@ -643,7 +651,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									continue; //进行下一次循环
 								}
 							}
-							todaySpeakRankingStr.append("\n").append("[").append(mySpeakNo).append("]").append(mySpeakQQNick).append(":")
+							todaySpeakRankingStr.append("\n").append("----------------").append("\n").append("[").append(mySpeakNo).append("]").append(mySpeakQQNick).append(":")
 											.append(mySpeakTimes).append("条");
 							System.gc(); //执行垃圾收集器
 							CQ.sendGroupMsg(groupId, todaySpeakRankingStr.toString()); //发送群成员日发言排行榜

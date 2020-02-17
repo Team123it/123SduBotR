@@ -5,10 +5,12 @@ import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
+import cf.ots123it.open.sdubotr.ProcessGroupMsg.Part2;
 
 import static cf.ots123it.open.sdubotr.Global.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * 123 SduBotR的主处理类
@@ -113,9 +115,18 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         	CQ.logInfo(Global.AppName, "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
         	Initialize(CQ); //调用初始化方法
         	CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" +
-        				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，您可以正常使用了\n");
+        				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，可以正常使用了\n");
         	enable = true;
         } else { //存在firstopen.stat文件（非首次打开）
+            try {
+                // 定义机器人主人QQ文件
+        		File masterQQFile = new File(appDirectory + "/masterQQ.txt");
+        		// 读取机器人主人QQ
+        		masterQQ = Long.parseLong(IOHelper.ReadToEnd(masterQQFile));
+        		CQ.logInfo(Global.AppName, "机器人主人QQ号:" + String.valueOf(masterQQ));
+    		} catch (Exception e) {
+    			CQ.logFatal(Global.AppName, "读取机器人主人QQ号失败\n请在数据目录下新建文件masterQQ.txt并写入机器人主人QQ号，然后重启酷Q");
+    		}
         	 if(!(new File(appDirectory + "/group/list/iMG.txt")).exists()) //[功能1-1]判断重点监视群聊列表文件是否存在
              { //若不存在
              	CQ.logWarning(Global.AppName, "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
@@ -216,6 +227,17 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         		ProcessGroupManageMsg.main(CQ, fromGroup, fromQQ, msg);
         	} else
         	{
+    	        // 读取特别监视群聊列表文件(功能2-1)
+    			File imMonitGroups = new File(Start.appDirectory + "/group/list/iMG.txt");
+    			if (imMonitGroups.exists()) { //如果列表文件存在
+    				for (String imMonitGroup : IOHelper.ReadAllLines(imMonitGroups)) {
+    					if (String.valueOf(fromGroup).equals(imMonitGroup)) //如果消息来源群为特别监视群
+    					{
+    						ProcessGroupMsg.Part2.Func2_1(CQ,fromGroup,fromQQ,msg); //转到功能2-1处理
+    						break;
+    					}
+    				}
+    			}
         		// 读取机器人黑名单列表文件(功能M-3)
     			File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
     			if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空

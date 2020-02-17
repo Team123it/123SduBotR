@@ -17,3 +17,4 @@
 		/group/list/AllGBan.txt 功能M-4:机器人群聊黑名单文件
 /private 私聊数据
 /firstopen.stat 首次启用判断文件（若该文件不存在则代表是首次启用程序）
+/masterQQ.txt 机器人主人QQ号文件
