@@ -84,9 +84,14 @@ public abstract class Global extends JcqAppAbstract
 		try {
 		// 初始化准备:删除数据目录所有文件夹
 		File initReady1 = new File(appDirectory + "/group");
+		if (initReady1.exists())
+		{
 		IOHelper.DeleteAllFiles(initReady1);
+		}
 		File initReady2 = new File(appDirectory + "/private");
-		IOHelper.DeleteAllFiles(initReady2);
+		if (initReady2.exists()) {
+			IOHelper.DeleteAllFiles(initReady2);
+		}
 		String[] files = {"/temp","/group","/private","/group/ranking","/group/ranking/speaking","/group/list","/group/list/iMG.txt",
 				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/group/list/AllGBan.txt","/firstopen.stat"};
 		for (String f:files) {
