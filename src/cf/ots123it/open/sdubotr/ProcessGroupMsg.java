@@ -48,8 +48,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			/* 读取并写入成员发言次数(功能3-1) */
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 			// 获取今日日期（格式:yyyyMMdd)
-			Date todayDate = new Date(System.currentTimeMillis());
-			String today = new SimpleDateFormat("yyyyMMdd").format(todayDate);;
+			Date todayDate = Calendar.getInstance().getTime();
+			String today = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate).split(" ",2)[0];
 			File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
 			if (!speakRanking.exists()) { //如果群聊日发言排行榜数据目录不存在（功能3-1）
 				speakRanking.mkdir();
@@ -548,8 +548,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在
 					System.gc(); //执行垃圾收集器
 					// 获取今日日期（格式:yyyyMMdd)
-					Date todayDate = new Date(System.currentTimeMillis());
-					String today = new SimpleDateFormat("yyyyMMdd").format(todayDate);;
+					Date todayDate = Calendar.getInstance().getTime();
+					String today = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate).split(" ",2)[0];
+					CQ.logDebug(Global.AppName, "今日日期:" + today);
 					// 获取今日的群聊日发言排行榜数据目录
 					File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
 					if (todaySpeakRanking.exists()) { //如果今日的数据目录存在
