@@ -11,6 +11,7 @@ import static cf.ots123it.open.sdubotr.Global.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.TimeZone;
 
 /**
  * 123 SduBotR的主处理类
@@ -86,6 +87,10 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         // 获取应用数据目录(无需储存数据时，请将此行注释)
         appDirectory = CQ.getAppDirectory().substring(0, CQ.getAppDirectory().length());
         // 返回如：D:\CoolQ\data\app\org.meowy.cqp.jcq\data\app\cf.ots123it.open.sdubotr\
+        // 设置时区（功能3-1）
+        System.setProperty("user.timezone", "Asia/Shanghai");
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+        CQ.logDebug(AppName, "时区设置完毕:GMT+8");
         return 0;
     }
 
@@ -318,10 +323,13 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      */
     public int groupAdmin(int subtype, int sendTime, long fromGroup, long beingOperateQQ) {
     	// 功能2-A1:群管理员变动提醒
+    	try {
+			
+
     	switch (subtype) //判断事件类型
 		{
 		case 1: //被取消管理员
-			if (beingOperateQQ == CQ.getLoginQQ()) { //如果被操作对象是机器人QQ
+			if ((CQ != null) && (beingOperateQQ == CQ.getLoginQQ())) { //如果被操作对象是机器人QQ
 				File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(fromGroup));
 				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在（功能3-1）
 					IOHelper.DeleteAllFiles(speakRanking); //删除数据目录下所有文件
@@ -345,6 +353,9 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
 						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被群主设置成管理员.");
 			}
+		}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
         return MSG_IGNORE;
     }

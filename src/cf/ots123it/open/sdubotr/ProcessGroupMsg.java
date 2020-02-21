@@ -707,7 +707,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			 */
 			aboutStrBuilder.append("123 SduBotR\n")
 			.append("版本 ").append(Global.Version).append("\n")
-			.append("当前登录账号:").append(CQ.getLoginNick()).append("(").append(String.valueOf(CQ.getLoginQQ())).append(")\n");
+			.append("当前登录账号:").append(CQ.getLoginNick()).append("(").append(String.valueOf(CQ.getLoginQQ())).append(")");
 			// 发送消息
 			CQ.sendGroupMsg(groupId, aboutStrBuilder.toString());
 			return;

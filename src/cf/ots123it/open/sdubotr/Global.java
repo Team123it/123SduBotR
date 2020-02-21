@@ -60,7 +60,7 @@ public abstract class Global extends JcqAppAbstract
 			"1-1.禁言\n" + 
 			"!mt [@/QQ号] [时长(单位:分钟)]\n" + 
 			"1-2.解禁\n" + 
-			"!um [@/QQ号] [时长(单位:分钟)]\n" + 
+			"!um [@/QQ号]\n" + 
 			"1-3.踢人\n" + 
 			"!k [@/QQ号]\n" + 
 			"1-4.永踢人（慎用）\n" + 
