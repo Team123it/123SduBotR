@@ -486,13 +486,14 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		/**
 		 * 功能2-1:特别监视违禁词提醒功能
 		 * @param CQ CQ实例，详见本大类注释
+		 * @param msgId 消息id
 		 * @param groupId 消息来源群号
 		 * @param qqId 消息来源成员QQ号
 		 * @param msg 消息内容
 		 * @see ProcessGroupMsg
 		 * @author 御坂12456(优化: Sugar 404)
 		 */
-		public static void Func2_1(CoolQ CQ,long groupId,long qqId,String msg)
+		public static void Func2_1(CoolQ CQ,int msgId,long groupId,long qqId,String msg)
 		{
 			// 判断违禁词列表是否为空
 			String iMGBanConfirm = IOHelper.ReadToEnd(Global.appDirectory + "/group/list/iMGBan.txt");
@@ -510,6 +511,18 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 			if (!bans.isEmpty()) {
 				StringBuilder b = new StringBuilder();
+				String handleStat = "撤回+禁言(1h)处理状态:";
+				int result = CQ.deleteMsg(msgId); //尝试撤回消息
+				if (result < 0) { //撤回失败
+					handleStat += "失败(" + result + ")";
+				} else { //撤回成功
+					int result2 = CQ.setGroupBan(groupId, qqId, 3600L); //尝试禁言1h
+					if (result2 < 0) { //禁言失败
+						handleStat += "撤回成功,禁言失败(" + result2 + ")";
+					} else { //禁言成功
+						handleStat += "成功";
+					}
+				}
 				b.append(Global.FriendlyName).append("\n检测到有人发布违禁词，请尽快查看\n来源群号:")
 				.append(Global.getGroupName(CQ, groupId)).append('(').append(groupId).append(")\n来源QQ:")
 				.append(CQ.getGroupMemberInfo(groupId, qqId).getNick()).append('(').append(qqId)
@@ -517,7 +530,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				for (String iMGBanString:bans) {
 					b.append(iMGBanString).append('.');
 				}
-				b.append("\n完整消息内容:\n").append(msg);
+				b.append(handleStat)
+				.append("\n完整消息内容:\n").append(msg);
 				CQ.sendPrivateMsg(Global.masterQQ,b.toString());
 			}
 			return;
@@ -550,7 +564,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					// 获取今日日期（格式:yyyyMMdd)
 					Date todayDate = Calendar.getInstance().getTime();
 					String today = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate).split(" ",2)[0];
-					CQ.logDebug(Global.AppName, "今日日期:" + today);
+					CQ.logDebug(Global.AppName, "今日日期:" + new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate));
 					// 获取今日的群聊日发言排行榜数据目录
 					File todaySpeakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId) + "/" + today);
 					if (todaySpeakRanking.exists()) { //如果今日的数据目录存在
@@ -814,12 +828,14 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			} else if ((k >= 499) & (k <= 501)) //如果k在499~501
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[5]);  //发送滑稽数组第6个消息
-			} else if ((k > 997)) //如果k大于997
+			} else if ((k > 950)) //如果k大于950
 			{
 				CQ.sendGroupMsg(groupId, funnyStrings[6]);  //发送滑稽数组第7个消息
 			}
 			System.gc(); //执行垃圾收集器
 			return;
 		}
+	
+		
 	}
 }

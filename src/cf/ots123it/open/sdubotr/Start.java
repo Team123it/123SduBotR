@@ -238,7 +238,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     				for (String imMonitGroup : IOHelper.ReadAllLines(imMonitGroups)) {
     					if (String.valueOf(fromGroup).equals(imMonitGroup)) //如果消息来源群为特别监视群
     					{
-    						ProcessGroupMsg.Part2.Func2_1(CQ,fromGroup,fromQQ,msg); //转到功能2-1处理
+    						ProcessGroupMsg.Part2.Func2_1(CQ,msgId,fromGroup,fromQQ,msg); //转到功能2-1处理
     						break;
     					}
     				}
@@ -342,7 +342,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 				}
 			} else {
 				CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
-						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被群主取消管理员.");
+						CQ.getGroupMemberInfo(fromGroup, beingOperateQQ).getNick() + "(" + String.valueOf(beingOperateQQ) + ")被群主取消管理员身份.");
 			}
 			break;
 		case 2: //被设置管理员
@@ -390,7 +390,29 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      */
     public int groupMemberIncrease(int subtype, int sendTime, long fromGroup, long fromQQ, long beingOperateQQ) {
         // 这里处理消息
-        return MSG_IGNORE;
+    	// 读取机器人黑名单列表文件(功能M-3)
+		File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
+		if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
+			for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
+				if (String.valueOf(fromQQ).equals(BanPerson)) //如果消息来源成员为机器人黑名单人员
+				{
+					return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
+				}
+			}
+		}
+		// 读取机器人群聊黑名单列表文件(功能M-4)
+		File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
+		if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
+			for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
+				if (String.valueOf(fromGroup).equals(BanGroup)) //如果消息来源群聊为机器人黑名单群聊
+				{
+					return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
+				}
+			}
+		}
+		// 群迎新
+		CQ.sendGroupMsg(fromGroup, "大佬来了，群地位-1");
+		return MSG_IGNORE;
     }
 
     /**
