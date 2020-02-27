@@ -530,7 +530,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				for (String iMGBanString:bans) {
 					b.append(iMGBanString).append('.');
 				}
-				b.append(handleStat)
+				b.append("\n").append(handleStat)
 				.append("\n完整消息内容:\n").append(msg);
 				CQ.sendPrivateMsg(Global.masterQQ,b.toString());
 			}
