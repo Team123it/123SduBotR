@@ -411,10 +411,10 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 			}
 		}
 		//群迎新(功能S-A1)
-		if (fromQQ != CQ.getLoginQQ()) { //如果不是机器人入群
-			CQ.sendGroupMsg(fromGroup, "大佬来了，群地位-1");
-		} else { //如果是机器人入群
+		if (beingOperateQQ == CQ.getLoginQQ()) { //如果是机器人入群
 			CQ.sendGroupMsg(fromGroup, "大佬们好……\n发送\"!m\"查看帮助~");
+		} else { //如果不是机器人入群
+			CQ.sendGroupMsg(fromGroup, "大佬来了，群地位-1");
 		}
 		return MSG_IGNORE;
     }
