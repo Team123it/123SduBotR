@@ -52,6 +52,10 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 	public static void main(CoolQ CQ,long groupId,long qqId,String msg)
 	{
 		try {
+			File abuseDataFolder = new File(Global.appDirectory + "/protect/group/abuse/" + groupId);
+			if (!abuseDataFolder.exists()) {
+				abuseDataFolder.mkdir();
+			}
 			/* 读取并写入成员发言次数(功能3-1) */
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 			// 获取今日日期（格式:yyyyMMdd)
@@ -141,16 +145,19 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "uab": //功能O-3:解除滥用状态
-					
+					Part_Other.FuncO_UnAbuse(CQ, groupId, qqId, msg);
+					break;
 				default:
 					break;
 				}
 			}
 			catch (NumberFormatException e) { //指令格式错误(1)
+				if((msg.trim().equals("!")) || (msg.trim().equals("！"))) return;
 				CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
 							"您输入的指令:");
 			}
 			catch (IndexOutOfBoundsException e) { //指令格式错误(2)
+				if((msg.trim().equals("!")) || (msg.trim().equals("！"))) return;
 				CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
 							"您输入的指令:");
 			}
@@ -765,28 +772,52 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			if ((msg.trim().equals("cov")) || (msg.trim().equals("疫情"))) { //如果无参数(查询全国最新数据)
 				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 						"正在从丁香园获取数据,请稍候");
-				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("https://lab.isaaclin.cn/nCoV/api/overall?latest=1"));
+				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("http://lab.isaaclin.cn/nCoV/api/overall?latest=1"));
 				// 获取全国数据
-				JSONObject results = resultJson.getJSONObject("results");
+				JSONObject results = JSONObject.parseObject(resultJson.getString("results").replace("[", "").replace("]", ""));
 				// 累计确诊人数
 				int confirmedCount = results.getIntValue("confirmedCount");
 				// 累计确诊人数变化量
-				int confirmedIncr = results.getIntValue("confirmedIncr");
+				String confirmedIncr;
+				// 添加正负号
+				if (results.getIntValue("confirmedIncr") > 0) {
+					confirmedIncr = "+" + results.getIntValue("confirmedIncr");
+				} else {
+					confirmedIncr = String.valueOf(results.getIntValue("confirmedIncr"));
+				}
 				// 疑似感染人数
 				int suspectedCount = results.getIntValue("suspectedCount");
 				// 疑似感染人数变化量
-				int suspectedIncr = results.getIntValue("suspectedIncr");
+				String suspectedIncr;
+				// 添加正负号
+				if (results.getIntValue("suspectedIncr") > 0) {
+					suspectedIncr = "+" + results.getIntValue("suspectedIncr");
+				} else {
+					suspectedIncr = String.valueOf(results.getIntValue("suspectedIncr"));
+				}
 				// 治愈人数
 				int curedCount = results.getIntValue("curedCount");
 				// 治愈人数变化量
-				int curedIncr = results.getIntValue("curedIncr");
+				String curedIncr;
+				// 添加正负号
+				if (results.getIntValue("curedIncr") > 0) {
+					curedIncr = "+" + results.getIntValue("curedIncr");
+				} else {
+					curedIncr = String.valueOf(results.getIntValue("curedIncr"));
+				}
 				// 死亡人数
 				int deadCount = results.getIntValue("deadCount");
 				// 死亡人数变化量
-				int deadIncr = results.getIntValue("deadIncr");
+				String deadIncr;
+				// 添加正负号
+				if (results.getIntValue("deadIncr") > 0) {
+					deadIncr = "+" + results.getIntValue("deadIncr");
+				} else {
+					deadIncr = String.valueOf(results.getIntValue("deadIncr"));
+				}
 				// 数据更新时间
 				Calendar updateCalendar = Calendar.getInstance();
-				updateCalendar.setTime(new Date(results.getLongValue("updateTime") / 1000));
+				updateCalendar.setTime(new Date(results.getLongValue("updateTime")));
 				String updateTime = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(updateCalendar.getTime());
 				// 定义数据字符串
 				StringBuilder resultBuilder = new StringBuilder()
@@ -801,19 +832,20 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 			else { //如果有参数
 				String[] argStr = msg.split(" ", 2); //获取参数数组(msg内容: "cov [参数]")
-				String province = argStr[0];
+				String province = argStr[1];
 				if (!province.endsWith("省")) { //如果省份名最后没有 省 字
 					province += "省";
 				}
 				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 						"正在从丁香园获取数据,请稍候");
-				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("https://lab.isaaclin.cn/nCoV/api/area?latest=1&province=" + province));
+				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("http://lab.isaaclin.cn/nCoV/api/area?latest=1&province=" + province));
 				if (resultJson.toJSONString().equals("{\"results\": [], \"success\": true}")) { //如果JSON字符串是{"results": [], "success": true}(根本就是获取失败好吧!!)
 					CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
 							"获取数据失败,请检查您输入的省份名是否正确");
 				} else {
 						// 获取对应省份的数据
-						JSONObject results = resultJson.getJSONObject("results");
+					System.out.println();
+						JSONObject results = JSONObject.parseObject(resultJson.getString("results").replace("[", "").replace("]", ""));
 						// 累计确诊人数
 						int confirmedCount = results.getIntValue("confirmedCount");
 						// 疑似感染人数
@@ -824,7 +856,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						int deadCount = results.getIntValue("deadCount");
 						// 数据更新时间
 						Calendar updateCalendar = Calendar.getInstance();
-						updateCalendar.setTime(new Date(results.getLongValue("updateTime") / 1000));
+						updateCalendar.setTime(new Date(results.getLongValue("updateTime")));
 						String updateTime = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(updateCalendar.getTime());
 						// 定义数据字符串
 						StringBuilder resultBuilder = new StringBuilder()
@@ -976,15 +1008,22 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 			return;
 		}
-	
-		public static void FunO_UnAbuse(CoolQ CQ,long groupId,long qqId,String msg)
+		/**
+		 * 功能O-3:解除防滥用
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源成员QQ号
+		 * @param msg 消息内容
+		 * @author 御坂12456
+		 */
+		public static void FuncO_UnAbuse(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
 				String[] arguments = msg.split(" ", 2);
 				if (msg.trim().equals("uab")) { // 如果只有一个指令
 					// 定义已滥用标志文件
 					File flagFile = new File(
-							Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".abused");
+							Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 					if (!flagFile.exists()) { // 如果标志文件不存在
 						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "未处于防滥用状态");
 					} else { // 如果标志文件存在
@@ -994,12 +1033,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						File tmpFile = new File(Global.appDirectory + "/temp/"
 								+ new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
 								+ ".jpg");
-						// 定义验证码字符串
-						String otp = checkOtp.getText();
 						// 保存验证码图片
 						OTPHelper.saveImage(checkOtp.getImage(), tmpFile);
+						// 定义验证码字符串
+						String otp = checkOtp.getText();
 						// 写入验证码字符串
-						IOHelper.WriteStr(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".unlocking", otp);
+						IOHelper.WriteStr(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".unlocking", otp);
 						StringBuilder otpMessage = new StringBuilder(FriendlyName).append("\n").append("[解除防滥用]输入!uab [验证码]").append("\n")
 								.append(new CQCode().image(tmpFile));
 						CQ.sendGroupMsg(groupId, otpMessage.toString());
@@ -1007,18 +1046,18 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				} else { // 否则（输入了验证码）
 					// 定义已滥用标志文件
 					File flagFile = new File(
-							Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".abused");
+							Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 					if (!flagFile.exists()) { // 如果标志文件不存在
 						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "未处于防滥用状态");
 					} else { // 如果标志文件存在
 						// 定义输入的验证码
 						String inputOtp = arguments[1];
 						// 定义验证码文件(.unlocking)
-						File otpFile = new File(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".unlocking");
+						File otpFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".unlocking");
 						// 定义执行中标志文件(.using)
-						File usingFile = new File(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".using");
+						File usingFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".using");
 						// 定义已滥用标志文件(.abused)
-						File abusedFile = new File(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".abused");
+						File abusedFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 						// 定义读取到的文件中的验证码
 						String realOtp = IOHelper.ReadToEnd(otpFile);
 						if (inputOtp.equals(realOtp)) { //如果验证码输入正确
