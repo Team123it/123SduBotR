@@ -15,12 +15,19 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
+import org.meowy.cqp.jcq.message.CQCode;
+import org.meowy.cqp.jcq.message.CoolQCode;
 
+import com.alibaba.fastjson.JSONObject;
 import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import cf.ots123it.jhlper.CommonHelper;
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
+import cf.ots123it.jhlper.JsonHelper;
+import cf.ots123it.jhlper.OTPHelper;
+import sun.font.TrueTypeFont;
+import sun.security.provider.VerificationProvider;
 
 import static cf.ots123it.open.sdubotr.Global.*;
 /**
@@ -82,32 +89,59 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				String[] arguments = msg.split(" ");
 				//获得第一个参数
 				String arg1 = arguments[0];
-				switch (arg1) // //判断第一个参数
+				switch (arg1.toLowerCase()) // //判断第一个参数
 				{
 				/* 主功能1:群管理核心功能 */
 				case "mt": //功能1-1:禁言
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_1(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "um": //功能1-2:解禁
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_2(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "k": //功能1-3:踢人
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_3(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "fk": //功能1-4:永踢人（慎用）
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_4(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				/* 主功能3:群增强功能 */
 				case "rk": //功能3-1:查看群成员日发言排行榜
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part3.Func3_1(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					break;
+				/* 主功能4:实用功能 */
+				case "cov": //功能4-1:查看新冠肺炎(SARS-Cov-2)疫情实时数据
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
+					Part4.Func4_1(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					break;
+				case "bf": //功能4-2:Bilibili实时粉丝数据
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
+					Part4.Func4_2(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				/* 其它功能 */
 				case "about": //功能O-1:关于
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "m": //功能O-2:功能菜单
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
+				case "uab": //功能O-3:解除滥用状态
+					
 				default:
 					break;
 				}
@@ -130,27 +164,46 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				switch (arg1) // //判断第一个参数
 				{
 				case "禁言": 
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_1(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "解禁":
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_2(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "踢":
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_3(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "永踢": 
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_4(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "成员活跃榜":
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part3.Func3_1(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					break;
+				case "疫情":
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
+					Part4.Func4_1(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "关于":
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				case "菜单":
 				case "帮助":
 				case "功能":
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
+					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
 					break;
 				default:
 					break;
@@ -695,6 +748,166 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 		}
 	}
+	
+	static class Part4{
+		/**
+		 * 功能4-1:获取新冠肺炎(SARS-Cov-2)疫情实时数据(数据来源:丁香园/丁香医生)
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源成员QQ号
+		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
+		 * @author 御坂12456
+		 */
+		public static void Func4_1(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			try {
+			if ((msg.trim().equals("cov")) || (msg.trim().equals("疫情"))) { //如果无参数(查询全国最新数据)
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+						"正在从丁香园获取数据,请稍候");
+				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("https://lab.isaaclin.cn/nCoV/api/overall?latest=1"));
+				// 获取全国数据
+				JSONObject results = resultJson.getJSONObject("results");
+				// 累计确诊人数
+				int confirmedCount = results.getIntValue("confirmedCount");
+				// 累计确诊人数变化量
+				int confirmedIncr = results.getIntValue("confirmedIncr");
+				// 疑似感染人数
+				int suspectedCount = results.getIntValue("suspectedCount");
+				// 疑似感染人数变化量
+				int suspectedIncr = results.getIntValue("suspectedIncr");
+				// 治愈人数
+				int curedCount = results.getIntValue("curedCount");
+				// 治愈人数变化量
+				int curedIncr = results.getIntValue("curedIncr");
+				// 死亡人数
+				int deadCount = results.getIntValue("deadCount");
+				// 死亡人数变化量
+				int deadIncr = results.getIntValue("deadIncr");
+				// 数据更新时间
+				Calendar updateCalendar = Calendar.getInstance();
+				updateCalendar.setTime(new Date(results.getLongValue("updateTime") / 1000));
+				String updateTime = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(updateCalendar.getTime());
+				// 定义数据字符串
+				StringBuilder resultBuilder = new StringBuilder()
+						.append(Global.FriendlyName).append("\n")
+						.append("全国新冠肺炎疫情实时数据\n")
+						.append("数据更新于").append(updateTime).append("\n")
+						.append("累计确诊病例:").append(confirmedCount).append("(").append(confirmedIncr).append(")").append("\n")
+						.append("疑似病例:").append(suspectedCount).append("(").append(suspectedIncr).append(")").append("\n")
+						.append("已治愈出院病例:").append(curedCount).append("(").append(curedIncr).append(")").append("\n")
+						.append("死亡病例:").append(deadCount).append("(").append(deadIncr).append(")");
+				CQ.sendGroupMsg(groupId, resultBuilder.toString());
+			}
+			else { //如果有参数
+				String[] argStr = msg.split(" ", 2); //获取参数数组(msg内容: "cov [参数]")
+				String province = argStr[0];
+				if (!province.endsWith("省")) { //如果省份名最后没有 省 字
+					province += "省";
+				}
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+						"正在从丁香园获取数据,请稍候");
+				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("https://lab.isaaclin.cn/nCoV/api/area?latest=1&province=" + province));
+				if (resultJson.toJSONString().equals("{\"results\": [], \"success\": true}")) { //如果JSON字符串是{"results": [], "success": true}(根本就是获取失败好吧!!)
+					CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
+							"获取数据失败,请检查您输入的省份名是否正确");
+				} else {
+						// 获取对应省份的数据
+						JSONObject results = resultJson.getJSONObject("results");
+						// 累计确诊人数
+						int confirmedCount = results.getIntValue("confirmedCount");
+						// 疑似感染人数
+						int suspectedCount = results.getIntValue("suspectedCount");
+						// 治愈人数
+						int curedCount = results.getIntValue("curedCount");
+						// 死亡人数
+						int deadCount = results.getIntValue("deadCount");
+						// 数据更新时间
+						Calendar updateCalendar = Calendar.getInstance();
+						updateCalendar.setTime(new Date(results.getLongValue("updateTime") / 1000));
+						String updateTime = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(updateCalendar.getTime());
+						// 定义数据字符串
+						StringBuilder resultBuilder = new StringBuilder()
+								.append(Global.FriendlyName).append("\n")
+								.append("新冠肺炎疫情实时数据(").append(province).append(")\n")
+								.append("数据更新于").append(updateTime).append("\n")
+								.append("累计确诊病例:").append(confirmedCount).append("\n")
+								.append("疑似病例:").append(suspectedCount).append("\n")
+								.append("已治愈出院病例:").append(curedCount).append("\n")
+								.append("死亡病例:").append(deadCount);
+						CQ.sendGroupMsg(groupId, resultBuilder.toString());
+				}
+			}
+			} catch (IndexOutOfBoundsException e) {
+				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+						"详细信息:\n" +
+						ExceptionHelper.getStackTrace(e));
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+						"您输入的指令格式有误，请重新输入\n" + 
+						"格式:!cov {省份名}\n" + 
+						"如:\n" + 
+						"查询全国最新数据:!cov\n" +
+						"查询指定省份:!cov 河北省\n" + 
+						"注意:不加\"省\"字的情况下系统会自动添加.");
+			}catch (Exception e) {
+				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+						"详细信息:\n" +
+						ExceptionHelper.getStackTrace(e));
+			}finally {
+				return; //返回
+			}
+		}
+
+		/**
+		 * 功能4-2:Bilibili实时粉丝数据
+		 * @param CQ CQ实例
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源QQ号
+		 * @param msg 消息内容
+		 */
+		public static void Func4_2(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			try {
+				String arg2 = msg.split(" ", 2)[1];
+				if (CommonHelper.isInteger(arg2)) {
+					JSONObject nameAndLevel = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/space/acc/info?mid=" + arg2 + "&jsonp=jsonp"));
+					if (nameAndLevel.getIntValue("code") == -404) { //UID不存在
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+								"您输入的UID不存在,请重新输入");
+					} else { //UID存在
+						JSONObject fansAndOthers = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/relation/stat?vmid=" + arg2 + "&jsonp=jsonp")).getJSONObject("data");
+						String nickName = nameAndLevel.getJSONObject("data").getString("name"); //昵称
+						String level = "Lv" + nameAndLevel.getJSONObject("data").getIntValue("level"); //等级
+						int fans = fansAndOthers.getIntValue("follower"); //粉丝数
+						StringBuilder fansResult = new StringBuilder(Global.FriendlyName).append("\n")
+								.append("Bilibili实时粉丝数据\n")
+								.append("UP主:").append(nickName).append("(").append(level).append(")").append("\n")
+								.append("UID:").append(arg2).append("\n")
+								.append("粉丝数:").append(fans);
+						CQ.sendGroupMsg(groupId, fansResult.toString());
+					}
+				} else {
+					throw new NumberFormatException("Wrong bilibili user id!");
+				}
+			} catch (NumberFormatException e) {
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+						"您输入的UID不合法,请重新输入");
+			}catch (IndexOutOfBoundsException e) {
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+						"您输入的指令格式有误,请重新输入\n" + 
+						"格式:!bf [UID]\n" + 
+						"如:!bf 2");
+			} catch (Exception e) {
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+						"获取失败(" + e.getClass().getName() + ")");
+				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+						"详细信息:\n" +
+						ExceptionHelper.getStackTrace(e));
+			} finally {
+				return; //返回
+			}
+		}
+	}
 	/**
 	 * 其它功能（注意与"特殊模块"区分开）
 	 * @author 御坂12456
@@ -763,6 +976,73 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 			return;
 		}
+	
+		public static void FunO_UnAbuse(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			try {
+				String[] arguments = msg.split(" ", 2);
+				if (msg.trim().equals("uab")) { // 如果只有一个指令
+					// 定义已滥用标志文件
+					File flagFile = new File(
+							Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".abused");
+					if (!flagFile.exists()) { // 如果标志文件不存在
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "未处于防滥用状态");
+					} else { // 如果标志文件存在
+						// 新建验证码图片实例
+						OTPHelper checkOtp = new OTPHelper();
+						// 定义验证码图片文件
+						File tmpFile = new File(Global.appDirectory + "/temp/"
+								+ new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
+								+ ".jpg");
+						// 定义验证码字符串
+						String otp = checkOtp.getText();
+						// 保存验证码图片
+						OTPHelper.saveImage(checkOtp.getImage(), tmpFile);
+						// 写入验证码字符串
+						IOHelper.WriteStr(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".unlocking", otp);
+						StringBuilder otpMessage = new StringBuilder(FriendlyName).append("\n").append("[解除防滥用]输入!uab [验证码]").append("\n")
+								.append(new CQCode().image(tmpFile));
+						CQ.sendGroupMsg(groupId, otpMessage.toString());
+					}
+				} else { // 否则（输入了验证码）
+					// 定义已滥用标志文件
+					File flagFile = new File(
+							Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".abused");
+					if (!flagFile.exists()) { // 如果标志文件不存在
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "未处于防滥用状态");
+					} else { // 如果标志文件存在
+						// 定义输入的验证码
+						String inputOtp = arguments[1];
+						// 定义验证码文件(.unlocking)
+						File otpFile = new File(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".unlocking");
+						// 定义执行中标志文件(.using)
+						File usingFile = new File(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".using");
+						// 定义已滥用标志文件(.abused)
+						File abusedFile = new File(Global.appDirectory + "/protect/group/abuse" + groupId + "/" + qqId + ".abused");
+						// 定义读取到的文件中的验证码
+						String realOtp = IOHelper.ReadToEnd(otpFile);
+						if (inputOtp.equals(realOtp)) { //如果验证码输入正确
+							if (otpFile.exists()) otpFile.delete(); //删除验证码文件(.unlocking)
+							if (usingFile.exists()) usingFile.delete(); //删除执行中标志文件(.using)
+							if (abusedFile.exists()) abusedFile.delete(); //删除已滥用标志文件(.abused)
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+									"验证成功,防滥用已解除");
+						} else { //如果验证码输入错误
+							otpFile.delete(); //删除验证码文件(.unlocking)
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+									"验证码输入错误,请重新输入!uab获取验证码");
+						}
+					}
+				}
+			} catch (Exception e) {
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+						"防滥用解除失败(" + e.getClass().toString() + ")");
+				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+						"详细信息:\n" +
+						ExceptionHelper.getStackTrace(e));
+			}
+		}
+	
 	}
 	/**
 	 * 特殊模块

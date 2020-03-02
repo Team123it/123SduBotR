@@ -5,6 +5,8 @@ package cf.ots123it.open.sdubotr;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Pattern;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
@@ -36,11 +38,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.2.2";
+	public final static String Version = "0.2.3";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-22";
+	public final static String AppVersionNumber = "Alpha-23";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -69,11 +71,18 @@ public abstract class Global extends JcqAppAbstract
 			"3.群增强功能\n" +
 			"3-1.查看群成员日发言排行榜(Top10)\n" +
 			"!rk\n" +
+			"4.实用功能\n" +
+			"4-1.查看新冠肺炎(SARS-Cov-2)疫情实时数据\n" +
+			"!cov {省份名}\n" +
+			"4-2.Bilibili实时粉丝数据\n" +
+			"!bf [UID]" +
 			"O.其它功能\n" + 
 			"O-1.关于\n" + 
 			"!about\n" + 
 			"O-2.功能菜单\n" + 
-			"!m";
+			"!m\n" + 
+			"O-3.解除防滥用\n" + 
+			"!uab {验证码}";
 	/**
 	 * 123 SduBotR 首次启动初始化方法
 	 * @author 御坂12456(优化:Sugar 404)
@@ -92,8 +101,9 @@ public abstract class Global extends JcqAppAbstract
 		if (initReady2.exists()) {
 			IOHelper.DeleteAllFiles(initReady2);
 		}
-		String[] files = {"/temp","/group","/private","/group/ranking","/group/ranking/speaking","/group/list","/group/list/iMG.txt",
-				"/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt","/group/list/AllGBan.txt","/firstopen.stat"};
+		String[] files = {"/temp","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/protect/group",
+				"/protect/group/abuse","/group/list/iMG.txt","/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt",
+				"/group/list/AllGBan.txt","/firstopen.stat"};
 		for (String f:files) {
 			File init = new File(appDirectory + f);
 			if (f.contains(".")) {
@@ -267,4 +277,103 @@ public abstract class Global extends JcqAppAbstract
 		}
 	}
 	
+}
+/**
+ * 防滥用保护模块
+ * @author 御坂12456
+ *
+ */
+class protectAbuse
+{
+	/**
+	 * 执行"指令执行中"防滥用保护
+	 * @param CQ CQ实例
+	 * @param groupId 来源群号
+	 * @param qqId 来源QQ号
+	 * @return 成功返回false,检测到滥用(标志文件已存在,同时将直接发送滥用提示)返回true,失败返回false
+	 */
+	public static boolean doExeProtAbuse(CoolQ CQ,long groupId,long qqId)
+	{
+		try {
+			File flagFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".using");
+			if (!flagFile.exists()) { //如果标志文件不存在
+				flagFile.createNewFile(); //创建标志文件
+				return false;
+			} else {  //如果标志文件已存在
+				File abusedFlagFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
+				if (!abusedFlagFile.exists()) { //如果已滥用标志文件不存在
+					abusedFlagFile.createNewFile(); //创建已滥用标志文件
+					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+							"[防滥用保护]请勿滥用功能。\n" + 
+							"输入!uab解除滥用状态");
+					return true;
+				} else { //如果已滥用标志文件已存在
+					return true;
+				}
+			}
+		} catch (Exception e) { //发生异常
+			return false;
+		}
+	}
+	/**
+	 * 执行指令执行后的"3秒缓冲"防滥用保护
+	 * @param CQ CQ实例
+	 * @param groupId 来源群号
+	 * @param qqId 来源QQ号
+	 */
+	public void doThreeProtAbuse(CoolQ CQ,long groupId,long qqId)
+	{
+		Thread threeProtAbuseThread = new protThread(CQ, groupId, qqId);
+		threeProtAbuseThread.start();
+	}
+
+	
+	/**
+	 * 防滥用功能线程
+	 * @author 御坂12456
+	 *
+	 */
+	class protThread extends Thread
+	{
+		CoolQ CQ;
+		long groupId;
+		long qqId;
+		boolean iAmSleeping;
+		/**
+		 * 创建三秒缓冲防滥用功能检测线程的实例。
+		 * @param CQ CQ实例
+		 * @param groupId 被检测人员的来源群号
+		 * @param qqId 被检测人员的QQ号
+		 */
+		public protThread(CoolQ CQ,long groupId,long qqId)
+		{
+			this.CQ = CQ;
+			this.groupId = groupId;
+			this.qqId = qqId;
+			this.iAmSleeping = false;
+		}
+		/**
+		 * 运行防滥用功能线程。
+		 */
+		@Override
+		public void run()
+		{
+			try {
+				if (!currentThread().isInterrupted()) { //如果线程未被要求中断
+					Thread.sleep(3000); //暂停3秒
+					// 定义机器人正在执行成员指令中标志
+					File usingFlag = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".using");
+					if (usingFlag.exists()) { //如果文件存在
+						usingFlag.delete(); //删除文件
+					} else { //如果线程被要求中断
+						this.iAmSleeping = false;
+					}
+					//自动退出线程
+				}
+			} catch (InterruptedException e) { //异常:线程已中断(sleep中中断线程)
+				iAmSleeping = true;
+			}
+			// 退出线程
+		}
+	}
 }

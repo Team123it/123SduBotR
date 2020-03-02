@@ -16,5 +16,12 @@
 		/group/list/AllBan.txt 功能M-3:机器人黑名单文件
 		/group/list/AllGBan.txt 功能M-4:机器人群聊黑名单文件
 /private 私聊数据
+/protect 机器人保护状态临时数据
+	/protect/group 针对群聊的保护状态临时数据
+		/protect/group/abuse 针对群聊的防滥用状态临时数据
+			/protect/group/abuse/[群号] （指定群的防滥用状态临时数据）
+				/protect/group/abuse/[群号]/[QQ号].using （指定群、指定成员的防滥用状态标记(存在该文件证明机器人正在执行该成员指令或在上一个指令执行完成后在3秒缓冲期中，文件存在时若该成员再次尝试执行指令则直接将其标志为已滥用(见下)）
+				/protect/group/abuse/[群号]/[QQ号].abused （指定群、指定成员已滥用机器人标志，除非该成员解除防滥用，否则将无限期屏蔽该成员的指令）
+				/protect/group/abuse/[群号]/[QQ号].unlocking （指定群、指定成员的解除防滥用验证码(随该成员尝试解除防滥用时创建该文件)，输入正确则using abused unlocking文件一并删除，否则删除unlocking文件并等待下一次解除的尝试动作）
 /firstopen.stat 首次启用判断文件（若该文件不存在则代表是首次启用程序）
 /masterQQ.txt 机器人主人QQ号文件
