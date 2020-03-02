@@ -162,6 +162,12 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
             	 enable = false;
         	 }
+        	 if(!(new File(appDirectory + "/protect/group/abuse")).exists()) //[功能M-4]判断机器人群聊黑名单列表是否存在
+        	 { //若不存在
+        		 CQ.logWarning(Global.AppName, "功能M-A2:机器人防滥用保护数据文件夹不存在,可能会影响到该功能的正常使用。\n" +
+              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
+        	 }
         	 if(!(new File(appDirectory + "/group/list/funnyWL.txt")).exists()) //[功能S-1]判断滑稽彩蛋白名单文件是否存在
         	 { //若不存在
         		 CQ.logWarning(Global.AppName, "功能S-1:滑稽彩蛋群聊白名单文件不存在，可能会在不需要应用彩蛋的群聊意外触发彩蛋导致意外情况出现。\n" +
