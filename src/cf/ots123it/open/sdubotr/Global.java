@@ -304,7 +304,7 @@ class protectAbuse
 				if (!abusedFlagFile.exists()) { //如果已滥用标志文件不存在
 					abusedFlagFile.createNewFile(); //创建已滥用标志文件
 					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
-							"[防滥用保护]请勿滥用功能。\n" + 
+							"[防滥用保护]请勿滥用功能(CD:3s)\n" + 
 							"输入!uab解除滥用状态");
 					return true;
 				} else { //如果已滥用标志文件已存在
