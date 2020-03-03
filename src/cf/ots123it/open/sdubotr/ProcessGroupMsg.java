@@ -1042,6 +1042,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						StringBuilder otpMessage = new StringBuilder(FriendlyName).append("\n").append("[解除防滥用]输入!uab [验证码]").append("\n")
 								.append(new CQCode().image(tmpFile));
 						CQ.sendGroupMsg(groupId, otpMessage.toString());
+						tmpFile.delete(); //删除验证码图片文件
 					}
 				} else { // 否则（输入了验证码）
 					// 定义已滥用标志文件

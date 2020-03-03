@@ -38,11 +38,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.2.3";
+	public final static String Version = "0.2.4";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-23";
+	public final static String AppVersionNumber = "Alpha-24";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -52,6 +52,10 @@ public abstract class Global extends JcqAppAbstract
 	 * 123 SduBotR 数据存放路径
 	 */
 	public final static String appDirectory = Start.appDirectory;
+	/**
+	 * 防滥用功能缓冲秒数
+	 */
+	public final static int abuseCheckSeconds = 5;
 	/**
 	 * 123 SduBotR的完整功能菜单
 	 */
@@ -75,7 +79,7 @@ public abstract class Global extends JcqAppAbstract
 			"4-1.查看新冠肺炎(SARS-Cov-2)疫情实时数据\n" +
 			"!cov {省份名}\n" +
 			"4-2.Bilibili实时粉丝数据\n" +
-			"!bf [UID]" +
+			"!bf [UID]\n" +
 			"O.其它功能\n" + 
 			"O-1.关于\n" + 
 			"!about\n" + 
@@ -304,7 +308,7 @@ class protectAbuse
 				if (!abusedFlagFile.exists()) { //如果已滥用标志文件不存在
 					abusedFlagFile.createNewFile(); //创建已滥用标志文件
 					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
-							"[防滥用保护]请勿滥用功能(CD:3s)\n" + 
+							"[防滥用保护]请勿滥用功能(CD:" + Global.abuseCheckSeconds + "s)\n" + 
 							"输入!uab解除滥用状态");
 					return true;
 				} else { //如果已滥用标志文件已存在
@@ -360,7 +364,7 @@ class protectAbuse
 		{
 			try {
 				if (!currentThread().isInterrupted()) { //如果线程未被要求中断
-					Thread.sleep(3000); //暂停3秒
+					Thread.sleep(Global.abuseCheckSeconds * 1000); //暂停设定的秒数
 					// 定义机器人正在执行成员指令中标志
 					File usingFlag = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".using");
 					if (usingFlag.exists()) { //如果文件存在
