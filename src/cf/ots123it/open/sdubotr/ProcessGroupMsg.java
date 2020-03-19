@@ -688,7 +688,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
 							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
 								String[] gotStr = msg.split(" ", 3)[2].trim().split(" ");
-								if (gotStr.equals("")) { //如果要添加的人员为空
+								if (gotStr.toString().equals("[]")) { //如果要添加的人员为空
 									throw new IndexOutOfBoundsException("添加人员为空");
 								} else { //如果要添加的人员不为空
 									ArrayList<String> readyToAddStr = new ArrayList<String>(); //新建保存列表的ArrayList
@@ -703,6 +703,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 											}
 										} else if (!CommonHelper.isInteger(readyToAddSingleStr)) { //如果数组中某一项不是整数
 											continue; //直接循环到下一个
+										} else { //如果是整数
+											String trueQQ = readyToAddSingleStr;
+											readyToAddStr.add(trueQQ); //添加成员
 										}
 									}
 									int succCount = readyToAddStr.size(); //记录成功添加的人员数
@@ -766,24 +769,27 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								if (gotStr.equals(null)) { //如果要移除的人员为空
 									throw new IndexOutOfBoundsException("添加人员为空");
 								} else { //如果要移除的人员不为空
-									ArrayList<String> readyToAddStr = new ArrayList<String>(); //新建保存列表的ArrayList
+									ArrayList<String> readyToDelStr = new ArrayList<String>(); //新建保存列表的ArrayList
 									int failCount = 0; //记录失败移除的人员数
-									for (String readyToAddSingleStr : gotStr) { //循环检查要移除的QQ号数组
-										if (readyToAddSingleStr.startsWith("[CQ:at,")) { //如果是at
-											String trueQQ = Long.valueOf(getCQAt(readyToAddSingleStr.trim())).toString();
+									for (String readyToDelSingleStr : gotStr) { //循环检查要移除的QQ号数组
+										if (readyToDelSingleStr.startsWith("[CQ:at,")) { //如果是at
+											String trueQQ = Long.valueOf(getCQAt(readyToDelSingleStr.trim())).toString();
 											if (trueQQ.equals("-1000")) { //如果是全体成员
 												continue; //直接循环到下一个
 											} else {
-												readyToAddStr.add(trueQQ); //移除成员
+												readyToDelStr.add(trueQQ); //移除成员
 											}
-										} else if (!CommonHelper.isInteger(readyToAddSingleStr)) { //如果数组中某一项不是整数
+										} else if (!CommonHelper.isInteger(readyToDelSingleStr)) { //如果数组中某一项不是整数
 											continue; //直接循环到下一个
+										} else { //如果是整数
+											String trueQQ = readyToDelSingleStr;
+											readyToDelStr.add(trueQQ); //添加成员
 										}
 									}
-									int succCount = readyToAddStr.size(); //记录成功移除的人员数
+									int succCount = readyToDelStr.size(); //记录成功移除的人员数
 									ListFileHelper bListFile = new ListFileHelper(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt"); //新建黑名单列表文件实例
-									for (String readyToAddSingleStr : readyToAddStr) { //遍历每个人员
-										switch (bListFile.remove(readyToAddSingleStr)) //执行移除操作并获取+判断处理状态（返回值）
+									for (String readyToDelSingleStr : readyToDelStr) { //遍历每个人员
+										switch (bListFile.remove(readyToDelSingleStr)) //执行移除操作并获取+判断处理状态（返回值）
 										{
 										case 0: //成功
 											continue; //进行下一次循环
