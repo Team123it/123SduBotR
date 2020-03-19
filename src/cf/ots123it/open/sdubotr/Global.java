@@ -98,7 +98,7 @@ public abstract class Global extends JcqAppAbstract
 			"1-5.群黑名单\n" + 
 			"1-5-1~2.启动/关闭黑名单\n" + 
 			"!blist [start/stop]\n" + 
-			"1-5-3.添加/删除黑名单成员\n" +
+			"1-5-3~4.添加/删除黑名单成员\n" +
 			"!blist [add/del] [成员1QQ号/at] {成员nQQ号/at...}\n" + 
 			"1-5-5.查看本群黑名单列表\n" + 
 			"!blist show\n" + 
