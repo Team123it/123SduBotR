@@ -16,6 +16,8 @@ import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Group;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
+import com.sun.prism.shader.Mask_TextureRGB_AlphaTest_Loader;
+
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
 import cf.ots123it.jhlper.UserInterfaceHelper;
@@ -382,6 +384,7 @@ class protectAbuse
 					return true;
 				}
 			} else {  //如果标志文件已存在
+				if(qqId == Global.masterQQ) return false; //如果是机器人主人的指令，忽视防滥用保护
 				File abusedFlagFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 				if (!abusedFlagFile.exists()) { //如果已滥用标志文件不存在
 					abusedFlagFile.createNewFile(); //创建已滥用标志文件

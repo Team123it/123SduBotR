@@ -651,6 +651,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
 							if (blistFolder.exists()) { //如果黑名单未关闭（文件夹存在）
 								IOHelper.DeleteAllFiles(blistFolder); //删除该群黑名单文件夹
+								blistFolder.delete();
+								CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
+										"本群黑名单已关闭,黑名单列表已清空。");
 							} else { //如果黑名单已关闭
 								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 										"本群黑名单已是关闭状态,您可以进行如下操作:\n" + 
