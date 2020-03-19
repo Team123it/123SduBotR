@@ -95,6 +95,15 @@ public abstract class Global extends JcqAppAbstract
 			"!k [@/QQ号]\n" + 
 			"1-4.永踢人（慎用）\n" + 
 			"!fk [@/QQ号]\n" + 
+			"1-5.群黑名单\n" + 
+			"1-5-1~2.启动/关闭黑名单\n" + 
+			"!blist [start/stop]\n" + 
+			"1-5-3.添加/删除黑名单成员\n" +
+			"!blist [add/del] [成员1QQ号/at] {成员nQQ号/at...}\n" + 
+			"1-5-5.查看本群黑名单列表\n" + 
+			"!blist show\n" + 
+			"1-5-6.切换黑名单成员入群拒绝提醒状态\n" +
+			"!blist cnp\n" +
 			"2.群管理辅助功能(详见Github)\n" +
 			"3.群增强功能\n" +
 			"3-1.查看群成员日发言排行榜(Top10)\n" +
@@ -110,7 +119,9 @@ public abstract class Global extends JcqAppAbstract
 			"O-2.功能菜单\n" + 
 			"!m\n" + 
 			"O-3.解除防滥用\n" + 
-			"!uab {验证码}";
+			"!uab {验证码}" + 
+			"O-4.反馈\n" +
+			"!rpt [具体内容]";
 	// [end]
 	/**
 	 * 123 SduBotR 首次启动初始化方法
@@ -130,7 +141,7 @@ public abstract class Global extends JcqAppAbstract
 			if (initReady2.exists()) {
 				IOHelper.DeleteAllFiles(initReady2);
 			}
-			String[] files = {"/temp","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/protect/group",
+			String[] files = {"/temp","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/group/blist","/protect/group",
 					"/protect/group/abuse","/group/list/iMG.txt","/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt",
 					"/group/list/AllGBan.txt","/firstopen.stat"};
 			for (String f:files) {

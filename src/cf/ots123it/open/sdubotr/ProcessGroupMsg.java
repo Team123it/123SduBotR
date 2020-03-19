@@ -55,9 +55,6 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			if (!abuseDataFolder.exists()) {
 				abuseDataFolder.mkdir();
 			}
-			// [start] 机器人防侮辱检测(功能M-A3)
-			
-			// [end]
 			// [start] 读取并写入成员发言次数(功能3-1)
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 			// 设置时区
@@ -158,6 +155,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					Part_Other.FuncO_UnAbuse(CQ, groupId, qqId, msg);
 					break;
 				case "rpt": //功能O-4:反馈
+					Part_Other.FuncO_Report(CQ, groupId, qqId, msg);
+					break;
 				default:
 					break;
 				}

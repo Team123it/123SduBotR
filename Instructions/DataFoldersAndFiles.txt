@@ -3,6 +3,7 @@
 	需要的库文件(核心运行环境“[JCQ]开发工具”插件的开发时库文件不要放到此处):
 	123 Java Helper库文件（123jhlper.jar）
 /temp 临时缓存数据（用于发送图片的临时缓存等）
+	/temp/autosave.zip 自动备份的数据文件（5分钟备份一次，备份内容为整个数据目录(Global.appDirectory)）
 /group 群聊数据
 	/group/ranking 群聊排行榜数据
 		/group/ranking/speaking 功能3-1:群成员发言日排行榜
@@ -29,3 +30,4 @@
 				/protect/group/abuse/[群号]/[QQ号].unlocking （指定群、指定成员的解除防滥用验证码(随该成员尝试解除防滥用时创建该文件)，输入正确则using abused unlocking文件一并删除，否则删除unlocking文件并等待下一次解除的尝试动作）
 /firstopen.stat 首次启用判断文件（若该文件不存在则代表是首次启用程序）
 /masterQQ.txt 机器人主人QQ号文件
+/running.stat 运行中判断文件（若启动时该文件存在说明上次未正常退出应用）
