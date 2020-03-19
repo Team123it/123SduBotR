@@ -66,7 +66,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         test.startup();// 程序运行开始 调用应用初始化方法
         test.enable();// 程序初始化完成后，启用应用，让应用正常工作
         // 开始模拟发送消息
-        test.groupMsg(0, 0, 0, 0, null, "!blist add [CQ:at,qq=123456]", 0);
+        
         // 以下是收尾触发函数
         // demo.disable();// 实际过程中程序结束不会触发disable，只有用户关闭了此插件才会触发
         test.exit();// 最后程序运行结束，调用exit方法
