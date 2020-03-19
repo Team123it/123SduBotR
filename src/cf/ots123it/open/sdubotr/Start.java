@@ -16,6 +16,7 @@ import cf.ots123it.open.sdubotr.protectAbuse.protThread;
 import static cf.ots123it.open.sdubotr.Global.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -237,7 +238,13 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     								"单击”确定“继续启动应用",MsgBoxButtons.Warning);
 				}
 			} else { //如果是正常启动
-				timer = new Timer(true);
+				try {
+					new File(appDirectory + "/running.stat").createNewFile();
+					CQ.logDebug(AppName, "“运行中”标志文件成功创建");
+				} catch (IOException e) {
+					CQ.logFatal(AppName, "应用启用时出现致命异常:无法创建“运行中”标志文件(running.stat)(java.io.IOException)");
+				}
+				timer = new Timer(false);
 				timer.schedule(new autoSave(CQ), 3000000L); //启动5分钟自动备份
 				CQ.logInfo(AppName, "自动备份线程已启动");
 			}
