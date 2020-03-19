@@ -45,11 +45,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.2.4";
+	public final static String Version = "0.2.5";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-24";
+	public final static String AppVersionNumber = "Alpha-25";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -230,18 +230,19 @@ public abstract class Global extends JcqAppAbstract
 	 */
 	public static boolean isGroupAdmin(CoolQ CQ,long checkGroupId,long checkQQId)
 	{
-		try {
-			switch (CQ.getGroupMemberInfo(checkGroupId, checkQQId).getAuthority().value()) //获取成员权限(1/成员,2/管理员,3/群主)
-			{
-			case 2: //是管理员
-			case 3: //是群主
-				return true;
-			default: //不是管理组成员
-				return false;
-			}
-		} catch (Exception e) {
-			return false;
-		}
+		return true;
+//		try {
+//			switch (CQ.getGroupMemberInfo(checkGroupId, checkQQId).getAuthority().value()) //获取成员权限(1/成员,2/管理员,3/群主)
+//			{
+//			case 2: //是管理员
+//			case 3: //是群主
+//				return true;
+//			default: //不是管理组成员
+//				return false;
+//			}
+//		} catch (Exception e) {
+//			return false;
+//		}
 	}
 
 	/**
@@ -280,18 +281,19 @@ public abstract class Global extends JcqAppAbstract
 	 */
 	public static boolean isGroupAdmin(CoolQ CQ,long checkGroupId)
 	{
-		try {
-			switch (CQ.getGroupMemberInfo(checkGroupId, CQ.getLoginQQ()).getAuthority().value()) //获取权限(1/成员,2/管理员,3/群主)
-			{
-			case 2: //是管理员
-			case 3: //是群主
-				return true;
-			default: //不是管理组成员
-				return false;
-			}
-		} catch (Exception e) {
-			return false;
-		}
+		return true;
+//		try {
+//			switch (CQ.getGroupMemberInfo(checkGroupId, CQ.getLoginQQ()).getAuthority().value()) //获取权限(1/成员,2/管理员,3/群主)
+//			{
+//			case 2: //是管理员
+//			case 3: //是群主
+//				return true;
+//			default: //不是管理组成员
+//				return false;
+//			}
+//		} catch (Exception e) {
+//			return false;
+//		}
 	}
 	/**
 	 * 判断机器人登录QQ号是否为指定群的管理组成员

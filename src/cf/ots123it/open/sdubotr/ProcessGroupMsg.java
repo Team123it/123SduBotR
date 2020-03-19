@@ -688,12 +688,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
 							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
 								String[] gotStr = msg.split(" ", 3)[2].trim().split(" ");
-								if (gotStr.equals(null)) { //如果要添加的人员为空
+								if (gotStr.equals("")) { //如果要添加的人员为空
 									throw new IndexOutOfBoundsException("添加人员为空");
 								} else { //如果要添加的人员不为空
 									ArrayList<String> readyToAddStr = new ArrayList<String>(); //新建保存列表的ArrayList
 									int failCount = 0; //记录失败添加的人员数
-									for (String readyToAddSingleStr : readyToAddStr) { //循环检查要添加的QQ号数组
+									for (String readyToAddSingleStr : gotStr) { //循环检查要添加的QQ号数组
 										if (readyToAddSingleStr.startsWith("[CQ:at,")) { //如果是at
 											String trueQQ = Long.valueOf(getCQAt(readyToAddSingleStr.trim())).toString();
 											if (trueQQ.equals("-1000")) { //如果是全体成员
@@ -768,7 +768,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								} else { //如果要移除的人员不为空
 									ArrayList<String> readyToAddStr = new ArrayList<String>(); //新建保存列表的ArrayList
 									int failCount = 0; //记录失败移除的人员数
-									for (String readyToAddSingleStr : readyToAddStr) { //循环检查要移除的QQ号数组
+									for (String readyToAddSingleStr : gotStr) { //循环检查要移除的QQ号数组
 										if (readyToAddSingleStr.startsWith("[CQ:at,")) { //如果是at
 											String trueQQ = Long.valueOf(getCQAt(readyToAddSingleStr.trim())).toString();
 											if (trueQQ.equals("-1000")) { //如果是全体成员
@@ -1501,9 +1501,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					StringBuilder callMasterStr = new StringBuilder(FriendlyName).append("\n") 
 							.append("成员反馈消息提醒\n") 
 							.append("来源群聊:").append(Global.getGroupName(CQ, groupId)).append("(").append(groupId).append(")\n")
+							.append("来源人员:").append(CQ.getStrangerInfo(qqId).getNick()).append("(").append(qqId).append(")\n")
 							.append("反馈信息:\n")
 							.append(reportStr);
 					CQ.sendPrivateMsg(masterQQ, callMasterStr.toString()); //向机器人主人发送反馈信息
+					CQ.sendGroupMsg(groupId, "收到！");
 					return;
 				}
 			} catch (IndexOutOfBoundsException e) {

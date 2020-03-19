@@ -73,7 +73,7 @@ public abstract class ProcessPrivateManageMsg extends JcqAppAbstract
 		public static void Func1_sendPrivateMsg(CoolQ CQ,long qqId,String msg)
 		{
 			try {
-				String[] arguments = msg.split(" ", 2); //获取参数列表
+				String[] arguments = msg.split(" ", 3); //获取参数列表
 				String personStr = arguments[1].trim(); //定义要发送到的QQ号
 				String sendStr = arguments[2].trim(); //定义要发送的信息
 				if (CommonHelper.isInteger(personStr)) { //如果QQ号是数字
@@ -112,7 +112,7 @@ public abstract class ProcessPrivateManageMsg extends JcqAppAbstract
 		public static void Func2_sendGroupMsg(CoolQ CQ,long qqId,String msg)
 		{
 			try {
-				String[] arguments = msg.split(" ", 2); //获取参数列表
+				String[] arguments = msg.split(" ", 3); //获取参数列表
 				String groupStr = arguments[1].trim(); //定义要发送到的群号
 				String sendStr = arguments[2].trim(); //定义要发送的信息
 				if (CommonHelper.isInteger(groupStr)) { //如果群号是数字
@@ -151,7 +151,7 @@ public abstract class ProcessPrivateManageMsg extends JcqAppAbstract
 		public static void Func3_exitGroup(CoolQ CQ,long qqId,String msg)
 		{
 			try {
-				String[] arguments = msg.split(" ", 1); //获取参数列表
+				String[] arguments = msg.split(" ", 2); //获取参数列表
 				String groupStr = arguments[1].trim(); //定义要退出的群号
 				if (CommonHelper.isInteger(groupStr)) { //如果群号是数字
 					int result = CQ.setGroupLeave(Long.parseLong(groupStr), false); //退出指定群
