@@ -350,7 +350,9 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 					for (String bannedObscenityToBot : bannedObscenitiesToBot) { //遍历脏话列表
 						if (msg.contains(bannedObscenityToBot)) { //如果消息内容有脏话之一
 							CQ.sendPrivateMsg(masterQQ,FriendlyName + "\n" + 
-									"主人,刚刚在群聊" + fromGroup + "里有人欺负我QAQ");
+									"主人,刚刚在群聊" + fromGroup + "里有人欺负我QAQ\n" + 
+									"坏人QQ:" + CQ.getStrangerInfo(fromQQ).getNick() + "(" + fromQQ + ")\n" + 
+									"Ta发的是" + msg);
 							CQ.sendGroupMsg(fromGroup, ".");
 							break; //跳出循环
 						}
