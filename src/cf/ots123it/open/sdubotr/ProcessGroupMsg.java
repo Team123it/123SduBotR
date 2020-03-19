@@ -1,14 +1,15 @@
 package cf.ots123it.open.sdubotr;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -16,18 +17,16 @@ import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
-import org.meowy.cqp.jcq.message.CoolQCode;
 
 import com.alibaba.fastjson.JSONObject;
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import cf.ots123it.jhlper.CommonHelper;
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
 import cf.ots123it.jhlper.JsonHelper;
 import cf.ots123it.jhlper.OTPHelper;
-import sun.font.TrueTypeFont;
-import sun.security.provider.VerificationProvider;
+import cf.ots123it.open.sdubotr.Utils.ListFileException;
+import cf.ots123it.open.sdubotr.Utils.ListFileHelper;
 
 import static cf.ots123it.open.sdubotr.Global.*;
 /**
@@ -56,8 +55,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			if (!abuseDataFolder.exists()) {
 				abuseDataFolder.mkdir();
 			}
-			/* 读取并写入成员发言次数(功能3-1) */
+			// [start] 机器人防侮辱检测(功能M-A3)
+			
+			// [end]
+			// [start] 读取并写入成员发言次数(功能3-1)
 			File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
+			// 设置时区
+			TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
 			// 获取今日日期（格式:yyyyMMdd)
 			Date todayDate = Calendar.getInstance().getTime();
 			String today = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate).split(" ",2)[0];
@@ -78,6 +82,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				long nowSpeakTimes = previousSpeakTimes + 1; //在当前记录次数上+1
 				IOHelper.WriteStr(todaySpeakPerson, String.valueOf(nowSpeakTimes)); //覆盖记录当前成员今日发言次数
 				}
+			// [end]
 		} catch (Exception e) {
 			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 					"详细信息:\n" +
@@ -99,54 +104,60 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				case "mt": //功能1-1:禁言
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_1(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "um": //功能1-2:解禁
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_2(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "k": //功能1-3:踢人
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_3(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "fk": //功能1-4:永踢人（慎用）
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_4(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
+					break;
+				case "blist" : //主功能1-5:群聊黑名单功能
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
+					Part1.Part1_5.Func1_5_main(CQ, groupId, qqId, msg);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				/* 主功能3:群增强功能 */
 				case "rk": //功能3-1:查看群成员日发言排行榜
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part3.Func3_1(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				/* 主功能4:实用功能 */
 				case "cov": //功能4-1:查看新冠肺炎(SARS-Cov-2)疫情实时数据
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part4.Func4_1(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "bf": //功能4-2:Bilibili实时粉丝数据
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part4.Func4_2(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				/* 其它功能 */
 				case "about": //功能O-1:关于
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
-				case "m": //功能O-2:功能菜单
+				case "m":  case "help": //功能O-2:功能菜单
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "uab": //功能O-3:解除滥用状态
 					Part_Other.FuncO_UnAbuse(CQ, groupId, qqId, msg);
 					break;
+				case "rpt": //功能O-4:反馈
 				default:
 					break;
 				}
@@ -173,44 +184,44 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				case "禁言": 
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_1(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "解禁":
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_2(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "踢":
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_3(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "永踢": 
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part1.Func1_4(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "成员活跃榜":
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part3.Func3_1(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "疫情":
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part4.Func4_1(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "关于":
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				case "菜单":
 				case "帮助":
 				case "功能":
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_Menu(CQ, groupId, qqId, msg);
-					new protectAbuse().doThreeProtAbuse(CQ, groupId, qqId);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				default:
 					break;
@@ -241,11 +252,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 * @param msg 消息内容
 		 * @see ProcessGroupMsg
 		 */
+		@SuppressWarnings("finally")
 		public static void Func1_1(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-				String arg2 = msg.split(" ", 3)[1]; //获取参数2（要被禁言的成员QQ号或at）
-				String arg3 = msg.split(" ", 3)[2]; //获取参数3（要禁言的时长(单位:分钟)）
+				String arg2 = msg.split(" ", 3)[1].trim(); //获取参数2（要被禁言的成员QQ号或at）
+				String arg3 = msg.split(" ", 3)[2].trim(); //获取参数3（要禁言的时长(单位:分钟)）
 				long muteQQ = 0, muteDuration = 0; //定义要被禁言的QQ号和禁言时长变量
 				if (arg2.startsWith("[")) 
 				{ //如果是at
@@ -301,11 +313,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 			} catch (IndexOutOfBoundsException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-							"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+							"您输入的指令格式有误,请更正后重试\n" + 
 							"格式:!mt [QQ号/at] [时长(单位:分钟)]");
 			} catch (NumberFormatException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!mt [QQ号/at] [时长(单位:分钟)]");
 			}  
 			catch (Exception e) {
@@ -329,7 +341,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func1_2(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-				String arg2 = msg.split(" ", 3)[1]; //获取参数2（要被解禁的成员QQ号或at）
+				String arg2 = msg.split(" ", 2)[1].trim(); //获取参数2（要被解禁的成员QQ号或at）
 				long unMuteQQ = 0; //定义要被解禁的QQ号变量
 				if (arg2.startsWith("[")) 
 				{ //如果是at
@@ -375,11 +387,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 			} catch (IndexOutOfBoundsException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!um [QQ号/at]");
 			} catch (NumberFormatException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!mt [QQ号/at] [时长(单位:分钟)]");
 			}  catch (Exception e) {
 				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
@@ -402,7 +414,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func1_3(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-				String arg2 = msg.split(" ", 3)[1]; //获取参数2（要被踢的成员QQ号或at）
+				String arg2 = msg.split(" ", 2)[1].trim(); //获取参数2（要被踢的成员QQ号或at）
 				long kickedQQ = 0; //定义要被踢的QQ号变量
 				if (arg2.startsWith("[")) 
 				{ //如果是at
@@ -447,11 +459,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 			} catch (IndexOutOfBoundsException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!k [QQ号/at]");
 			} catch (NumberFormatException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!mt [QQ号/at] [时长(单位:分钟)]");
 			}  catch (Exception e) {
 				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
@@ -474,7 +486,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func1_4(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-				String arg2 = msg.split(" ", 3)[1]; //获取参数2（要被踢的成员QQ号或at）
+				String arg2 = msg.split(" ", 2)[1].trim(); //获取参数2（要被踢的成员QQ号或at）
 				long foreverKickedQQ = 0; //定义要被踢的QQ号变量
 				if (arg2.startsWith("[")) 
 				{ //如果是at
@@ -519,11 +531,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 			} catch (IndexOutOfBoundsException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!fk [QQ号/at]");
 			} catch (NumberFormatException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请更正后重试(注意参数间只能存在一个空格)\n" + 
+						"您输入的指令格式有误,请更正后重试\n" + 
 						"格式:!mt [QQ号/at] [时长(单位:分钟)]");
 			}  catch (Exception e) {
 				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
@@ -534,8 +546,398 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 		}
 
+		/**
+		 * 功能1-5:群聊黑名单(请与功能M-4区分开)
+		 * @author 御坂12456
+		 *
+		 */
+		static class Part1_5{
+			
+			public static void Func1_5_main(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					String[] arguments = msg.split(" ", 3); //获取参数（格式类似于"blist add 12345"）
+					String arg2 = arguments[1].toLowerCase(); //获取第2个参数（下标为1）（类似于"add"）
+					switch (arg2)
+					{
+					case "start": //功能1-5-1:启动黑名单（!blist start）
+						Func1_5_1(CQ, groupId, qqId, msg);
+						break;
+					case "stop": //功能1-5-2:关闭黑名单（!blist stop）
+						Func1_5_2(CQ, groupId, qqId, msg);
+						break;
+					case "add": //功能1-5-3:添加黑名单成员（!blist add...）
+						Func1_5_3(CQ, groupId, qqId, msg);
+						break;
+					case "del": //功能1-5-4:移除黑名单成员（!blist del...）
+						Func1_5_4(CQ, groupId, qqId, msg);
+						break;
+					case "show": //功能1-5-5:查看本群黑名单（!blist show）
+						Func1_5_5(CQ, groupId, qqId, msg);
+						break;
+					case "cnp": //功能1-5-6:切换黑名单成员入群拒绝提醒状态（!blist cnp）
+						Func1_5_6(CQ, groupId, qqId, msg);
+						break;
+					default: //不存在的黑名单参数2
+						throw new IndexOutOfBoundsException("Unknown Func1-5(Blist) Argument 2:" + arg2);
+					}
+					return;
+				}
+				catch (IndexOutOfBoundsException e) { //指令格式错误
+					CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
+								"格式:!blist [start/stop/add/del/cnp]...");
+				}
+			
+			}
+			
+			/**
+			 * 功能1-5-1:启动群聊黑名单
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_1(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (!blistFolder.exists()) { //如果黑名单未开启（文件夹不存在）
+								blistFolder.mkdir();
+								File blistFile = new File(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt");
+								blistFile.createNewFile();
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单已开启");
+								return;
+							} else { //如果黑名单已开启
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单已是开启状态,您可以进行如下操作:\n" + 
+										"输入!blist show查看本群黑名单\n" + 
+										"输入!blist cnp切换黑名单成员入群拒绝是否提醒的状态\n" + 
+										"输入!blist close关闭本群黑名单。您将会丢失整个黑名单成员列表数据。");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试:\n" + 
+							"格式:!blist start");
+				} catch (IOException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"启动失败(java.io.IOException)");
+				}
+			}
+			/**
+			 * 功能1-5-2:关闭群聊黑名单
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_2(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (blistFolder.exists()) { //如果黑名单未关闭（文件夹存在）
+								IOHelper.DeleteAllFiles(blistFolder); //删除该群黑名单文件夹
+							} else { //如果黑名单已关闭
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单已是关闭状态,您可以进行如下操作:\n" + 
+										"输入!blist start启动本群黑名单");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试:\n" + 
+							"格式:!blist stop");
+				}
+			}
+			/**
+			 * 功能1-5-3:添加群聊黑名单成员
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_3(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
+								String[] gotStr = msg.split(" ", 3)[2].trim().split(" ");
+								if (gotStr.equals(null)) { //如果要添加的人员为空
+									throw new IndexOutOfBoundsException("添加人员为空");
+								} else { //如果要添加的人员不为空
+									ArrayList<String> readyToAddStr = new ArrayList<String>(); //新建保存列表的ArrayList
+									int failCount = 0; //记录失败添加的人员数
+									for (String readyToAddSingleStr : readyToAddStr) { //循环检查要添加的QQ号数组
+										if (readyToAddSingleStr.startsWith("[CQ:at,")) { //如果是at
+											String trueQQ = Long.valueOf(getCQAt(readyToAddSingleStr.trim())).toString();
+											if (trueQQ.equals("-1000")) { //如果是全体成员
+												continue; //直接循环到下一个
+											} else {
+												readyToAddStr.add(trueQQ); //添加成员
+											}
+										} else if (!CommonHelper.isInteger(readyToAddSingleStr)) { //如果数组中某一项不是整数
+											continue; //直接循环到下一个
+										}
+									}
+									int succCount = readyToAddStr.size(); //记录成功添加的人员数
+									ListFileHelper bListFile = new ListFileHelper(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt"); //新建黑名单列表文件实例
+									for (String readyToAddSingleStr : readyToAddStr) { //遍历每个人员
+										switch (bListFile.add(readyToAddSingleStr)) //执行添加操作并获取+判断处理状态（返回值）
+										{
+										case 0: //成功
+											continue; //进行下一次循环
+										case 1: //人员重复
+										case -1: //失败
+											succCount--; //成功次数-1
+											failCount++; //失败次数+1
+											continue; //进行下一次循环
+										}
+									}
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+											"命令成功完成.\n" + 
+											"成功:" + succCount + " 失败:" + failCount);
+									return;
+								}
+							} else { //如果黑名单未开启
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单未开启，请输入!blist start开启");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
+							"格式:!blist add [QQ号/at] {QQ号/at...}");
+				} catch (ListFileException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"添加失败");
+				}
+			}
+			/**
+			 * 功能1-5-4:移除群聊黑名单成员
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_4(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
+								String[] gotStr = msg.split(" ", 3)[2].trim().split(" ");
+								if (gotStr.equals(null)) { //如果要移除的人员为空
+									throw new IndexOutOfBoundsException("添加人员为空");
+								} else { //如果要移除的人员不为空
+									ArrayList<String> readyToAddStr = new ArrayList<String>(); //新建保存列表的ArrayList
+									int failCount = 0; //记录失败移除的人员数
+									for (String readyToAddSingleStr : readyToAddStr) { //循环检查要移除的QQ号数组
+										if (readyToAddSingleStr.startsWith("[CQ:at,")) { //如果是at
+											String trueQQ = Long.valueOf(getCQAt(readyToAddSingleStr.trim())).toString();
+											if (trueQQ.equals("-1000")) { //如果是全体成员
+												continue; //直接循环到下一个
+											} else {
+												readyToAddStr.add(trueQQ); //移除成员
+											}
+										} else if (!CommonHelper.isInteger(readyToAddSingleStr)) { //如果数组中某一项不是整数
+											continue; //直接循环到下一个
+										}
+									}
+									int succCount = readyToAddStr.size(); //记录成功移除的人员数
+									ListFileHelper bListFile = new ListFileHelper(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt"); //新建黑名单列表文件实例
+									for (String readyToAddSingleStr : readyToAddStr) { //遍历每个人员
+										switch (bListFile.remove(readyToAddSingleStr)) //执行移除操作并获取+判断处理状态（返回值）
+										{
+										case 0: //成功
+											continue; //进行下一次循环
+										case 2: //列表文件为空或者不存在
+											throw new ListFileException("File cannot be found!");
+										case 1: //人员不存在
+										case -1: //失败
+											succCount--; //成功次数-1
+											failCount++; //失败次数+1
+											continue; //进行下一次循环
+										}
+									}
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+											"命令成功完成.\n" + 
+											"成功:" + succCount + " 失败:" + failCount);
+									return;
+								}
+							} else { //如果黑名单未开启
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单未开启，请输入!blist start开启");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
+							"格式:!blist del [QQ号/at] {QQ号/at...}");
+				} catch (ListFileException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"移除失败");
+				}
+			}
+			/**
+			 * 功能1-5-5:查看群聊黑名单
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_5(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
+									ListFileHelper bListFile = new ListFileHelper(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt"); //新建黑名单列表文件实例
+									ArrayList<String> returnList = bListFile.getList(); // 获取返回的列表
+									if (returnList.equals(null)) { //如果返回的列表为null
+										throw new ListFileException("返回列表为null");
+									}
+									StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
+											.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n")
+											.append("人员总数:").append(returnList.size()).append("\n");
+									// 定义要发送的消息的列表字符串
+									Iterator<String> returnIt = returnList.iterator(); //获取返回列表的迭代器
+									while (returnIt.hasNext()) { //如果迭代器中存在下一个项
+										String nextPerson = returnIt.next(); //获取下一个项
+										if (returnIt.hasNext()) { //如果迭代器中仍有下一项
+											returnBuilder.append(nextPerson).append("\n"); //添加下一项+回车符到发送消息字符串中
+										} else { //如果迭代器没有下一项了（最后一项了）
+											returnBuilder.append(nextPerson); //添加最后一项到发送信息字符串中
+										}
+									}
+									CQ.sendPrivateMsg(qqId, returnBuilder.toString()); //私聊发送黑名单
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +  
+											"由于防止在群内刷屏，本群黑名单已私聊发送给指定人员，请查收(如未收到私聊消息请检查本群是否允许临时会话后重试)");
+									return;
+							} else { //如果黑名单未开启
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单未开启，请输入!blist start开启");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
+							"格式:!blist show");
+				} catch (ListFileException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"读取失败");
+				}
+			}
+			/**
+			 * 功能1-5-6:切换黑名单成员入群拒绝提醒状态
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_6(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
+								File statFile = new File(Global.appDirectory + "/group/blist/" + groupId + "/noPrompt.stat"); //定义不提醒标志文件
+								if (!statFile.exists()) { //如果标志文件不存在
+									statFile.createNewFile(); //创建标志文件
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+											"已切换成:拒绝后不提醒");
+									return;
+								} else { //如果标志文件存在
+									statFile.delete(); //删除标志文件
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+											"已切换成:拒绝后提醒");
+									return;
+								}
+							} else { //如果黑名单未开启
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单未开启，请输入!blist start开启");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
+							"格式:!blist cnp");
+				} catch (IOException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"设置失败");
+				}
+			}
+		}
 	}
-
 	/**
 	 * 主功能2:群管理辅助功能
 	 * @author 御坂12456
@@ -582,6 +984,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					} else { //禁言成功
 						handleStat += "成功";
 					}
+					CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n检测到违禁词,已撤回");
 				}
 				b.append(Global.FriendlyName).append("\n检测到有人发布违禁词，请尽快查看\n来源群号:")
 				.append(Global.getGroupName(CQ, groupId)).append('(').append(groupId).append(")\n来源QQ:")
@@ -621,6 +1024,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				File speakRanking = new File(Global.appDirectory + "/group/ranking/speaking/" + String.valueOf(groupId));
 				if (speakRanking.exists()) { //如果群聊日发言排行榜数据目录存在
 					System.gc(); //执行垃圾收集器
+					TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai")); //设置时区
 					// 获取今日日期（格式:yyyyMMdd)
 					Date todayDate = Calendar.getInstance().getTime();
 					String today = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate).split(" ",2)[0];
@@ -832,7 +1236,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 			else { //如果有参数
 				String[] argStr = msg.split(" ", 2); //获取参数数组(msg内容: "cov [参数]")
-				String province = argStr[1];
+				String province = argStr[1].trim();
 				if (!province.endsWith("省")) { //如果省份名最后没有 省 字
 					province += "省";
 				}
@@ -881,7 +1285,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						"查询全国最新数据:!cov\n" +
 						"查询指定省份:!cov 河北省\n" + 
 						"注意:不加\"省\"字的情况下系统会自动添加.");
+			}catch (NullPointerException e) {
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+						"获取数据为空，可能是省份名输入错误或该省份无数据，请更换省份后再试");
 			}catch (Exception e) {
+				CQ.sendGroupMsg(groupId,FriendlyName + "\n获取失败");
 				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 						"详细信息:\n" +
 						ExceptionHelper.getStackTrace(e));
@@ -900,7 +1308,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func4_2(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-				String arg2 = msg.split(" ", 2)[1];
+				String arg2 = msg.split(" ", 2)[1].trim();
 				if (CommonHelper.isInteger(arg2)) {
 					JSONObject nameAndLevel = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/space/acc/info?mid=" + arg2 + "&jsonp=jsonp"));
 					if (nameAndLevel.getIntValue("code") == -404) { //UID不存在
@@ -1020,13 +1428,16 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		{
 			try {
 				String[] arguments = msg.split(" ", 2);
-				if (msg.trim().equals("uab")) { // 如果只有一个指令
+				if (msg.trim().toLowerCase().equals("uab")) { // 如果只有一个指令
 					// 定义已滥用标志文件
 					File flagFile = new File(
 							Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 					if (!flagFile.exists()) { // 如果标志文件不存在
 						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "未处于防滥用状态");
 					} else { // 如果标志文件存在
+						if (new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".unlocking").exists()) { //如果验证码文件已存在
+							return; //忽略（防止二次滥用）
+						}
 						// 新建验证码图片实例
 						OTPHelper checkOtp = new OTPHelper();
 						// 定义验证码图片文件
@@ -1052,7 +1463,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + "未处于防滥用状态");
 					} else { // 如果标志文件存在
 						// 定义输入的验证码
-						String inputOtp = arguments[1];
+						String inputOtp = arguments[1].trim();
 						// 定义验证码文件(.unlocking)
 						File otpFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".unlocking");
 						// 定义执行中标志文件(.using)
@@ -1083,6 +1494,25 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 		}
 	
+		public static void FuncO_Report(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			try {
+				String reportStr = msg.split(" ",2)[1];
+				if (!reportStr.equals("")) { //如果反馈字符串不为空
+					StringBuilder callMasterStr = new StringBuilder(FriendlyName).append("\n") 
+							.append("成员反馈消息提醒\n") 
+							.append("来源群聊:").append(Global.getGroupName(CQ, groupId)).append("(").append(groupId).append(")\n")
+							.append("反馈信息:\n")
+							.append(reportStr);
+					CQ.sendPrivateMsg(masterQQ, callMasterStr.toString()); //向机器人主人发送反馈信息
+					return;
+				}
+			} catch (IndexOutOfBoundsException e) {
+				// Do nothing (23333
+			} catch (Exception e) {
+				CQ.logError(AppName, "发生错误,请及时处理\n详细信息:\n" + e.getMessage() + "\n" + ExceptionHelper.getStackTrace(e));
+			}
+		}
 	}
 	/**
 	 * 特殊模块

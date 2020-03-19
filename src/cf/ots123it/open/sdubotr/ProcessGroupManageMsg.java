@@ -7,11 +7,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
-import java.util.Iterator;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.TimeZone;
 
 import javax.imageio.ImageIO;
@@ -24,7 +21,8 @@ import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
 
 import cf.ots123it.jhlper.ExceptionHelper;
-import cf.ots123it.jhlper.IOHelper;
+import cf.ots123it.open.sdubotr.Utils.*;
+import cf.ots123it.open.sdubotr.Global;
 /**
  * 123 SduBot 群管理代码调用类(以#开始，在群聊中使用)<br>
  * 当前暂时仅Global.java中设置的机器人主人可调用
@@ -234,25 +232,43 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 								"不能把主人加入黑名单的~");
 						return; //直接返回
 					}
-					File AllBanPersonsFile = new File(Global.appDirectory + "/group/list/AllBan.txt");
-					if (AllBanPersonsFile.exists()) { //如果列表文件存在
-						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
-							IOHelper.WriteStr(AllBanPersonsFile, banPersonQQ); //直接写入QQ号
-							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
-						} else { //否则（不为空）
-							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
-								if (banPersonQQ.equals(banPerson)) { //如果黑名单成员已经在列表里了
-									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
-											"这个人已经在黑名单里了QwQ");
-									return; //直接返回
-								}
-							}
-							IOHelper.AppendWriteStr(AllBanPersonsFile, "\n" + banPersonQQ); //追加写入QQ号(回车符+QQ号)
-							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
-						}
+					ListFileHelper AllBanPersonsFile = new ListFileHelper(Global.appDirectory + "/group/list/AllBan.txt"); //新建列表文件实例
+					int result = AllBanPersonsFile.add(banPersonQQ); //添加该成员并获取返回值
+					switch (result) //判断处理状态（返回值）
+					{
+					case 0: //成功
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+								"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
+						return;
+					case 1: //重复（该成员已存在）
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+								"这个人已经在黑名单里了QwQ");
+						return;
+					case -1: //失败
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+								"添加失败");
+						return;
 					}
+//   v0.2.4及之前使用下列方式（从v0.2.5开始弃用，请使用ListFileHelper类
+//					File AllBanPersonsFile = new File(Global.appDirectory + "/group/list/AllBan.txt");
+//					if (AllBanPersonsFile.exists()) { //如果列表文件存在
+//						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
+//							IOHelper.WriteStr(AllBanPersonsFile, banPersonQQ); //直接写入QQ号
+//							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+//									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
+//						} else { //否则（不为空）
+//							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
+//								if (banPersonQQ.equals(banPerson)) { //如果黑名单成员已经在列表里了
+//									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+//											"这个人已经在黑名单里了QwQ");
+//									return; //直接返回
+//								}
+//							}
+//							IOHelper.AppendWriteStr(AllBanPersonsFile, "\n" + banPersonQQ); //追加写入QQ号(回车符+QQ号)
+//							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+//									"按照主人的意愿,已成功将" + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")" + "加入黑名单!");
+//						}
+//					}
 				} catch(IndexOutOfBoundsException e)
 				{
 					CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
@@ -284,51 +300,72 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 					} else { //否则
 						banPersonQQ = arg2; //直接读取输入的QQ号
 					}
-					File AllBanPersonsFile = new File(Global.appDirectory + "/group/list/AllBan.txt");
-					if (AllBanPersonsFile.exists()) { //如果列表文件存在
-						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
-							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-										"黑名单列表是空的w");
-						} else { //否则（不为空）
-							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
-								if (banPersonQQ.equals(banPerson)) { //如果该成员在列表里
-									ArrayList<String> AllBanPersons = new ArrayList<String>(); //新建一个ArrayList对象
-									Collections.addAll(AllBanPersons, IOHelper.ReadAllLines(AllBanPersonsFile)); //读取原列表所有成员
-									/* 由于直接remove(Object o)判断的是地址导致无法remove成功
-									 * 故此处直接使用ArrayList的父类迭代器的remove方法来remove掉要移除的成员QQ号
-									 * （确定的ArrayList对应的迭代器若发生更改，该ArrayList也会发生更改）
-									 * Author:御坂12456 于 2020-2-15 0:36 */
-									Iterator<String> it = AllBanPersons.iterator(); //获取迭代器对象
-									while (it.hasNext()) { //如果它存在下一个值
-										String tmpbanPerson = it.next(); //获取下一个值（下一个黑名单成员QQ号）
-										if (tmpbanPerson.equals(banPerson)) { //如果此黑名单成员即当前要移除的成员
-											it.remove(); //移除该成员
-										}
-									}
-									AllBanPersonsFile.delete(); //先删除原列表文件
-									IOHelper.WriteStr(AllBanPersonsFile, ""); //重新创建该文件
-									for (String newBanPerson : AllBanPersons) {
-										if (newBanPerson.equals(AllBanPersons.get(AllBanPersons.size() - 1))) { //如果当前循环到的newBanPerson是最后一个
-											IOHelper.AppendWriteStr(AllBanPersonsFile, newBanPerson); //直接写入最后一个QQ号
-											break; //跳出for循环
-										} else {
-											IOHelper.AppendWriteStr(AllBanPersonsFile, newBanPerson  + "\n"); //写入后来个换行
-										}
-									}
-									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-												"好啦好啦," + CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")"  + "已经被我删啦xd");
-									return; //返回
-								}
-							}
-							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
-									"这人没在列表中xxx");
-						}
+					ListFileHelper AllBanPersonsFile = new ListFileHelper(Global.appDirectory + "/group/list/AllBan.txt"); //新建列表文件实例
+					int result = AllBanPersonsFile.remove(banPersonQQ); //移除该成员并获得返回值
+					switch (result) //判断处理结果（返回值）
+					{
+					case 0: //成功
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+								CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")"  + "已取消屏蔽。\nHello, world!");
+						return;
+					case 1: //未找到该成员
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+								"这人没在列表中xxx");
+						break;
+					case 2: //列表文件为空或者不存在
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+								"黑名单列表是空的w");
+						break;
+					case -1: //失败
+						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
+								"移除失败");
+						break;
 					}
+//   v0.2.4及之前使用下列方式（从v0.2.5开始弃用，请使用ListFileHelper类
+//					File AllBanPersonsFile = new File(Global.appDirectory + "/group/list/AllBan.txt");
+//					if (AllBanPersonsFile.exists()) { //如果列表文件存在
+//						if (IOHelper.ReadToEnd(AllBanPersonsFile).equals("")) { //如果列表文件为空
+//							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+//										"黑名单列表是空的w");
+//						} else { //否则（不为空）
+//							for (String banPerson : IOHelper.ReadAllLines(AllBanPersonsFile)) {
+//								if (banPersonQQ.equals(banPerson)) { //如果该成员在列表里
+//									ArrayList<String> AllBanPersons = new ArrayList<String>(); //新建一个ArrayList对象
+//									Collections.addAll(AllBanPersons, IOHelper.ReadAllLines(AllBanPersonsFile)); //读取原列表所有成员
+//									/* 由于直接remove(Object o)判断的是地址导致无法remove成功
+//									 * 故此处直接使用ArrayList的父类迭代器的remove方法来remove掉要移除的成员QQ号
+//									 * （确定的ArrayList对应的迭代器若发生更改，该ArrayList也会发生更改）
+//									 * Author:御坂12456 于 2020-2-15 0:36 */
+//									Iterator<String> it = AllBanPersons.iterator(); //获取迭代器对象
+//									while (it.hasNext()) { //如果它存在下一个值
+//										String tmpbanPerson = it.next(); //获取下一个值（下一个黑名单成员QQ号）
+//										if (tmpbanPerson.equals(banPerson)) { //如果此黑名单成员即当前要移除的成员
+//											it.remove(); //移除该成员
+//										}
+//									}
+//									AllBanPersonsFile.delete(); //先删除原列表文件
+//									IOHelper.WriteStr(AllBanPersonsFile, ""); //重新创建该文件
+//									for (String newBanPerson : AllBanPersons) {
+//										if (newBanPerson.equals(AllBanPersons.get(AllBanPersons.size() - 1))) { //如果当前循环到的newBanPerson是最后一个
+//											IOHelper.AppendWriteStr(AllBanPersonsFile, newBanPerson); //直接写入最后一个QQ号
+//											break; //跳出for循环
+//										} else {
+//											IOHelper.AppendWriteStr(AllBanPersonsFile, newBanPerson  + "\n"); //写入后来个换行
+//										}
+//									}
+//									CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+//												CQ.getStrangerInfo(Long.parseLong(banPersonQQ),true).getNick() + "(" +  banPersonQQ +  ")"  + "已取消屏蔽。\nHello, world!");
+//									return; //返回
+//								}
+//							}
+//							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" +
+//									"这人没在列表中xxx");
+//						}
+//					}
 				} catch (IndexOutOfBoundsException e) {
-					CQ.logError("123 SduBotR","Oops!数组下标居然越界了!看看是哪里出错了:(\n" +
+					CQ.logError("123 SduBotR","Oops!数组下标居然越界了!看看是哪里出错了:( \n" +
 							ExceptionHelper.getStackTrace(e));
-				} catch(Exception e)
-				{
+				} catch (Exception e) {
 					CQ.logError("123 SduBotR", "您输入的指令格式有误,请检查后再试\n" +
 							"指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
 							"来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
@@ -336,5 +373,6 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				}
 			}
 		}
+
 	}
 }

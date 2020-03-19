@@ -9,7 +9,11 @@
 			/group/ranking/speaking/[群号] （指定群的成员发言日排行榜）
 				/group/ranking/speaking/[群号]/[日期编号(YYYYmmdd)] （指定群、指定日期的成员发言排行榜）
 					/group/ranking/speaking/[群号]/[日期编号]/[QQ号] （指定群、指定日期的该成员当日发送消息条数文件[纯文本,无文件后缀名]）
-	/group/list 群聊相关名单数据
+	/group/blist 群聊黑名单数据
+		/group/blist/[群号] 功能1-5:群聊黑名单列表
+			/group/blist/[群号]/persons.txt （指定群的群聊黑名单文件）
+			/group/blist/[群号]/noPrompt.stat （指定群是否关闭黑名单成员入群拒绝的提醒消息标志文件）
+	/group/list 群聊相关名单数据（机器人主人部分）
 		/group/list/iMG.txt 功能2-1:重点监视群聊列表文件
 		/group/list/iMGBan.txt 功能2-1:违禁词名单
 		/group/list/funnyWL.txt 功能S-1.滑稽彩蛋群聊白名单（群聊忽略名单）文件

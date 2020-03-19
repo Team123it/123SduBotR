@@ -5,16 +5,23 @@ package cf.ots123it.open.sdubotr;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Pattern;
 
+import org.meowy.cqp.jcq.annotation.common.CQAnonymous;
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Group;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
+import cf.ots123it.jhlper.UserInterfaceHelper;
+import cf.ots123it.jhlper.ZipFileHelper;
+import cf.ots123it.jhlper.UserInterfaceHelper.MsgBoxButtons;
+import sun.util.resources.cldr.cgg.CalendarData_cgg_UG;
 
 /**
  * 
@@ -26,7 +33,7 @@ import cf.ots123it.jhlper.IOHelper;
 @SuppressWarnings("deprecation")
 public abstract class Global extends JcqAppAbstract
 {
-	
+	// [start] 常变量集合
 	/**
 	 * 机器人主人QQ号，如需自定义机器人请改成自己所需要的，默认为本人（御坂12456）的
 	 */
@@ -56,6 +63,23 @@ public abstract class Global extends JcqAppAbstract
 	 * 防滥用功能缓冲秒数
 	 */
 	public final static int abuseCheckSeconds = 5;
+	/**
+	 * 机器人侮辱检测所使用的脏话列表
+	 * @since 0.2.5
+	 */
+	public final static String[] bannedObscenitiesToBot = {"垃圾","傻逼","智障","脑残","贱","你妈炸了","滚","fuck","shit","bullshit","laji","nmsl"};
+	/**
+	 * 机器人主人(私聊)功能菜单
+	 */
+	public final static String masterMenuStr = "123 SduBotR 主人(私聊)功能菜单\n" +
+			"详细内容:https://github.com/Misaka12456/123SduBotR/blob/master/README_master.md\n" + 
+			"以下[]代表必填参数,{}代表可填参数\n" + 
+			"1.发送私聊消息\n" + 
+			"!spm [QQ号] [消息内容]\n" + 
+			"2.发送群聊消息\n" + 
+			"!sgm [QQ号] [消息内容]\n" + 
+			"3.退出指定群(慎用)\n" + 
+			"!eg [群号]";
 	/**
 	 * 123 SduBotR的完整功能菜单
 	 */
@@ -87,6 +111,7 @@ public abstract class Global extends JcqAppAbstract
 			"!m\n" + 
 			"O-3.解除防滥用\n" + 
 			"!uab {验证码}";
+	// [end]
 	/**
 	 * 123 SduBotR 首次启动初始化方法
 	 * @author 御坂12456(优化:Sugar 404)
@@ -95,31 +120,31 @@ public abstract class Global extends JcqAppAbstract
 	public static void Initialize(CoolQ CQ)
 	{
 		try {
-		// 初始化准备:删除数据目录所有文件夹
-		File initReady1 = new File(appDirectory + "/group");
-		if (initReady1.exists())
-		{
-		IOHelper.DeleteAllFiles(initReady1);
-		}
-		File initReady2 = new File(appDirectory + "/private");
-		if (initReady2.exists()) {
-			IOHelper.DeleteAllFiles(initReady2);
-		}
-		String[] files = {"/temp","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/protect/group",
-				"/protect/group/abuse","/group/list/iMG.txt","/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt",
-				"/group/list/AllGBan.txt","/firstopen.stat"};
-		for (String f:files) {
-			File init = new File(appDirectory + f);
-			if (f.contains(".")) {
-				init.createNewFile();
-                                CQ.logDebug(Global.AppName , "初始化:文件" + appDirectory + f + "建立成功");
-			}else {
-				init.mkdir();
-                                CQ.logDebug(Global.AppName, "初始化:路径" + appDirectory + f + "建立成功");
+			// 初始化准备:删除数据目录所有文件夹
+			File initReady1 = new File(appDirectory + "/group");
+			if (initReady1.exists())
+			{
+				IOHelper.DeleteAllFiles(initReady1);
 			}
-		
-			System.gc();
-		}
+			File initReady2 = new File(appDirectory + "/private");
+			if (initReady2.exists()) {
+				IOHelper.DeleteAllFiles(initReady2);
+			}
+			String[] files = {"/temp","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/protect/group",
+					"/protect/group/abuse","/group/list/iMG.txt","/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt",
+					"/group/list/AllGBan.txt","/firstopen.stat"};
+			for (String f:files) {
+				File init = new File(appDirectory + f);
+				if (f.contains(".")) {
+					init.createNewFile();
+					CQ.logDebug(Global.AppName , "初始化:文件" + appDirectory + f + "建立成功");
+				}else {
+					init.mkdir();
+					CQ.logDebug(Global.AppName, "初始化:路径" + appDirectory + f + "建立成功");
+				}
+
+				System.gc();
+			}
 		} catch (IOException e) {
 			CQ.logFatal(Global.AppName, "初始化时出现严重错误,详细信息:\n" + 
 					ExceptionHelper.getStackTrace(e));
@@ -127,8 +152,43 @@ public abstract class Global extends JcqAppAbstract
 		}
 		return; //返回
 	}
+
+	/**
+	 * 恢复自动备份的数据
+	 * @param CQ
+	 */
+	public static void RestoreData(CoolQ CQ)
+	{
+		try {
+			CQ.logInfo(AppName, "准备恢复数据");
+			String temp = System.getProperty("java.io.tmpdir"); // 获取临时目录
+			File tmpFolder = new File(temp + "/123 SduBotR/autosave"); // 新建临时目录实例
+			if (tmpFolder.exists()) { // 如果临时目录已存在
+				IOHelper.DeleteAllFiles(tmpFolder); // 删除临时目录里的所有文件
+				tmpFolder.delete(); // 删除临时目录
+			}
+			tmpFolder.mkdirs(); // 创建临时目录
+			File restoreSaveFile = new File(temp + "/123 SduBotR/autosave/autosave.zip");
+			File lastAutoSaveFile = new File(Global.appDirectory + "/temp/autosave.zip");
+			if (lastAutoSaveFile.exists()) { // 如果上一个自动保存的文件存在
+				lastAutoSaveFile.renameTo(restoreSaveFile); // 移动到临时目录
+				IOHelper.DeleteAllFiles(new File(appDirectory)); // 删除数据目录中所有文件
+				ZipFileHelper.extractZipFile(restoreSaveFile.getAbsolutePath(), Global.appDirectory); //解压缩数据文件到指定目录
+				CQ.logInfoSuccess(AppName, "数据恢复完成");
+				UserInterfaceHelper.MsgBox(AppName, "数据恢复完成，请切换机器人为在线状态后单击确定", MsgBoxButtons.Info);
+				return; //返回
+			} else {
+				UserInterfaceHelper.MsgBox(AppName, "错误:找不到备份的数据文件", MsgBoxButtons.Error);
+			}
+		} catch (Exception e) {
+			UserInterfaceHelper.MsgBox(AppName, "错误:未知\n" + 
+					e.getMessage() + "\n" + 
+					ExceptionHelper.getStackTrace(e),MsgBoxButtons.Error);
+		}
+		
+	}
 	
-    /**
+	/**
 	 * 返回指定群组的群名
 	 * @param GroupId 指定群组的群号
 	 * @return 成功返回群名,失败返回null
@@ -162,17 +222,17 @@ public abstract class Global extends JcqAppAbstract
 		try {
 			switch (CQ.getGroupMemberInfo(checkGroupId, checkQQId).getAuthority().value()) //获取成员权限(1/成员,2/管理员,3/群主)
 			{
-				case 2: //是管理员
-				case 3: //是群主
-					return true;
-				default: //不是管理组成员
-					return false;
+			case 2: //是管理员
+			case 3: //是群主
+				return true;
+			default: //不是管理组成员
+				return false;
 			}
 		} catch (Exception e) {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * 判断是否为指定群的管理组成员（包括管理员和群主）
 	 * @param CQ CQ实例
@@ -186,16 +246,16 @@ public abstract class Global extends JcqAppAbstract
 		try {
 			switch (CQ.getGroupMemberInfo(checkGroupId, checkQQId).getAuthority().value()) //获取成员权限(1/成员,2/管理员,3/群主)
 			{
-				case 2: //是管理员
-					if (isLeader = true) { //如果仅判断是否为群主
-						return false;
-					} else { //否则
-						return true;
-					}
-				case 3: //是群主
-					return true;
-				default: //不是管理组成员
+			case 2: //是管理员
+				if (isLeader = true) { //如果仅判断是否为群主
 					return false;
+				} else { //否则
+					return true;
+				}
+			case 3: //是群主
+				return true;
+			default: //不是管理组成员
+				return false;
 			}
 		} catch (Exception e) {
 			return false;
@@ -212,11 +272,11 @@ public abstract class Global extends JcqAppAbstract
 		try {
 			switch (CQ.getGroupMemberInfo(checkGroupId, CQ.getLoginQQ()).getAuthority().value()) //获取权限(1/成员,2/管理员,3/群主)
 			{
-				case 2: //是管理员
-				case 3: //是群主
-					return true;
-				default: //不是管理组成员
-					return false;
+			case 2: //是管理员
+			case 3: //是群主
+				return true;
+			default: //不是管理组成员
+				return false;
 			}
 		} catch (Exception e) {
 			return false;
@@ -234,22 +294,22 @@ public abstract class Global extends JcqAppAbstract
 		try {
 			switch (CQ.getGroupMemberInfo(checkGroupId, CQ.getLoginQQ()).getAuthority().value()) //获取权限(1/成员,2/管理员,3/群主)
 			{
-				case 2: //是管理员
-					if (isLeader = true) { //如果仅判断是否为群主
-						return false;
-					} else { //否则
-						return true;
-					}
-				case 3: //是群主
-					return true;
-				default: //不是管理组成员
+			case 2: //是管理员
+				if (isLeader = true) { //如果仅判断是否为群主
 					return false;
+				} else { //否则
+					return true;
+				}
+			case 3: //是群主
+				return true;
+			default: //不是管理组成员
+				return false;
 			}
 		} catch (Exception e) {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * 获取at的CQ码中的对应QQ号
 	 * @param CQCode
@@ -301,8 +361,13 @@ class protectAbuse
 		try {
 			File flagFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".using");
 			if (!flagFile.exists()) { //如果标志文件不存在
-				flagFile.createNewFile(); //创建标志文件
-				return false;
+				File abusedFlagFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
+				if (!abusedFlagFile.exists()) { //如果已滥用标志文件不存在
+					flagFile.createNewFile(); //创建标志文件
+					return false;
+				} else { //如果已滥用标志文件已存在
+					return true;
+				}
 			} else {  //如果标志文件已存在
 				File abusedFlagFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 				if (!abusedFlagFile.exists()) { //如果已滥用标志文件不存在
@@ -320,18 +385,17 @@ class protectAbuse
 		}
 	}
 	/**
-	 * 执行指令执行后的"3秒缓冲"防滥用保护
+	 * 执行指令执行后的"x秒缓冲"防滥用保护
 	 * @param CQ CQ实例
 	 * @param groupId 来源群号
 	 * @param qqId 来源QQ号
 	 */
-	public void doThreeProtAbuse(CoolQ CQ,long groupId,long qqId)
+	public void doProtAbuse(CoolQ CQ,long groupId,long qqId)
 	{
-		Thread threeProtAbuseThread = new protThread(CQ, groupId, qqId);
-		threeProtAbuseThread.start();
+		Thread customProtAbuseThread = new protThread(CQ, groupId, qqId);
+		customProtAbuseThread.start();
 	}
 
-	
 	/**
 	 * 防滥用功能线程
 	 * @author 御坂12456
@@ -344,7 +408,7 @@ class protectAbuse
 		long qqId;
 		boolean iAmSleeping;
 		/**
-		 * 创建三秒缓冲防滥用功能检测线程的实例。
+		 * 创建秒缓冲防滥用功能检测线程的实例。
 		 * @param CQ CQ实例
 		 * @param groupId 被检测人员的来源群号
 		 * @param qqId 被检测人员的QQ号
@@ -380,4 +444,37 @@ class protectAbuse
 			// 退出线程
 		}
 	}
+	}
+
+class autoSave extends TimerTask {
+	private CoolQ CQ;
+
+	public autoSave(CoolQ CQ){
+		this.CQ = CQ;
+	}
+
+	public void run() {
+		try {
+			String temp = System.getProperty("java.io.tmpdir"); //获取临时目录
+			File tmpFolder = new File(temp + "/123 SduBotR/autosave"); //新建临时目录实例
+			tmpFolder.mkdirs(); //递归创建临时目录
+			File finalAutoSaveFile = new File(Global.appDirectory + "/temp/autosave.zip");
+			if (finalAutoSaveFile.exists()) { //如果上一个自动保存的文件存在
+				finalAutoSaveFile.delete(); //先删了
+			}
+			File autoSaveFile = 
+					new File(tmpFolder.getAbsolutePath() + "/autosave.zip");
+			//新建自动保存文件实例
+			ZipFileHelper.createZipFile(Global.appDirectory, autoSaveFile.getAbsolutePath()); //压缩数据目录并保存
+			autoSaveFile.renameTo(finalAutoSaveFile); //移动文件至temp目录
+			this.CQ.logInfoSuccess(Global.FriendlyName, "已成功自动备份数据目录中的所有数据至:\n" + 
+					finalAutoSaveFile.getAbsolutePath());
+		} catch (Exception e) {
+			this.CQ.logError(Global.FriendlyName, "自动备份数据目录失败:\n" + 
+					e.getMessage() + "\n" + 
+					ExceptionHelper.getStackTrace(e));
+		}
+	}
 }
+
+

@@ -5,26 +5,37 @@ import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
 import cf.ots123it.jhlper.ExceptionHelper;
 import cf.ots123it.jhlper.IOHelper;
-import cf.ots123it.open.sdubotr.ProcessGroupMsg.Part2;
+import cf.ots123it.jhlper.UserInterfaceHelper;
+import cf.ots123it.jhlper.UserInterfaceHelper.MsgBoxButtons;
+import cf.ots123it.jhlper.UserInterfaceHelper.confirmingBoxButtons;
+import cf.ots123it.open.sdubotr.Global;
+import cf.ots123it.open.sdubotr.Utils.ListFileException;
+import cf.ots123it.open.sdubotr.Utils.ListFileHelper;
+import cf.ots123it.open.sdubotr.protectAbuse.protThread;
 
 import static cf.ots123it.open.sdubotr.Global.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.Timer;
 
 /**
  * 123 SduBotR的主处理类
  * <br>
  * 保留JCQ Demo的基本注释，方便开发
  * @author <a href="mailto:a15951@qq.com">御坂12456</a>
- * @version Alpha 0.0.1
+ * @since Alpha 0.0.1
  */
 public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 	/**
 	 * 123 SduBotR 数据存放路径(不建议在此调用,请在Global调用)
 	 */
 	public static String appDirectory;
+	private Timer timer;
     /**
      * 使用新的方式加载CQ （建议使用这种方式）
      *
@@ -102,6 +113,20 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * @return 请固定返回0，返回后酷Q将很快关闭，请不要再通过线程等方式执行其他代码。
      */
     public int exit() {
+    	if (timer != null) { //如果timer不是null（应用已启用）
+    		try {
+    			CQ.logInfo(AppName, "接收到关闭信号，正在执行关闭操作");
+    			timer.cancel(); //停止自动备份线程
+    			CQ.logDebug(AppName, "自动备份线程已停止");
+    			File runningStat = new File(Global.appDirectory + "/running.stat"); //新建“正在运行中”标志文件实例
+    			runningStat.delete(); //删除“正在运行中”标志文件（正常关闭）
+    			CQ.logDebug(AppName, "运行标志文件已删除（正常关闭）");
+    			CQ.logInfo(AppName, "应用已正常关闭，等待主程序退出……");
+			} catch (Exception e) {
+				CQ.logFatal(AppName, "执行关闭操作时出现致命异常:\n" + 
+						e.getMessage() + "\n" + ExceptionHelper.getStackTrace(e));
+			}
+		}
         return 0;
     }
 
@@ -123,6 +148,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，可以正常使用了\n");
         	enable = true;
         } else { //存在firstopen.stat文件（非首次打开）
+        	// [start] 机器人文件夹检测
             try {
                 // 定义机器人主人QQ文件
         		File masterQQFile = new File(appDirectory + "/masterQQ.txt");
@@ -142,6 +168,18 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         	 { //若不存在
         		 CQ.logWarning(Global.AppName, "功能1-1:重点监视群聊列表文件不存在,可能会影响到该功能的正常使用。\n" +
               			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
+        	 }
+        	 if(!(new File(appDirectory + "/group/blist")).exists()) //[功能M-3]判断机器人黑名单列表是否存在
+        	 { //若不存在
+        		 CQ.logWarning(Global.AppName, "功能1-5:群聊黑名单列表文件夹不存在,可能会影响到该功能的正常使用。\n" +
+              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
+            	 enable = false;
+        	 }
+        	 if(!(new File(appDirectory + "/group/ranking/speaking")).exists()) //[功能3-1]判断群成员日发言排行榜文件夹是否存在
+        	 { //若不存在
+        		 CQ.logWarning(Global.AppName, "功能3-1:群成员日发言排行榜数据文件夹不存在,可能会影响到该功能的正常使用。\n" +
+              			"请删除数据目录下的firstopen.stat然后重载插件以重新生成所需目录。");
             	 enable = false;
         	 }
         	 if(!(new File(appDirectory + "/group/ranking/speaking")).exists()) //[功能3-1]判断群成员日发言排行榜文件夹是否存在
@@ -174,6 +212,31 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         			    "请删除数据目录下的firstopen.stat然后重载插件以重新生成所需文件。");
             	 enable = false;
         	 }
+        	 // [end]
+        	 if (new File(appDirectory + "/running.stat").exists()) { //如果”正在运行中“文件已存在
+        		 CQ.logInfo(AppName, "上次应用的关闭是意外的。");
+        		File autoSaveData = new File(appDirectory + "/temp/autosave.zip"); //新建自动备份数据文件实例
+        		if (autoSaveData.exists()) { //如果自动备份数据文件存在
+        			String date = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
+           				 .format(new Date
+           						 (autoSaveData.lastModified())); //获取自动保存文件的上一次修改日期
+           		 int result = UserInterfaceHelper.confirmingBox("检测到应用未正常关闭 - " + AppName, 
+    						"检测到应用未正常关闭，这可能是操作系统突然断电所导致的。\n" + 
+    								"应用未正常关闭可能会造成本应用的数据丢失或错乱。" + 
+    								"是否使用于" + date + "自动保存的数据目录备份文件恢复数据?",confirmingBoxButtons.Question);
+   				if (result == 1) { //是
+   					UserInterfaceHelper.MsgBox("准备恢复数据 - " + AppName, "准备恢复数据:\n" + 
+   							"数据备份日期:" + date + "\n" + 
+   							"请将机器人设置成离线状态后单击”确定“按钮", MsgBoxButtons.Info);
+   					RestoreData(CQ); //执行恢复操作
+   				}
+				} else { //如果自动备份数据文件不存在
+					UserInterfaceHelper.MsgBox("检测到应用未正常关闭 - " + AppName, 
+    						"检测到应用未正常关闭，这可能是操作系统突然断电所导致的。\n" + 
+    								"应用未正常关闭可能会造成本应用的数据丢失或错乱。" + 
+    								"单击”确定“继续启动应用",MsgBoxButtons.Warning);
+				}
+			}
         }
         return 0;
     }
@@ -206,7 +269,27 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * 如果不回复消息，交由之后的应用/过滤器处理，这里 返回  {@link IMsg#MSG_IGNORE MSG_IGNORE} - 忽略本条消息
      */
     public int privateMsg(int subType, int msgId, long fromQQ, String msg, int font) {
-        
+        if (fromQQ == masterQQ) { //如果是主人私聊机器人
+        	ProcessPrivateManageMsg.main(CQ, fromQQ, msg);
+        } else { //如果不是主人私聊机器人
+        	// [start] 读取机器人黑名单列表文件(功能M-3)
+			File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
+			if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
+				for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
+					if (String.valueOf(fromQQ).equals(BanPerson)) //如果消息来源成员为机器人黑名单人员
+					{
+						return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
+					}
+				}
+			}
+			// [end]
+			StringBuilder callMasterStr = new StringBuilder(FriendlyName).append("\n") 
+					.append("有人私聊机器人,请处理\n") 
+					.append("来源QQ:").append(CQ.getStrangerInfo(fromQQ).getNick()).append("(").append(fromQQ).append(")\n")
+					.append("消息内容:\n")
+					.append(msg);
+			CQ.sendPrivateMsg(masterQQ,callMasterStr.toString()); //向机器人主人发送提醒消息
+		}
         return MSG_IGNORE;
     }
 
@@ -227,18 +310,19 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 	public int groupMsg(int subType, int msgId, long fromGroup, long fromQQ, String fromAnonymous, String msg,
                         int font) {
 		try {
-        // 如果消息来自匿名者
+        // [start] 如果消息来自匿名者
         if (fromQQ == 80000000L && !fromAnonymous.isEmpty()) {
             // 将匿名用户信息放到 anonymous 变量中
             @SuppressWarnings("unused")
 			Anonymous anonymous = CQ.getAnonymous(fromAnonymous);
         }
+        // [end]
         if (fromQQ==Global.masterQQ&&msg.startsWith("#")) //若是管理命令前缀且为机器人主人发送的
         	{ //转到ProcessGroupManageMsg类处理
         		ProcessGroupManageMsg.main(CQ, fromGroup, fromQQ, msg);
         	} else
         	{
-    	        // 读取特别监视群聊列表文件(功能2-1)
+    	        // [start] 读取特别监视群聊列表文件(功能2-1)
     			File imMonitGroups = new File(Start.appDirectory + "/group/list/iMG.txt");
     			if (imMonitGroups.exists()) { //如果列表文件存在
     				for (String imMonitGroup : IOHelper.ReadAllLines(imMonitGroups)) {
@@ -249,7 +333,20 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     					}
     				}
     			}
-        		// 读取机器人黑名单列表文件(功能M-3)
+    			// [end]
+        		// [start] 机器人防侮辱检测(功能M-A3)
+    			if ((msg.toLowerCase().contains("bot")) || (msg.contains("机器人"))) { //如果消息内容有"机器人"或"bot"
+					for (String bannedObscenityToBot : bannedObscenitiesToBot) { //遍历脏话列表
+						if (msg.contains(bannedObscenityToBot)) { //如果消息内容有脏话之一
+							CQ.sendPrivateMsg(masterQQ,FriendlyName + "\n" + 
+									"主人,刚刚在群聊" + fromGroup + "里有人欺负我QAQ");
+							CQ.sendGroupMsg(fromGroup, ".");
+							break; //跳出循环
+						}
+					}
+				}
+    			// [end]
+    			// [start] 读取机器人黑名单列表文件(功能M-3)
     			File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
     			if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
     				for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
@@ -259,7 +356,8 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     					}
     				}
     			}
-    			// 读取机器人群聊黑名单列表文件(功能M-4)
+    			// [end]
+    			// [start]  读取机器人群聊黑名单列表文件(功能M-4)
     			File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
     			if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
     				for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
@@ -269,6 +367,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     					}
     				}
     			}
+    			// [end]
         		ProcessGroupMsg.main(CQ, fromGroup, fromQQ, msg); //转到ProcessGroupMsg类处理
         	}
 		} catch (Exception e) {
@@ -509,7 +608,32 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     	switch (subtype)
 		{
     	case 1: //他人申请入群
-    		
+    		try {
+    			//功能1-5:群聊黑名单
+        		File currentGroupBlistFolder = new File(Global.appDirectory + "/blist/" + fromGroup); //新建当前群的黑名单数据文件夹实例
+        		if (currentGroupBlistFolder.exists()) { //如果当前群黑名单文件夹存在
+    				File currentGroupBlistFile = new File(Global.appDirectory + "/blist/" + fromGroup + "/persons.txt"); //新建当前群的黑名单文件实例
+    				boolean noPrompt = false; //定义拒绝不提醒标志
+    				if (new File(Global.appDirectory + "/blist/" + fromGroup + "/noPrompt.stat").exists()) { //如果不提醒文件存在
+    					noPrompt = true; //设置拒绝不提醒标志为true
+    				}
+    				ListFileHelper currentGroupBListHelper = new ListFileHelper(currentGroupBlistFile); //新建当前群的黑名单列表实例
+    				ArrayList<String> currentGroupBList = currentGroupBListHelper.getList(); //获取当前群的黑名单列表
+    				if (currentGroupBList != null) { //如果当前群黑名单列表不为空
+    					for (String bListPerson : currentGroupBList) { //循环遍历当前群黑名单列表
+    						if (bListPerson.equals(String.valueOf(fromQQ))) { //如果申请加群人员为当前群黑名单人员
+								CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_ADD,REQUEST_REFUSE, "您是本群黑名单人员，无法加入本群!"); //拒绝申请
+								if (noPrompt == false) { //如果拒绝不提醒为false（拒绝提醒）
+									StringBuilder result = new StringBuilder(FriendlyName).append("\n")
+											.append(CQ.getStrangerInfo(fromQQ, true).getNick() + "(" + fromQQ + ")属于本群黑名单人员,已拒绝其入群。");
+								}
+							}
+    					}
+					}
+    			}
+			} catch (ListFileException e) {
+				CQ.logError(AppName, "群聊" + fromGroup + "黑名单读取出现异常(cf.ots123it.open.sdubotr.Utils.ListFileException)");
+			}
     		break;
 		case 2: //机器人QQ受邀入群
 			// 若是机器人主人邀请入群，则同意
