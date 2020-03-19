@@ -614,7 +614,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 										"本群黑名单已是开启状态,您可以进行如下操作:\n" + 
 										"输入!blist show查看本群黑名单\n" + 
 										"输入!blist cnp切换黑名单成员入群拒绝是否提醒的状态\n" + 
-										"输入!blist close关闭本群黑名单。您将会丢失整个黑名单成员列表数据。");
+										"输入!blist stop关闭本群黑名单。您将会丢失整个黑名单成员列表数据。");
 								return;
 							}
 						} else { //如果机器人不是管理组成员
