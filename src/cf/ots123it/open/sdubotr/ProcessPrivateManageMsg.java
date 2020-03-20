@@ -47,6 +47,9 @@ public abstract class ProcessPrivateManageMsg extends JcqAppAbstract
 				case "pm": //功能4:查看私聊功能菜单
 					Standalone_Funcs.Func4_getPrivateMenu(CQ, qqId, msg);
 					return;
+				case "cig": //功能5:机器人受邀入群确认
+					Standalone_Funcs.Func5_inviteGroupRequestCheck(CQ, qqId, msg);
+					return;
 				default:
 					return;
 				}
@@ -193,6 +196,48 @@ public abstract class ProcessPrivateManageMsg extends JcqAppAbstract
 				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 						"详细信息:\n" +
 						ExceptionHelper.getStackTrace(e));
+			}
+		}
+
+		/**
+		 * 功能5:机器人受邀入群确认
+		 * @param CQ CQ实例
+		 * @param qqId 来源QQ号
+		 * @param msg 消息内容
+		 */
+		public static void Func5_inviteGroupRequestCheck(CoolQ CQ,long qqId,String msg)
+		{
+			try {
+				String arg3 = msg.split(" ", 3)[2].toLowerCase(); //获取参数
+				switch (arg3) //判断参数
+				{
+				case "agree": //如果是同意
+					String responseFlag_a = msg.split(" ",3)[1]; //反馈标识
+					int result = CQ.setGroupAddRequest(responseFlag_a, Start.REQUEST_GROUP_INVITE, Start.REQUEST_ADOPT, null);
+					if (result < 0) {
+						CQ.sendPrivateMsg(qqId, FriendlyName + "\n邀请入群请求通过失败(" + result + ")");
+						return;
+					} else {
+						CQ.sendPrivateMsg(qqId, FriendlyName + "\n" + 
+								"已通过该邀请入群请求");
+					}
+					return;
+				case "refuse": //如果是拒绝
+					String responseFlag_r = msg.split(" ",3)[1]; //反馈标识
+					int result2 = CQ.setGroupAddRequest(responseFlag_r, Start.REQUEST_GROUP_INVITE, Start.REQUEST_REFUSE, null);
+					if (result2 < 0) {
+						CQ.sendPrivateMsg(qqId, FriendlyName + "\n" + 
+								"邀请入群请求拒绝失败(" + result2 + ")");
+					} else {
+						CQ.sendPrivateMsg(qqId, FriendlyName + "\n" + 
+								"已拒绝该邀请入群请求");
+						return;
+					}
+				}
+			} catch (IndexOutOfBoundsException e) {
+				CQ.sendPrivateMsg(qqId, FriendlyName + "\n" + 
+						"您输入的指令格式有误,请检查后重试\n" + 
+						"格式:!cig [请求标识]");
 			}
 		}
 	}

@@ -36,7 +36,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 	 * 123 SduBotR 数据存放路径(不建议在此调用,请在Global调用)
 	 */
 	public static String appDirectory;
-	private Timer timer;
+	private Timer timer = new Timer(false);
     /**
      * 使用新的方式加载CQ （建议使用这种方式）
      *
@@ -114,7 +114,6 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * @return 请固定返回0，返回后酷Q将很快关闭，请不要再通过线程等方式执行其他代码。
      */
     public int exit() {
-    	if (timer != null) { //如果timer不是null（应用已启用）
     		try {
     			CQ.logInfo(AppName, "接收到关闭信号，正在执行关闭操作");
     			timer.cancel(); //停止自动备份线程
@@ -127,7 +126,6 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 				CQ.logFatal(AppName, "执行关闭操作时出现致命异常:\n" + 
 						e.getMessage() + "\n" + ExceptionHelper.getStackTrace(e));
 			}
-		}
         return 0;
     }
 
@@ -244,8 +242,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 				} catch (IOException e) {
 					CQ.logFatal(AppName, "应用启用时出现致命异常:无法创建“运行中”标志文件(running.stat)(java.io.IOException)");
 				}
-				timer = new Timer(false);
-				timer.schedule(new autoSave(CQ), 3000000L); //启动5分钟自动备份
+				timer.schedule(new autoSave(CQ), 0L, 300000L); //启动5分钟自动备份
 				CQ.logInfo(AppName, "自动备份线程已启动");
 			}
         }
@@ -532,6 +529,13 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 		//群迎新(功能S-A1)
 		if (beingOperateQQ == CQ.getLoginQQ()) { //如果是机器人入群
 			CQ.sendGroupMsg(fromGroup, "大佬们好……\n发送\"!m\"查看帮助~");
+			if (fromQQ != masterQQ) { //如果不是机器人主人邀请入群
+				CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" + 
+						"机器人已受邀入群提醒\n" + 
+						"来源群聊:" + getGroupName(CQ, fromGroup) + "(" + fromGroup + ")\n" + 
+						"邀请人:" + CQ.getStrangerInfo(fromQQ).getNick() + "(" + fromQQ + ")\n" + 
+						"如果不是主动同意而进群,建议输入!eg " + fromGroup + "退出该群.");
+			}
 		} else { //如果不是机器人入群
 			CQ.sendGroupMsg(fromGroup, "大佬来了，群地位-1");
 		}
@@ -655,7 +659,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 				CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_ADOPT, null);
 				return MSG_INTERCEPT;
 			}
-	    	// 读取机器人黑名单列表文件(功能M-3)
+	    	// [start] 读取机器人黑名单列表文件(功能M-3)
 	    	File AllBanPersons = new File(Start.appDirectory + "/group/list/AllBan.txt");
 			if ((AllBanPersons.exists()) && (!IOHelper.ReadToEnd(AllBanPersons).equals(""))) { //如果列表文件存在且列表文件内容不为空
 				for (String BanPerson : IOHelper.ReadAllLines(AllBanPersons)) {
@@ -663,10 +667,12 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 					{
 						// 拒绝邀请
 						CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_REFUSE, "您是机器人黑名单人员，无法邀请机器人入群!");
+						return 1;
 					}
 				}
 			}
-			// 读取机器人群聊黑名单列表文件(功能M-4)
+			// [end]
+			// [start] 读取机器人群聊黑名单列表文件(功能M-4)
 			File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
 			if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
 				for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
@@ -674,9 +680,20 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 					{
 						// 拒绝邀请
 						CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_REFUSE, "该群是机器人黑名单群，无法邀请机器人入群!");
+						return 1;
 					}
 				}
 			}
+			// [end]
+			// [start] 机器人受邀入群确认(私聊功能5)
+			CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" + 
+					"机器人受邀入群请求提醒\n" + 
+					"请求标识:" + responseFlag + "\n" +
+					"邀请者:" + CQ.getStrangerInfo(fromQQ).getNick() + "(" + fromQQ + ")\n" + 
+					"请求邀请加入的群:" + fromGroup + "\n" + 
+					"输入!cig " + responseFlag + " agree通过请求\n" + 
+					"输入!cig " + responseFlag + " refuse拒绝请求");
+			// [end]
 			break;
 		}  	
         /**

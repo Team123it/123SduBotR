@@ -47,11 +47,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.2.5";
+	public final static String Version = "0.2.6";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-25";
+	public final static String AppVersionNumber = "Alpha-26";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -81,7 +81,11 @@ public abstract class Global extends JcqAppAbstract
 			"2.发送群聊消息\n" + 
 			"!sgm [QQ号] [消息内容]\n" + 
 			"3.退出指定群(慎用)\n" + 
-			"!eg [群号]";
+			"!eg [群号]\n" + 
+			"4.查看私聊功能菜单\n" + 
+			"!pm\n" + 
+			"5.机器人受邀入群确认\n" + 
+			"!cig [请求标识] [agree/refuse]";
 	/**
 	 * 123 SduBotR的完整功能菜单
 	 */
@@ -232,19 +236,18 @@ public abstract class Global extends JcqAppAbstract
 	 */
 	public static boolean isGroupAdmin(CoolQ CQ,long checkGroupId,long checkQQId)
 	{
-		return true;
-//		try {
-//			switch (CQ.getGroupMemberInfo(checkGroupId, checkQQId).getAuthority().value()) //获取成员权限(1/成员,2/管理员,3/群主)
-//			{
-//			case 2: //是管理员
-//			case 3: //是群主
-//				return true;
-//			default: //不是管理组成员
-//				return false;
-//			}
-//		} catch (Exception e) {
-//			return false;
-//		}
+		try {
+			switch (CQ.getGroupMemberInfo(checkGroupId, checkQQId).getAuthority().value()) //获取成员权限(1/成员,2/管理员,3/群主)
+			{
+			case 2: //是管理员
+			case 3: //是群主
+				return true;
+			default: //不是管理组成员
+				return false;
+			}
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	/**
@@ -283,19 +286,18 @@ public abstract class Global extends JcqAppAbstract
 	 */
 	public static boolean isGroupAdmin(CoolQ CQ,long checkGroupId)
 	{
-		return true;
-//		try {
-//			switch (CQ.getGroupMemberInfo(checkGroupId, CQ.getLoginQQ()).getAuthority().value()) //获取权限(1/成员,2/管理员,3/群主)
-//			{
-//			case 2: //是管理员
-//			case 3: //是群主
-//				return true;
-//			default: //不是管理组成员
-//				return false;
-//			}
-//		} catch (Exception e) {
-//			return false;
-//		}
+		try {
+			switch (CQ.getGroupMemberInfo(checkGroupId, CQ.getLoginQQ()).getAuthority().value()) //获取权限(1/成员,2/管理员,3/群主)
+			{
+			case 2: //是管理员
+			case 3: //是群主
+				return true;
+			default: //不是管理组成员
+				return false;
+			}
+		} catch (Exception e) {
+			return false;
+		}
 	}
 	/**
 	 * 判断机器人登录QQ号是否为指定群的管理组成员
@@ -483,10 +485,10 @@ class autoSave extends TimerTask {
 			//新建自动保存文件实例
 			ZipFileHelper.createZipFile(Global.appDirectory, autoSaveFile.getAbsolutePath()); //压缩数据目录并保存
 			autoSaveFile.renameTo(finalAutoSaveFile); //移动文件至temp目录
-			this.CQ.logInfoSuccess(Global.FriendlyName, "已成功自动备份数据目录中的所有数据至:\n" + 
+			this.CQ.logInfoSuccess(Global.AppName, "已成功自动备份数据目录中的所有数据至:\n" + 
 					finalAutoSaveFile.getAbsolutePath());
 		} catch (Exception e) {
-			this.CQ.logError(Global.FriendlyName, "自动备份数据目录失败:\n" + 
+			this.CQ.logError(Global.AppName, "自动备份数据目录失败:\n" + 
 					e.getMessage() + "\n" + 
 					ExceptionHelper.getStackTrace(e));
 		}
