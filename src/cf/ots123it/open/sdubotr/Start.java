@@ -348,6 +348,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         		// [start] 机器人防侮辱检测(功能M-A3)
     			if ((msg.toLowerCase().contains("bot")) || (msg.contains("机器人"))) { //如果消息内容有"机器人"或"bot"
 					for (String bannedObscenityToBot : bannedObscenitiesToBot) { //遍历脏话列表
+						if (msg.toLowerCase().contains("http")) break; //如果检测到网址直接跳出循环（忽略）
 						if (msg.contains(bannedObscenityToBot)) { //如果消息内容有脏话之一
 							CQ.sendPrivateMsg(masterQQ,FriendlyName + "\n" + 
 									"主人,刚刚在群聊" + fromGroup + "里有人欺负我QAQ\n" + 

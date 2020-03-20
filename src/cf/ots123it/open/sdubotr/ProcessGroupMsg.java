@@ -892,6 +892,10 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				} catch (ListFileException e) {
 					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 							"读取失败");
+				} catch (NullPointerException e) {
+					StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
+							.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n")
+							.append("人员总数:0");
 				}
 			}
 			/**
