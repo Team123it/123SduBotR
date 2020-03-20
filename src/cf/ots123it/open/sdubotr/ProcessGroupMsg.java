@@ -896,6 +896,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
 							.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n")
 							.append("人员总数:0");
+					CQ.sendGroupMsg(groupId, returnBuilder.toString());
 				}
 			}
 			/**
