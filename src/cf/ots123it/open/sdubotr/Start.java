@@ -628,11 +628,11 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     	case 1: //他人申请入群
     		try {
     			//功能1-5:群聊黑名单
-        		File currentGroupBlistFolder = new File(Global.appDirectory + "/blist/" + fromGroup); //新建当前群的黑名单数据文件夹实例
+        		File currentGroupBlistFolder = new File(Global.appDirectory + "/group/blist/" + fromGroup); //新建当前群的黑名单数据文件夹实例
         		if (currentGroupBlistFolder.exists()) { //如果当前群黑名单文件夹存在
-    				File currentGroupBlistFile = new File(Global.appDirectory + "/blist/" + fromGroup + "/persons.txt"); //新建当前群的黑名单文件实例
+    				File currentGroupBlistFile = new File(Global.appDirectory + "/group/blist/" + fromGroup + "/persons.txt"); //新建当前群的黑名单文件实例
     				boolean noPrompt = false; //定义拒绝不提醒标志
-    				if (new File(Global.appDirectory + "/blist/" + fromGroup + "/noPrompt.stat").exists()) { //如果不提醒文件存在
+    				if (new File(Global.appDirectory + "/group/blist/" + fromGroup + "/noPrompt.stat").exists()) { //如果不提醒文件存在
     					noPrompt = true; //设置拒绝不提醒标志为true
     				}
     				ListFileHelper currentGroupBListHelper = new ListFileHelper(currentGroupBlistFile); //新建当前群的黑名单列表实例

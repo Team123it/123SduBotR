@@ -896,7 +896,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
 							.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n")
 							.append("人员总数:0");
-					CQ.sendGroupMsg(groupId, returnBuilder.toString());
+					CQ.sendPrivateMsg(qqId, returnBuilder.toString()); //私聊发送黑名单
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +  
+							"由于防止在群内刷屏，本群黑名单已私聊发送给指定人员，请查收(如未收到私聊消息请检查本群是否允许临时会话后重试)");
 				}
 			}
 			/**
