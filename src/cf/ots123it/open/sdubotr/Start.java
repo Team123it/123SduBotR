@@ -228,12 +228,37 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
    							"数据备份日期:" + date + "\n" + 
    							"请将机器人设置成离线状态后单击”确定“按钮", MsgBoxButtons.Info);
    					RestoreData(CQ); //执行恢复操作
-   				}
+   					try {
+   						new File(appDirectory + "/running.stat").createNewFile();
+   						CQ.logDebug(AppName, "“运行中”标志文件成功创建");
+   					} catch (IOException e) {
+   						CQ.logFatal(AppName, "应用启用时出现致命异常:无法创建“运行中”标志文件(running.stat)(java.io.IOException)");
+   					}
+   					timer.schedule(new autoSave(CQ), 0L, 300000L); //启动5分钟自动备份
+   					CQ.logInfo(AppName, "自动备份线程已启动");
+   				} else {
+   					try {
+   						new File(appDirectory + "/running.stat").createNewFile();
+   						CQ.logDebug(AppName, "“运行中”标志文件成功创建");
+   					} catch (IOException e) {
+   						CQ.logFatal(AppName, "应用启用时出现致命异常:无法创建“运行中”标志文件(running.stat)(java.io.IOException)");
+   					}
+   					timer.schedule(new autoSave(CQ), 0L, 300000L); //启动5分钟自动备份
+   					CQ.logInfo(AppName, "自动备份线程已启动");
+				}
 				} else { //如果自动备份数据文件不存在
 					UserInterfaceHelper.MsgBox("检测到应用未正常关闭 - " + AppName, 
     						"检测到应用未正常关闭，这可能是操作系统突然断电所导致的。\n" + 
     								"应用未正常关闭可能会造成本应用的数据丢失或错乱。" + 
     								"单击”确定“继续启动应用",MsgBoxButtons.Warning);
+					try {
+						new File(appDirectory + "/running.stat").createNewFile();
+						CQ.logDebug(AppName, "“运行中”标志文件成功创建");
+					} catch (IOException e) {
+						CQ.logFatal(AppName, "应用启用时出现致命异常:无法创建“运行中”标志文件(running.stat)(java.io.IOException)");
+					}
+					timer.schedule(new autoSave(CQ), 0L, 300000L); //启动5分钟自动备份
+					CQ.logInfo(AppName, "自动备份线程已启动");
 				}
 			} else { //如果是正常启动
 				try {
@@ -488,9 +513,86 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
      * @return 关于返回值说明, 见 {@link #privateMsg 私聊消息} 的方法
      */
     public int groupMemberDecrease(int subtype, int sendTime, long fromGroup, long fromQQ, long beingOperateQQ) {
-        // 这里处理消息
-
-        return MSG_IGNORE;
+    	// 这里处理消息
+    	try
+    	{
+    		// [start]  读取机器人群聊黑名单列表文件(功能M-4)
+    		File AllBanGroups = new File(Start.appDirectory + "/group/list/AllGBan.txt");
+    		if ((AllBanGroups.exists()) && (!IOHelper.ReadToEnd(AllBanGroups).equals(""))) { //如果列表文件存在且列表文件内容不为空
+    			for (String BanGroup : IOHelper.ReadAllLines(AllBanGroups)) {
+    				if (String.valueOf(fromGroup).equals(BanGroup)) //如果消息来源群聊为机器人黑名单群聊
+    				{
+    					return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
+    				}
+    			}
+    		}
+    		// [end]
+    		// [start] 退群自动加黑(功能1-5-7)
+    		if (isGroupAdmin(CQ, fromGroup)) { //如果机器人是该群管理
+    			switch (subtype)
+    			{
+    			case 1: //主动退群
+    				if ((new File(Global.appDirectory + "/group/blist/" + fromGroup).exists()) && 
+    						(new File(Global.appDirectory + "/group/blist/" + fromGroup + "/exitAutoAdd.stat").exists())) { 
+    					//如果该群黑名单已开启且退群加黑是开启状态
+    					ListFileHelper thisGroupBListHelper = 
+    							new ListFileHelper(Global.appDirectory + "/group/blist/" + fromGroup + "/persons.txt"); //新建该群黑名单实例
+    					thisGroupBListHelper.add(String.valueOf(beingOperateQQ)); //加黑
+    					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+    							CQ.getStrangerInfo(beingOperateQQ).getNick() + "(" + beingOperateQQ + ")退出本群,已自动加入黑名单。");
+    					return 1;
+    				} else { //该群黑名单未开启或退群加黑未开启
+    					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+    							CQ.getStrangerInfo(beingOperateQQ).getNick() + "(" + beingOperateQQ + ")已退出本群。");
+    					return 0;
+					}
+    			case 2: //被踢
+    				if ((new File(Global.appDirectory + "/group/blist/" + fromGroup).exists()) && 
+    						(new File(Global.appDirectory + "/group/blist/" + fromGroup + "/exitAutoAdd.stat").exists())) { 
+    					//如果该群黑名单已开启且退群加黑是开启状态
+    					ListFileHelper thisGroupBListHelper = 
+    							new ListFileHelper(Global.appDirectory + "/group/blist/" + fromGroup + "/persons.txt"); //新建该群黑名单实例
+    					thisGroupBListHelper.add(String.valueOf(beingOperateQQ)); //加黑
+    					String fromQQNick = CQ.getStrangerInfo(fromQQ).getNick(); //定义操作者的昵称
+    					if (!CQ.getGroupMemberInfo(fromGroup, fromQQ).getCard().equals(""))  //如果操作者群内存在昵称
+    						fromQQNick = CQ.getGroupMemberInfo(fromGroup, fromQQ).getCard(); //将操作者昵称设置成群名片昵称
+    					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+    							CQ.getStrangerInfo(beingOperateQQ).getNick() + "(" + beingOperateQQ + ")被管理员:" + 
+    							fromQQNick + "("  + fromQQ + ")移出本群,已自动加入黑名单。");
+    					return 1;
+    				} else { //该群黑名单未开启或退群加黑未开启
+    					String fromQQNick = CQ.getStrangerInfo(fromQQ).getNick(); //定义操作者的昵称
+    					if (!CQ.getGroupMemberInfo(fromGroup, fromQQ).getCard().equals(""))  //如果操作者群内存在昵称
+    						fromQQNick = CQ.getGroupMemberInfo(fromGroup, fromQQ).getCard(); //将操作者昵称设置成群名片昵称
+    					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+    							CQ.getStrangerInfo(beingOperateQQ).getNick() + "(" + beingOperateQQ + ")被管理员:" + 
+    							fromQQNick + "("  + fromQQ + ")移出本群。");
+    					return 0;
+					}
+    			}
+    		} else { //如果机器人不是该群管理
+				switch (subtype)
+				{
+				case 1: //主动退群
+					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+							CQ.getStrangerInfo(beingOperateQQ).getNick() + "(" + beingOperateQQ + ")已退出本群。");
+					return 0;
+				case 2: //被踢
+					String fromQQNick = CQ.getStrangerInfo(fromQQ).getNick(); //定义操作者的昵称
+					if (!CQ.getGroupMemberInfo(fromGroup, fromQQ).getCard().equals(""))  //如果操作者群内存在昵称
+						fromQQNick = CQ.getGroupMemberInfo(fromGroup, fromQQ).getCard(); //将操作者昵称设置成群名片昵称
+					CQ.sendGroupMsg(fromGroup, FriendlyName + "\n" + 
+							CQ.getStrangerInfo(beingOperateQQ).getNick() + "(" + beingOperateQQ + ")被管理员:" + 
+							fromQQNick + "("  + fromQQ + ")移出本群。");
+					return 0;
+				}
+			}
+    		// [end]
+    	}
+    	catch (Exception e) {
+    		CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + e.getMessage() + "\n" + ExceptionHelper.getStackTrace(e));
+    	}
+    	return MSG_IGNORE;
     }
 
     /**
@@ -644,6 +746,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 								if (noPrompt == false) { //如果拒绝不提醒为false（拒绝提醒）
 									StringBuilder result = new StringBuilder(FriendlyName).append("\n")
 											.append(CQ.getStrangerInfo(fromQQ, true).getNick() + "(" + fromQQ + ")属于本群黑名单人员,已拒绝其入群。");
+									CQ.sendGroupMsg(fromGroup, result.toString());
 								}
 							}
     					}

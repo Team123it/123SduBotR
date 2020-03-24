@@ -4,6 +4,13 @@
 	123 Java Helper库文件（123jhlper.jar）
 /temp 临时缓存数据（用于发送图片的临时缓存等）
 	/temp/autosave.zip 自动备份的数据文件（5分钟备份一次，备份内容为整个数据目录(Global.appDirectory)）
+/data 运行过程中需要使用的资源数据
+	/data/pic 图片消息资源数据
+		/data/pic/menu 功能菜单图片资源
+			/data/pic/menu/[主功能编号].png （指定功能的菜单图片）
+		/data/pic/about.png 关于原图片资源
+		/data/pic/blist.png 黑名单列表原图片资源
+		/data/pic/ancment.txt 图片中公告列表（一行一条，每条最多40字符，超过的部分直接省略）
 /group 群聊数据
 	/group/ranking 群聊排行榜数据
 		/group/ranking/speaking 功能3-1:群成员发言日排行榜
@@ -14,6 +21,11 @@
 		/group/blist/[群号] 功能1-5:群聊黑名单列表
 			/group/blist/[群号]/persons.txt （指定群的群聊黑名单文件）
 			/group/blist/[群号]/noPrompt.stat （指定群是否关闭黑名单成员入群拒绝的提醒消息标志文件）
+	/group/custom 群聊自定义设置数据
+		/group/custom/welcome/ 群聊自定义迎新内容数据
+			/group/custom/welcome/[群号].txt （指定群的自定义迎新内容）
+		/group/custom/exit/ 群聊自定义退群提醒内容数据
+			/group/custom/exit/[群号].txt （指定群的自定义退群提醒内容）
 	/group/list 群聊相关名单数据（机器人主人部分）
 		/group/list/iMG.txt 功能2-1:重点监视群聊列表文件
 		/group/list/iMGBan.txt 功能2-1:违禁词名单

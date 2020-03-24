@@ -3,19 +3,33 @@
  */
 package cf.ots123it.open.sdubotr;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Enumeration;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.meowy.cqp.jcq.annotation.common.CQAnonymous;
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Group;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 
+import com.sun.crypto.provider.AESParameters;
 import com.sun.prism.shader.Mask_TextureRGB_AlphaTest_Loader;
 
 import cf.ots123it.jhlper.ExceptionHelper;
@@ -40,6 +54,7 @@ public abstract class Global extends JcqAppAbstract
 	 * 机器人主人QQ号，如需自定义机器人请改成自己所需要的，默认为本人（御坂12456）的
 	 */
 	public static long masterQQ;
+	
 	/**
 	 * 123 SduBotR 程序名（若自定义机器人请务必更改此名称）
 	 */
@@ -47,11 +62,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.2.6";
+	public final static String Version = "0.4.1";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Alpha-26";
+	public final static String AppVersionNumber = "Alpha-30";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -110,6 +125,8 @@ public abstract class Global extends JcqAppAbstract
 			"!blist show\n" + 
 			"1-5-6.切换黑名单成员入群拒绝提醒状态\n" +
 			"!blist cnp\n" +
+			"1-5-7.切换退群加黑开启状态\n" +
+			"!blist eab\n" + 
 			"2.群管理辅助功能(详见Github)\n" +
 			"3.群增强功能\n" +
 			"3-1.查看群成员日发言排行榜(Top10)\n" +
@@ -117,17 +134,25 @@ public abstract class Global extends JcqAppAbstract
 			"4.实用功能\n" +
 			"4-1.查看新冠肺炎(SARS-Cov-2)疫情实时数据\n" +
 			"!cov {省份名}\n" +
-			"4-2.Bilibili实时粉丝数据\n" +
+			"4-2.Bilibili相关功能\n" +
+			"4-2-1.Bilibili实时粉丝数据\n" +
 			"!bf [UID]\n" +
+			"4-2-2.BV号与AV号互转\n" +
+			"!bavid [视频链接]\n" +
 			"O.其它功能\n" + 
 			"O-1.关于\n" + 
 			"!about\n" + 
 			"O-2.功能菜单\n" + 
 			"!m\n" + 
 			"O-3.解除防滥用\n" + 
-			"!uab {验证码}" + 
+			"!uab {验证码}\n" + 
 			"O-4.反馈\n" +
-			"!rpt [具体内容]";
+			"!rpt [具体内容]\n" + 
+			"O-5.图片消息(Beta)\n" + 
+			"O-5-1~2.启禁用图片消息模式\n" + 
+			"!imm [start/stop]\n" + 
+			"O-5-3.查看图片消息模式启用状态\n" + 
+			"!imm stat";
 	// [end]
 	/**
 	 * 123 SduBotR 首次启动初始化方法
@@ -147,7 +172,7 @@ public abstract class Global extends JcqAppAbstract
 			if (initReady2.exists()) {
 				IOHelper.DeleteAllFiles(initReady2);
 			}
-			String[] files = {"/temp","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/group/blist","/protect/group",
+			String[] files = {"/temp","/data","/data/pic","/data/pic/menu","/group","/private","/protect","/group/ranking","/group/ranking/speaking","/group/list","/group/blist","/protect/group",
 					"/protect/group/abuse","/group/list/iMG.txt","/group/list/iMGBan.txt","/group/list/funnyWL.txt","/group/list/AllBan.txt",
 					"/group/list/AllGBan.txt","/firstopen.stat"};
 			for (String f:files) {
@@ -159,10 +184,45 @@ public abstract class Global extends JcqAppAbstract
 					init.mkdir();
 					CQ.logDebug(Global.AppName, "初始化:路径" + appDirectory + f + "建立成功");
 				}
-
 				System.gc();
 			}
+			// [start] 初始化图片文件数据
+			ArrayList<URI> picsUrls = new ArrayList<URI>(); //定义图片文件URI集合
+			ArrayList<File> picsFiles = new ArrayList<File>(); //定义图片文件集合
+			// 获取功能菜单图片URL
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/main_menu.png").toURI());
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/1.png").toURI());
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/2.png").toURI());
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/3.png").toURI());
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/4.png").toURI());
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/o.png").toURI());
+			// 获取关于图片URL
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/about.png").toURI());
+			// 获取黑名单列表图片URL
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/blist.png").toURI());
+			// 遍历图片URL集合，转换添加到图片文件集合
+			for (URI singleURL : picsUrls) {
+				picsFiles.add(new File(singleURL));
+			}
+			// 遍历图片文件集合，提取图片文件
+			for (File singleFile : picsFiles) {
+				if (singleFile.getName().toLowerCase().contains("menu")) { //如果是功能菜单图片
+					IOHelper.copyFile(singleFile.toString(), Global.appDirectory + "/data/pic/menu/" + singleFile.getName()); //提取图片文件
+				} else { //如果不是功能菜单图片
+					IOHelper.copyFile(singleFile.toString(), Global.appDirectory + "/data/pic/" + singleFile.getName()); //提取图片文件
+				}
+			}
+			File announcement = new File(Global.appDirectory + "/data/pic/ancment.txt"); //定义公告文件
+			if (announcement.exists()) { //如果公告文件存在
+				announcement.delete(); //删除文件
+			}
+			announcement.createNewFile(); //创建公告文件
+			// [end]
+			CQ.logInfo(Global.AppName, "初始化完成");
 		} catch (IOException e) {
+			CQ.logFatal(Global.AppName, "初始化时出现严重错误,详细信息:\n" + 
+					ExceptionHelper.getStackTrace(e));
+		} catch (URISyntaxException e) {
 			CQ.logFatal(Global.AppName, "初始化时出现严重错误,详细信息:\n" + 
 					ExceptionHelper.getStackTrace(e));
 		} finally {
@@ -191,6 +251,33 @@ public abstract class Global extends JcqAppAbstract
 				lastAutoSaveFile.renameTo(restoreSaveFile); // 移动到临时目录
 				IOHelper.DeleteAllFiles(new File(appDirectory)); // 删除数据目录中所有文件
 				ZipFileHelper.extractZipFile(restoreSaveFile.getAbsolutePath(), Global.appDirectory); //解压缩数据文件到指定目录
+				String fromZipFileName = restoreSaveFile.getAbsolutePath();
+				String toUnzipFolder = Global.appDirectory;
+				 ZipFile zfile=new ZipFile(fromZipFileName);  
+			        Enumeration zList=zfile.entries();  
+			        ZipEntry ze=null;  
+			        byte[] buf=new byte[1024];  
+			        while(zList.hasMoreElements()){  
+			            ze=(ZipEntry)zList.nextElement();         
+			            if(ze.isDirectory()){  
+			                File f=new File(toUnzipFolder+ze.getName());  
+			                f.mkdir();  
+			                continue;  
+			            } else if (ze.getName().contains(".jar")) { //如果是库文件
+							continue;
+						}  else if (ze.getName().equals("lib")) { //如果是库目录
+							continue;
+						}
+			            OutputStream os=new BufferedOutputStream(new FileOutputStream(cf.ots123it.jhlper.ZipFileHelper.getRealFileName(toUnzipFolder, ze.getName())));  
+			            InputStream is=new BufferedInputStream(zfile.getInputStream(ze));  
+			            int readLen=0;  
+			            while ((readLen=is.read(buf, 0, 1024))!=-1) {  
+			                os.write(buf, 0, readLen);  
+			            }  
+			            is.close();  
+			            os.close();   
+			        }  
+			        zfile.close();  
 				CQ.logInfoSuccess(AppName, "数据恢复完成");
 				UserInterfaceHelper.MsgBox(AppName, "数据恢复完成，请切换机器人为在线状态后单击确定", MsgBoxButtons.Info);
 				return; //返回
@@ -355,6 +442,26 @@ public abstract class Global extends JcqAppAbstract
 			}
 		} catch (Exception e) {
 			return -1;
+		}
+	}
+	/**
+	 * 获取图片信息中需要显示的随机公告信息
+	 * @return 成功返回随机公告信息，公告为空返回"[公告暂时为空]”，失败返回"[公告读取失败]"
+	 */
+	public static String getRandAncment()
+	{
+		try {
+			String fullAncMentStr = IOHelper.ReadToEnd(Global.appDirectory + "/data/pic/ancment.txt"); //读取公告文件全部内容
+			if ((fullAncMentStr != null) && (!fullAncMentStr.equals(""))) { //如果公告内容不是null且公告文件不为空
+				String[] ancMents = IOHelper.ReadAllLines(Global.appDirectory + "/data/pic/ancment.txt"); //读取公告数组
+				Random r = new Random(); //新建随机数实例
+				String randAncMentStr = ancMents[r.nextInt(ancMents.length)]; //随机获取一个公告内容
+				return randAncMentStr; //返回随机获得的公告内容
+			} else {
+				return "[公告暂时为空]";
+			}
+		} catch (Exception e) {
+			return "[公告读取失败]";
 		}
 	}
 	

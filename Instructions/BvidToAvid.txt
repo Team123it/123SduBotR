@@ -1,0 +1,52 @@
+Bilibili BV号转AV号工具
+原理：[通过B站接口]输入BV号得到cid，输入BV号和cid得到av号
+
+接口1:https://api.bilibili.com/x/player/pagelist?bvid=[这里填BV号]&jsonp=jsonp
+原作用：获取视频分P列表
+返回包含cid的json字符串，格式为：
+{"code":[获取状态,成功为0,失败为-400],
+"message":"[提示信息,成功返回 "0" ,失败返回 "请求错误" ]",
+"ttl":1,
+"data":
+	[{"cid":[获取到的cid]",
+		 page":1,
+		 "from":"vupload",
+		 "part":"[分P1视频名]",
+		 "duration":121,
+		 "vid":"",
+		 "weblink":"",
+		 "dimension":{"width":[视频长],"height":[视频宽],"rotate":0}},
+	 {"cid":[P2的cid,通常用前面的就行了],"page":2,"from":"vupload","part":"[P2视频名]","duration":119,"vid":"","weblink":"","dimension":{"width":[见前面],"height":[见前面],"rotate":0}}
+	 },
+	 ...
+	]
+}
+
+接口2:https://api.bilibili.com/x/web-interface/view?cid=[这里填cid]&bvid=[这里填BV号]
+原作用：获取视频详细信息（名称，简介，cid对应分p名等）
+返回包含avid的json字符串，格式为：
+{"code":0,
+"message":"0",
+"ttl":1,
+"data":
+	{"bvid":"[视频bv号]",
+	"aid":[获取到的视频av号],
+	"videos":[分p数],
+	"tid":[总时长],
+	"tname":"[小分区名(如:音游)]",
+	"copyright":[是否设置原创标识,0为未设置,1为已设置],
+	"pic":"[封面图链接]",
+	"title":"[主视频名]",
+	"pubdate":[通过审核时的时间戳(单位为秒)],
+	"ctime":[提交审核时的时间戳(单位同上)],
+	"desc":"[简介,使用\r\n换行]",
+	.....
+	"owner":
+		{"mid":[UP主的UID],
+		"name":"[UP主昵称]",
+		"face":"[UP主头像图片链接]"
+		},
+	.....
+	}
+.....
+}

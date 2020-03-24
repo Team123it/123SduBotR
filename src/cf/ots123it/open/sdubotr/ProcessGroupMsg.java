@@ -13,11 +13,15 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ThreadLocalRandom;
 
+import javax.management.relation.RoleResult;
+
+import org.meowy.cqp.jcq.entity.CQImage;
 import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import cf.ots123it.jhlper.CommonHelper;
@@ -27,6 +31,7 @@ import cf.ots123it.jhlper.JsonHelper;
 import cf.ots123it.jhlper.OTPHelper;
 import cf.ots123it.open.sdubotr.Utils.ListFileException;
 import cf.ots123it.open.sdubotr.Utils.ListFileHelper;
+import cf.ots123it.open.sdubotr.picModeUtils.PicsGenerateUtility;
 
 import static cf.ots123it.open.sdubotr.Global.*;
 /**
@@ -78,7 +83,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				long previousSpeakTimes = Long.parseLong(IOHelper.ReadToEnd(todaySpeakPerson)); //获取当前记录次数
 				long nowSpeakTimes = previousSpeakTimes + 1; //在当前记录次数上+1
 				IOHelper.WriteStr(todaySpeakPerson, String.valueOf(nowSpeakTimes)); //覆盖记录当前成员今日发言次数
-				}
+			}
 			// [end]
 		} catch (Exception e) {
 			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
@@ -123,24 +128,25 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					Part1.Part1_5.Func1_5_main(CQ, groupId, qqId, msg);
 					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
-				/* 主功能3:群增强功能 */
+					/* 主功能3:群增强功能 */
 				case "rk": //功能3-1:查看群成员日发言排行榜
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part3.Func3_1(CQ, groupId, qqId, msg);
 					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
-				/* 主功能4:实用功能 */
+					/* 主功能4:实用功能 */
 				case "cov": //功能4-1:查看新冠肺炎(SARS-Cov-2)疫情实时数据
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part4.Func4_1(CQ, groupId, qqId, msg);
 					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
-				case "bf": //功能4-2:Bilibili实时粉丝数据
+				case "bf":
+				case "bavid": //功能4-2:Bilibili相关功能
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
-					Part4.Func4_2(CQ, groupId, qqId, msg);
+					Part4.Part4_2.Func4_2_main(CQ, groupId, qqId, msg);
 					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
-				/* 其它功能 */
+					/* 其它功能 */
 				case "about": //功能O-1:关于
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_About(CQ, groupId, qqId, msg);
@@ -155,7 +161,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					Part_Other.FuncO_UnAbuse(CQ, groupId, qqId, msg);
 					break;
 				case "rpt": //功能O-4:反馈
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
 					Part_Other.FuncO_Report(CQ, groupId, qqId, msg);
+					new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 					break;
 				default:
 					break;
@@ -164,12 +172,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			catch (NumberFormatException e) { //指令格式错误(1)
 				if((msg.trim().equals("!")) || (msg.trim().equals("！"))) return;
 				CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
-							"您输入的指令:");
+						"您输入的指令:");
 			}
 			catch (IndexOutOfBoundsException e) { //指令格式错误(2)
 				if((msg.trim().equals("!")) || (msg.trim().equals("！"))) return;
 				CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
-							"您输入的指令:");
+						"您输入的指令:");
 			}
 		} else {
 			/* 本部分代码只是为了保留中文指令兼容性，请勿直接在此处增加新功能 */
@@ -266,7 +274,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						muteQQ = Long.parseLong(arg2); //直接读取输入的QQ号
 					} else { //否则
 						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n"  + 
-									"您输入的QQ号不合法，请重新输入(301)");
+								"您输入的QQ号不合法，请重新输入(301)");
 						return; //直接返回
 					}
 				}
@@ -312,8 +320,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 			} catch (IndexOutOfBoundsException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-							"您输入的指令格式有误,请更正后重试\n" + 
-							"格式:!mt [QQ号/at] [时长(单位:分钟)]");
+						"您输入的指令格式有误,请更正后重试\n" + 
+						"格式:!mt [QQ号/at] [时长(单位:分钟)]");
 			} catch (NumberFormatException e) { //若发生数组下标越界异常
 				CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
 						"您输入的指令格式有误,请更正后重试\n" + 
@@ -350,7 +358,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						unMuteQQ = Long.parseLong(arg2); //直接读取输入的QQ号
 					} else { //否则
 						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n"  + 
-									"您输入的QQ号不合法，请重新输入(301)");
+								"您输入的QQ号不合法，请重新输入(301)");
 						return; //直接返回
 					}
 				}
@@ -423,7 +431,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						kickedQQ = Long.parseLong(arg2); //直接读取输入的QQ号
 					} else { //否则
 						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n"  + 
-									"您输入的QQ号不合法，请重新输入(301)");
+								"您输入的QQ号不合法，请重新输入(301)");
 						return; //直接返回
 					}
 				}
@@ -551,11 +559,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 *
 		 */
 		static class Part1_5{
-			
+
 			public static void Func1_5_main(CoolQ CQ,long groupId,long qqId,String msg)
 			{
 				try {
-					String[] arguments = msg.split(" ", 3); //获取参数（格式类似于"blist add 12345"）
+					String[] arguments = msg.split(" "); //获取参数（格式类似于"blist add 12345"）
 					String arg2 = arguments[1].toLowerCase(); //获取第2个参数（下标为1）（类似于"add"）
 					switch (arg2)
 					{
@@ -577,6 +585,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					case "cnp": //功能1-5-6:切换黑名单成员入群拒绝提醒状态（!blist cnp）
 						Func1_5_6(CQ, groupId, qqId, msg);
 						break;
+					case "eab": //功能1-5-7:切换退群加黑开启状态（!blist eab）
+						Func1_5_7(CQ, groupId, qqId, msg);
+						break;
 					default: //不存在的黑名单参数2
 						throw new IndexOutOfBoundsException("Unknown Func1-5(Blist) Argument 2:" + arg2);
 					}
@@ -584,11 +595,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				}
 				catch (IndexOutOfBoundsException e) { //指令格式错误
 					CQ.sendGroupMsg(groupId, Global.FriendlyName +  "\n您输入的指令格式有误,请检查后再试\n" +
-								"格式:!blist [start/stop/add/del/cnp]...");
+							"格式:!blist [start/stop/add/del/cnp]...");
 				}
-			
+
 			}
-			
+
 			/**
 			 * 功能1-5-1:启动群聊黑名单
 			 * @param CQ CQ实例
@@ -843,33 +854,95 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			 */
 			public static void Func1_5_5(CoolQ CQ,long groupId,long qqId,String msg)
 			{
+				boolean noPrompt = false; //定义拒绝黑名单成员提醒状态
+				boolean exitAutoAdd = false; //定义退群自动加黑开启状态
 				try {
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
 							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
 							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
-									ListFileHelper bListFile = new ListFileHelper(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt"); //新建黑名单列表文件实例
-									ArrayList<String> returnList = bListFile.getList(); // 获取返回的列表
-									if (returnList.equals(null)) { //如果返回的列表为null
-										throw new ListFileException("返回列表为null");
+								if (new File(Global.appDirectory + "/group/blist/" + groupId + "/noPrompt.stat").exists()) noPrompt = true;
+								//检测拒绝黑名单成员开启状态
+								if (new File(Global.appDirectory + "/group/blist/" + groupId + "/exitAutoAdd.stat").exists()) exitAutoAdd = true;
+								String page = "1";
+								if (msg.split(" ",3).length == 3) {
+									page = msg.split(" ",3)[2]; //获取页码参数
+								}
+								String result = ""; //定义返回的图片路径变量
+								if ((!page.equals("")) && (CommonHelper.isInteger(page))) { //如果页码参数存在且是数字
+									result = PicsGenerateUtility.getGroupBlistPic(CQ, groupId, Integer.parseInt(page)).trim();
+									if (result == null) {
+										CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+										return;
 									}
-									StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
-											.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n")
-											.append("人员总数:").append(returnList.size()).append("\n");
-									// 定义要发送的消息的列表字符串
-									Iterator<String> returnIt = returnList.iterator(); //获取返回列表的迭代器
-									while (returnIt.hasNext()) { //如果迭代器中存在下一个项
-										String nextPerson = returnIt.next(); //获取下一个项
-										if (returnIt.hasNext()) { //如果迭代器中仍有下一项
-											returnBuilder.append(nextPerson).append("\n"); //添加下一项+回车符到发送消息字符串中
-										} else { //如果迭代器没有下一项了（最后一项了）
-											returnBuilder.append(nextPerson); //添加最后一项到发送信息字符串中
-										}
+									switch (result)
+									{
+									case "": //获取为空
+										CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+									case "invalid": //无效的页码数
+										break;
+									case "nothing": //黑名单列表为空
+										throw new NullPointerException("The black list of this group is empty");
+									default: //其它（返回的是文件路径）
+										CQImage image = new CQImage(new File(result)); // 获取图片CQ码并发送
+										CQ.sendGroupMsg(groupId, new CQCode().image(image)); //发送图片消息
+										new File(result).delete();
 									}
-									CQ.sendPrivateMsg(qqId, returnBuilder.toString()); //私聊发送黑名单
-									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +  
-											"由于防止在群内刷屏，本群黑名单已私聊发送给指定人员，请查收(如未收到私聊消息请检查本群是否允许临时会话后重试)");
-									return;
+								}  else { //如果页码参数不存在
+									result = PicsGenerateUtility.getGroupBlistPic(CQ, groupId, 1).trim();
+									if (result == null) {
+										CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+										return;
+									}
+									switch (result)
+									{
+									case "": //获取为空
+										CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+									case "invalid": //无效的页码数
+										break;
+									case "nothing": //黑名单列表为空
+										throw new NullPointerException("The black list of this group is empty");
+									default: //其它（返回的是文件路径）
+										CQImage image = new CQImage(new File(result)); // 获取图片CQ码并发送
+										CQ.sendGroupMsg(groupId, new CQCode().image(image)); //发送图片消息
+										new File(result).delete();
+									}
+								}
+								return;
+								// [start] [已弃用,本注释将在下个版本移除]文字格式返回黑名单列表
+								//									ListFileHelper bListFile = new ListFileHelper(Global.appDirectory + "/group/blist/" + groupId + "/persons.txt"); //新建黑名单列表文件实例
+								//									ArrayList<String> returnList = bListFile.getList(); // 获取返回的列表
+								//									if (returnList.equals(null)) { //如果返回的列表为null
+								//										throw new ListFileException("返回列表为null");
+								//									}
+								//									StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
+								//											.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n");
+								//									if (noPrompt) {
+								//										returnBuilder.append("拒绝黑名单成员提醒状态:不提醒\n");
+								//									} else {
+								//										returnBuilder.append("拒绝黑名单成员提醒状态:提醒\n");
+								//									}
+								//									if (exitAutoAdd) {
+								//										returnBuilder.append("退群自动加黑状态:开启\n");
+								//									} else {
+								//										returnBuilder.append("退群自动加黑状态:关闭\n");
+								//									}
+								//											returnBuilder.append("人员总数:").append(returnList.size()).append("\n");
+								//									// 定义要发送的消息的列表字符串
+								//									Iterator<String> returnIt = returnList.iterator(); //获取返回列表的迭代器
+								//									while (returnIt.hasNext()) { //如果迭代器中存在下一个项
+								//										String nextPerson = returnIt.next(); //获取下一个项
+								//										if (returnIt.hasNext()) { //如果迭代器中仍有下一项
+								//											returnBuilder.append(nextPerson).append("\n"); //添加下一项+回车符到发送消息字符串中
+								//										} else { //如果迭代器没有下一项了（最后一项了）
+								//											returnBuilder.append(nextPerson); //添加最后一项到发送信息字符串中
+								//										}
+								//									}
+								//									CQ.sendPrivateMsg(qqId, returnBuilder.toString()); //私聊发送黑名单
+								//									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +  
+								//											"由于防止在群内刷屏，本群黑名单已私聊发送给指定人员，请查收(如未收到私聊消息请检查本群是否允许临时会话后重试)");
+								//									return;
+								// [end]
 							} else { //如果黑名单未开启
 								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 										"本群黑名单未开启，请输入!blist start开启");
@@ -886,19 +959,10 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								"您没有权限执行该操作(403)");
 					}
 				} catch (IndexOutOfBoundsException e) {
-					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
-							"格式:!blist show");
-				} catch (ListFileException e) {
-					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-							"读取失败");
 				} catch (NullPointerException e) {
-					StringBuilder returnBuilder = new StringBuilder(FriendlyName).append("\n")
-							.append("群:").append(getGroupName(CQ, groupId)).append("(").append(groupId).append(")黑名单\n")
-							.append("人员总数:0");
-					CQ.sendPrivateMsg(qqId, returnBuilder.toString()); //私聊发送黑名单
-					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +  
-							"由于防止在群内刷屏，本群黑名单已私聊发送给指定人员，请查收(如未收到私聊消息请检查本群是否允许临时会话后重试)");
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n本群黑名单为空");
+				} catch (IOException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
 				}
 			}
 			/**
@@ -946,6 +1010,56 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
 							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
 							"格式:!blist cnp");
+				} catch (IOException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"设置失败");
+				}
+			}
+			/**
+			 * 功能1-5-7:切换退群加黑启用状态
+			 * @param CQ CQ实例
+			 * @param groupId 来源群号
+			 * @param qqId 来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func1_5_7(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
+						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
+							File blistFolder = new File(Global.appDirectory + "/group/blist/" + groupId); //定义本群黑名单数据文件夹
+							if (blistFolder.exists()) { //如果黑名单是开启状态（文件夹存在）
+								File statFile = new File(Global.appDirectory + "/group/blist/" + groupId + "/exitAutoAdd.stat"); //定义退群加黑标志文件
+								if (!statFile.exists()) { //如果标志文件不存在
+									statFile.createNewFile(); //创建标志文件
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+											"已切换成:退群后加黑");
+									return;
+								} else { //如果标志文件存在
+									statFile.delete(); //删除标志文件
+									CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+											"已切换成:退群后不加黑");
+									return;
+								}
+							} else { //如果黑名单未开启
+								CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+										"本群黑名单未开启，请输入!blist start开启");
+								return;
+							}
+						} else { //如果机器人不是管理组成员
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+									"请先将机器人设置成为本群管理员后再进行操作(401)");
+							return;
+						}
+					}
+					else { //如果消息发送人员不是管理组成员
+						CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"您没有权限执行该操作(403)");
+					}
+				} catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+							"您输入的指令格式有误，请更正后重试(注意指令间只能存在一个空格):\n" + 
+							"格式:!blist eab");
 				} catch (IOException e) {
 					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 							"设置失败");
@@ -1054,7 +1168,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								//将今日发言数组中的索引为i的值赋值为"记录文件名" + "," + "记录文件内容(发言次数)"
 								todaySpeakCounts[i] = todaySpeakPersons[i] + "," + IOHelper.ReadToEnd(todaySpeakRanking.getAbsolutePath() + "/" + todaySpeakPersons[i]);
 							}
-							 	//通过匿名的Comparator使数组按照每个值中","后面的数字的顺序进行数组降序排序
+							//通过匿名的Comparator使数组按照每个值中","后面的数字的顺序进行数组降序排序
 							Arrays.sort(todaySpeakCounts, new Comparator<String>() {
 								@Override
 								public int compare(String o1, String o2)
@@ -1084,7 +1198,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 							});
 							StringBuilder todaySpeakRankingStr = new StringBuilder();
 							todaySpeakRankingStr.append(FriendlyName).append("\n")
-															 .append("群成员日发言排行榜(").append(groupId).append(")").append("\n");
+							.append("群成员日发言排行榜(").append(groupId).append(")").append("\n");
 							//定义for循环(初始i=0,当i小于今日发言人数且当i小于10（排行榜仅显示top10时就循环）
 							for (int i = 0; ((i < todaySpeakCounts.length) && (i < 10)); i++) {
 								//定义当前遍历到的QQ号
@@ -1117,7 +1231,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								{
 									todaySpeakRankingStr.append("[").append(i + 1).append("]").append(currentSpeakQQNick).append(":").append(currentSpeakTimes).append("条").append("\n");
 								}
-								
+
 							}
 							//定义消息发送人员的发言次数和发言名次
 							long mySpeakTimes = 0,mySpeakNo = 9999;
@@ -1133,7 +1247,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									mySpeakQQNick = mySpeakQQ.getNick();
 								}
 							} else {
-									mySpeakQQNick = "未知昵称";
+								mySpeakQQNick = "未知昵称";
 							}
 							//再次遍历循环，得到消息发送人员的发言次数
 							long i = 1; //定义循环次数i
@@ -1148,7 +1262,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								}
 							}
 							todaySpeakRankingStr.append("\n").append("----------------").append("\n").append("[").append(mySpeakNo).append("]").append(mySpeakQQNick).append(":")
-											.append(mySpeakTimes).append("条");
+							.append(mySpeakTimes).append("条");
 							System.gc(); //执行垃圾收集器
 							CQ.sendGroupMsg(groupId, todaySpeakRankingStr.toString()); //发送群成员日发言排行榜
 						} else { //否则
@@ -1158,12 +1272,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					} else { //否则
 						todaySpeakRanking.mkdir(); //创建
 						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-									"今日本群的群聊日发言排行榜为空~");
+								"今日本群的群聊日发言排行榜为空~");
 					}
 				} else { //如果群聊日发言排行榜数据目录不存在
 					speakRanking.mkdir(); //创建
 					CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-								"今日本群的群聊日发言排行榜为空~");
+							"今日本群的群聊日发言排行榜为空~");
 				}
 			} catch (Exception e) {
 				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
@@ -1174,7 +1288,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			}
 		}
 	}
-	
+
 	static class Part4{
 		/**
 		 * 功能4-1:获取新冠肺炎(SARS-Cov-2)疫情实时数据(数据来源:丁香园/丁香医生)
@@ -1188,82 +1302,126 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		public static void Func4_1(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
-			if ((msg.trim().equals("cov")) || (msg.trim().equals("疫情"))) { //如果无参数(查询全国最新数据)
-				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-						"正在从丁香园获取数据,请稍候");
-				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("http://lab.isaaclin.cn/nCoV/api/overall?latest=1"));
-				// 获取全国数据
-				JSONObject results = JSONObject.parseObject(resultJson.getString("results").replace("[", "").replace("]", ""));
-				// 累计确诊人数
-				int confirmedCount = results.getIntValue("confirmedCount");
-				// 累计确诊人数变化量
-				String confirmedIncr;
-				// 添加正负号
-				if (results.getIntValue("confirmedIncr") > 0) {
-					confirmedIncr = "+" + results.getIntValue("confirmedIncr");
-				} else {
-					confirmedIncr = String.valueOf(results.getIntValue("confirmedIncr"));
+				if ((msg.trim().equals("cov")) || (msg.trim().equals("疫情"))) { //如果无参数(查询全球最新数据)
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"正在从丁香园获取数据,请稍候");
+					JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("http://lab.isaaclin.cn/nCoV/api/overall?latest=1"));
+					// 获取全国数据
+					JSONObject results = JSONObject.parseObject(resultJson.getString("results").replace("[", "").replace("]", ""));
+					// 累计确诊人数
+					int confirmedCount = results.getIntValue("confirmedCount");
+					// 累计确诊人数变化量
+					String confirmedIncr;
+					// 添加正负号
+					if (results.getIntValue("confirmedIncr") > 0) {
+						confirmedIncr = "+" + results.getIntValue("confirmedIncr");
+					} else {
+						confirmedIncr = String.valueOf(results.getIntValue("confirmedIncr"));
+					}
+					// 疑似感染人数
+					int suspectedCount = results.getIntValue("suspectedCount");
+					// 疑似感染人数变化量
+					String suspectedIncr;
+					// 添加正负号
+					if (results.getIntValue("suspectedIncr") > 0) {
+						suspectedIncr = "+" + results.getIntValue("suspectedIncr");
+					} else {
+						suspectedIncr = String.valueOf(results.getIntValue("suspectedIncr"));
+					}
+					// 治愈人数
+					int curedCount = results.getIntValue("curedCount");
+					// 治愈人数变化量
+					String curedIncr;
+					// 添加正负号
+					if (results.getIntValue("curedIncr") > 0) {
+						curedIncr = "+" + results.getIntValue("curedIncr");
+					} else {
+						curedIncr = String.valueOf(results.getIntValue("curedIncr"));
+					}
+					// 死亡人数
+					int deadCount = results.getIntValue("deadCount");
+					// 死亡人数变化量
+					String deadIncr;
+					// 添加正负号
+					if (results.getIntValue("deadIncr") > 0) {
+						deadIncr = "+" + results.getIntValue("deadIncr");
+					} else {
+						deadIncr = String.valueOf(results.getIntValue("deadIncr"));
+					}
+					// 数据更新时间
+					Calendar updateCalendar = Calendar.getInstance();
+					updateCalendar.setTime(new Date(results.getLongValue("updateTime")));
+					String updateTime = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(updateCalendar.getTime());
+					// 定义数据字符串
+					StringBuilder resultBuilder = new StringBuilder()
+							.append(Global.FriendlyName).append("\n")
+							.append("全球新冠肺炎疫情实时数据\n")
+							.append("数据更新于").append(updateTime).append("\n")
+							.append("累计确诊病例:").append(confirmedCount).append("(").append(confirmedIncr).append(")").append("\n")
+							.append("疑似病例:").append(suspectedCount).append("(").append(suspectedIncr).append(")").append("\n")
+							.append("已治愈出院病例:").append(curedCount).append("(").append(curedIncr).append(")").append("\n")
+							.append("死亡病例:").append(deadCount).append("(").append(deadIncr).append(")");
+					CQ.sendGroupMsg(groupId, resultBuilder.toString());
 				}
-				// 疑似感染人数
-				int suspectedCount = results.getIntValue("suspectedCount");
-				// 疑似感染人数变化量
-				String suspectedIncr;
-				// 添加正负号
-				if (results.getIntValue("suspectedIncr") > 0) {
-					suspectedIncr = "+" + results.getIntValue("suspectedIncr");
-				} else {
-					suspectedIncr = String.valueOf(results.getIntValue("suspectedIncr"));
-				}
-				// 治愈人数
-				int curedCount = results.getIntValue("curedCount");
-				// 治愈人数变化量
-				String curedIncr;
-				// 添加正负号
-				if (results.getIntValue("curedIncr") > 0) {
-					curedIncr = "+" + results.getIntValue("curedIncr");
-				} else {
-					curedIncr = String.valueOf(results.getIntValue("curedIncr"));
-				}
-				// 死亡人数
-				int deadCount = results.getIntValue("deadCount");
-				// 死亡人数变化量
-				String deadIncr;
-				// 添加正负号
-				if (results.getIntValue("deadIncr") > 0) {
-					deadIncr = "+" + results.getIntValue("deadIncr");
-				} else {
-					deadIncr = String.valueOf(results.getIntValue("deadIncr"));
-				}
-				// 数据更新时间
-				Calendar updateCalendar = Calendar.getInstance();
-				updateCalendar.setTime(new Date(results.getLongValue("updateTime")));
-				String updateTime = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(updateCalendar.getTime());
-				// 定义数据字符串
-				StringBuilder resultBuilder = new StringBuilder()
-						.append(Global.FriendlyName).append("\n")
-						.append("全国新冠肺炎疫情实时数据\n")
-						.append("数据更新于").append(updateTime).append("\n")
-						.append("累计确诊病例:").append(confirmedCount).append("(").append(confirmedIncr).append(")").append("\n")
-						.append("疑似病例:").append(suspectedCount).append("(").append(suspectedIncr).append(")").append("\n")
-						.append("已治愈出院病例:").append(curedCount).append("(").append(curedIncr).append(")").append("\n")
-						.append("死亡病例:").append(deadCount).append("(").append(deadIncr).append(")");
-				CQ.sendGroupMsg(groupId, resultBuilder.toString());
-			}
-			else { //如果有参数
-				String[] argStr = msg.split(" ", 2); //获取参数数组(msg内容: "cov [参数]")
-				String province = argStr[1].trim();
-				if (!province.endsWith("省")) { //如果省份名最后没有 省 字
-					province += "省";
-				}
-				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-						"正在从丁香园获取数据,请稍候");
-				JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("http://lab.isaaclin.cn/nCoV/api/area?latest=1&province=" + province));
-				if (resultJson.toJSONString().equals("{\"results\": [], \"success\": true}")) { //如果JSON字符串是{"results": [], "success": true}(根本就是获取失败好吧!!)
-					CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
-							"获取数据失败,请检查您输入的省份名是否正确");
-				} else {
+				else { //如果有参数
+					String[] argStr = msg.split(" ", 2); //获取参数数组(msg内容: "cov [参数]")
+					String province = argStr[1].trim();
+					if (!province.endsWith("省")) { //如果省份名最后没有 省 字
+						switch (province)
+						{
+						case "新疆":
+						case "新疆自治区":
+						case "新疆维吾尔自治区":
+							province = "新疆维吾尔自治区";
+							break;
+						case "宁夏":
+						case "宁夏自治区":
+						case "宁夏回族自治区":
+							province = "宁夏回族自治区";
+							break;
+						case "广西":
+						case "广西自治区":
+						case "广西壮族自治区":
+							province = "广西壮族自治区";
+							break;
+						case "西藏":
+						case "西藏自治区":
+							province = "西藏自治区";
+							break;
+						case "内蒙古":
+						case "内蒙古自治区":
+							province = "内蒙古自治区";
+							break;
+						case "北京":
+						case "北京市":
+							province = "北京市";
+							break;
+						case "天津":
+						case "天津市":
+							province = "天津市";
+							break;
+						case "上海":
+						case "上海市":
+							province = "上海市";
+							break;
+						case "重庆":
+						case "重庆市":
+							province = "重庆市";
+							break;
+						default:
+							province += "省";
+							break;
+						}
+					}
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+							"正在从丁香园获取数据,请稍候");
+					JSONObject resultJson = JSONObject.parseObject(JsonHelper.loadJson("http://lab.isaaclin.cn/nCoV/api/area?latest=1&province=" + province));
+					if (resultJson.toJSONString().equals("{\"results\": [], \"success\": true}")) { //如果JSON字符串是{"results": [], "success": true}(根本就是获取失败好吧!!)
+						CQ.sendGroupMsg(groupId,Global.FriendlyName + "\n" + 
+								"获取数据失败,请检查您输入的省份名是否正确");
+					} else {
 						// 获取对应省份的数据
-					System.out.println();
+						System.out.println();
 						JSONObject results = JSONObject.parseObject(resultJson.getString("results").replace("[", "").replace("]", ""));
 						// 累计确诊人数
 						int confirmedCount = results.getIntValue("confirmedCount");
@@ -1287,8 +1445,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								.append("已治愈出院病例:").append(curedCount).append("\n")
 								.append("死亡病例:").append(deadCount);
 						CQ.sendGroupMsg(groupId, resultBuilder.toString());
+					}
 				}
-			}
 			} catch (IndexOutOfBoundsException e) {
 				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 						"详细信息:\n" +
@@ -1312,56 +1470,215 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				return; //返回
 			}
 		}
-
 		/**
-		 * 功能4-2:Bilibili实时粉丝数据
-		 * @param CQ CQ实例
-		 * @param groupId 消息来源群号
-		 * @param qqId 消息来源QQ号
-		 * @param msg 消息内容
+		 * 功能4-2:Bilibili相关功能
+		 * @author 御坂12456
+		 *
 		 */
-		public static void Func4_2(CoolQ CQ,long groupId,long qqId,String msg)
+		static class Part4_2
 		{
-			try {
-				String arg2 = msg.split(" ", 2)[1].trim();
-				if (CommonHelper.isInteger(arg2)) {
-					JSONObject nameAndLevel = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/space/acc/info?mid=" + arg2 + "&jsonp=jsonp"));
-					if (nameAndLevel.getIntValue("code") == -404) { //UID不存在
-						CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-								"您输入的UID不存在,请重新输入");
-					} else { //UID存在
-						JSONObject fansAndOthers = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/relation/stat?vmid=" + arg2 + "&jsonp=jsonp")).getJSONObject("data");
-						String nickName = nameAndLevel.getJSONObject("data").getString("name"); //昵称
-						String level = "Lv" + nameAndLevel.getJSONObject("data").getIntValue("level"); //等级
-						int fans = fansAndOthers.getIntValue("follower"); //粉丝数
-						StringBuilder fansResult = new StringBuilder(Global.FriendlyName).append("\n")
-								.append("Bilibili实时粉丝数据\n")
-								.append("UP主:").append(nickName).append("(").append(level).append(")").append("\n")
-								.append("UID:").append(arg2).append("\n")
-								.append("粉丝数:").append(fans);
-						CQ.sendGroupMsg(groupId, fansResult.toString());
+
+			public static void Func4_2_main(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					String[] arguments = msg.split(" "); //获取参数（格式类似于"bf 2"）
+					String arg1 = arguments[0].toLowerCase(); //获取第1个参数（下标为0）（类似于"bf"）
+					switch (arg1)
+					{
+					case "bf":
+						Func4_2_1(CQ, groupId, qqId, msg);
+						return;
+					case "bavid":
+						Func_4_2_2(CQ, groupId, qqId, msg);
+						return;
+					default:
+						return;
 					}
-				} else {
-					throw new NumberFormatException("Wrong bilibili user id!");
 				}
-			} catch (NumberFormatException e) {
-				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
-						"您输入的UID不合法,请重新输入");
-			}catch (IndexOutOfBoundsException e) {
-				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
-						"您输入的指令格式有误,请重新输入\n" + 
-						"格式:!bf [UID]\n" + 
-						"如:!bf 2");
-			} catch (Exception e) {
-				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
-						"获取失败(" + e.getClass().getName() + ")");
-				CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
-						"详细信息:\n" +
-						ExceptionHelper.getStackTrace(e));
-			} finally {
-				return; //返回
+				catch (Exception e) { //指令格式错误
+					return;
+				}
 			}
+
+			/**
+			 * 功能4-2-1:Bilibili实时粉丝数据
+			 * @param CQ CQ实例
+			 * @param groupId 消息来源群号
+			 * @param qqId 消息来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func4_2_1(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					String arg2 = msg.split(" ", 2)[1].trim();
+					if (CommonHelper.isInteger(arg2)) {
+						JSONObject nameAndLevel = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/space/acc/info?mid=" + arg2 + "&jsonp=jsonp"));
+						if (nameAndLevel.getIntValue("code") == -404) { //UID不存在
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
+									"您输入的UID不存在,请重新输入");
+						} else { //UID存在
+							JSONObject fansAndOthers = JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/relation/stat?vmid=" + arg2 + "&jsonp=jsonp")).getJSONObject("data");
+							String nickName = nameAndLevel.getJSONObject("data").getString("name"); //昵称
+							String level = "Lv" + nameAndLevel.getJSONObject("data").getIntValue("level"); //等级
+							int fans = fansAndOthers.getIntValue("follower"); //粉丝数
+							StringBuilder fansResult = new StringBuilder(Global.FriendlyName).append("\n")
+									.append("Bilibili实时粉丝数据\n")
+									.append("UP主:").append(nickName).append("(").append(level).append(")").append("\n")
+									.append("UID:").append(arg2).append("\n")
+									.append("粉丝数:").append(fans);
+							CQ.sendGroupMsg(groupId, fansResult.toString());
+						}
+					} else {
+						throw new NumberFormatException("Wrong bilibili user id!");
+					}
+				} catch (NumberFormatException e) {
+					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+							"您输入的UID不合法,请重新输入");
+				}catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+							"您输入的指令格式有误,请重新输入\n" + 
+							"格式:!bf [UID]\n" + 
+							"如:!bf 2");
+				} catch (Exception e) {
+					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+							"获取失败(" + e.getClass().getName() + ")");
+					CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+							"详细信息:\n" +
+							ExceptionHelper.getStackTrace(e));
+				} finally {
+					return; //返回
+				}
+			}
+			/**
+			 * 功能4-2-2:Bilibili BV号与AV号互转
+			 * @param CQ CQ实例
+			 * @param groupId 消息来源群号
+			 * @param qqId 消息来源QQ号
+			 * @param msg 消息内容
+			 */
+			public static void Func_4_2_2(CoolQ CQ,long groupId,long qqId,String msg)
+			{
+				try {
+					String arg2 = msg.split(" ", 2)[1].trim();
+					if (arg2.toLowerCase().contains("bv")) { //如果是bv号链接(bv转av)
+						String bvid = ""; //定义bv号
+						if (arg2.contains("BV")) { //如果是大写的BV
+							bvid = arg2.split("BV", 2)[1].split("&", 2)[0].split("/",2)[0]; //获取bv号(原理见下)
+							/*  原理:
+							 * 1.链接格式通常为https://b23.tv/BVa1b2C3D4/p1&xxxxxxxx
+							 * 2.按"BV"分隔字符串，得到返回数组下标1的值为"a1b2C3D4/p1&xxxxxxxx"
+							 * 3.按"&"再次分隔字符串，得到返回数组下标0的值为"a1b2C3D4/p1"
+							 * 4.按"/"再次分隔，得到"a1b2C3D4"
+							 * 小写bv和大小写av号同理
+							 */
+						} else if (arg2.contains("bv")) { //如果是小写的bv
+							bvid = arg2.split("bv", 2)[1].split("&", 2)[0].split("/",2)[0]; //获取bv号
+						} else {
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+									"您输入的视频链接格式不正确,请重新输入");
+							return;
+						}
+						JSONObject cidJsonObject = 
+								JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/player/pagelist?bvid=" + bvid + "&jsonp=jsonp"));
+						//获取包含cid的Json字符串
+						if (cidJsonObject.getIntValue("code") == 0) { //成功(0)
+							JSONArray videoParts = cidJsonObject.getJSONArray("data"); //获取"data"JSON数组
+							long cid = Long.parseLong(videoParts.getJSONObject(0).getString("cid")); //获取视频分P1的cid
+							Thread.sleep(50); //暂停50ms线程(防止被B站检测到连续使用api然后导致ip被暂时封禁)
+							JSONObject aidJsonObject = 
+									JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/web-interface/view?cid=" + cid + "&bvid=" + bvid));
+							//获取包含aid(av号)的Json字符串
+							if (aidJsonObject.getIntValue("code") == 0) { //成功(0)
+								JSONObject videoDetailParts = aidJsonObject.getJSONObject("data"); //获取"data"JSON数组
+								long aid = Long.parseLong(videoDetailParts.getString("aid")); //获取视频的av号(aid)
+								String title = videoDetailParts.getString("title"); //获取主视频标题("title")
+								String description = videoDetailParts.getString("desc").replace("\r\n", "\n"); //获取主视频简介("desc",即description)
+								String albumPic =videoDetailParts.getString("pic"); //获取视频封面图片URL
+								JSONObject owner = videoDetailParts.getJSONObject("owner"); //获取"owner"JSON对象
+								long upUID = owner.getLongValue("mid"); //获取UP主的UID("mid")
+								String upName = owner.getString("name"); //获取UP主的昵称("name")
+								StringBuilder convertResult = new StringBuilder(FriendlyName).append("\n")
+										.append("Bilibili BV转AV号结果\n")
+										.append("标题:").append(title).append("\n")
+										.append("视频bv号:").append("BV").append(bvid).append("\n")
+										.append("视频av号:").append("av").append(aid).append("\n")
+										.append("UP主:").append(upName).append("(").append(upUID).append(")"); //定义返回信息
+								String convertCardResult = new CQCode().share("https://www.bilibili.com/" + bvid, title, description,albumPic); //定义返回的卡片信息
+								int result = CQ.sendGroupMsg(groupId, convertResult.toString()); //发送返回信息
+								if (result >= 0 ) { //如果发送成功(返回值大于等于0)
+									CQ.sendGroupMsg(groupId, convertCardResult); //发送卡片信息
+								}
+								return;
+							} else { //失败
+								CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+										"转换失败(" + aidJsonObject.getIntValue("code") + ")");
+							}
+						} else { //失败
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+									"转换失败(" + cidJsonObject.getIntValue("code") + ")");
+						}
+					} else if (arg2.toLowerCase().contains("av")) { //如果是av号链接(av转bv)
+						String aid = ""; //定义av号
+						if (arg2.contains("AV")) { //如果是大写的AV
+							aid = arg2.split("AV", 2)[1].split("&", 2)[0].split("/",2)[0]; //获取av号
+						} else if (arg2.contains("av")) { //如果是小写的av
+							aid = arg2.split("av", 2)[1].split("&", 2)[0].split("/",2)[0]; //获取av号
+						} else {
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+									"您输入的视频链接格式不正确,请重新输入");
+							return;
+						}
+						JSONObject bvidJsonObject = 
+								JSONObject.parseObject(JsonHelper.loadJson("https://api.bilibili.com/x/web-interface/view?aid=" + aid));
+						//获取包含aid(av号)的Json字符串
+						if (bvidJsonObject.getIntValue("code") == 0) { //成功(0)
+							JSONObject videoDetailParts = bvidJsonObject.getJSONObject("data"); //获取"data"JSON数组
+							String bvid =videoDetailParts.getString("bvid"); //获取视频的av号(aid)
+							String title = videoDetailParts.getString("title"); //获取主视频标题("title")
+							String description = videoDetailParts.getString("desc").replace("\r\n", "\n"); //获取主视频简介("desc",即description)
+							String albumPic = videoDetailParts.getString("pic"); //获取视频封面图片URL
+							JSONObject owner = videoDetailParts.getJSONObject("owner"); //获取"owner"JSON对象
+							long upUID = owner.getLongValue("mid"); //获取UP主的UID("mid")
+							String upName = owner.getString("name"); //获取UP主的昵称("name")
+							StringBuilder convertResult = new StringBuilder(FriendlyName).append("\n")
+									.append("Bilibili AV转BV号结果\n")
+									.append("标题:").append(title).append("\n")
+									.append("视频bv号:").append(bvid).append("\n")
+									.append("视频av号:").append("av").append(aid).append("\n")
+									.append("UP主:").append(upName).append("(").append(upUID).append(")"); //定义返回信息
+							String convertCardResult = new CQCode().share("https://www.bilibili.com/" + bvid, title, description, albumPic); //定义返回的卡片信息
+							int result = CQ.sendGroupMsg(groupId, convertResult.toString()); //发送返回信息
+							if (result >= 0 ) { //如果发送成功(返回值大于等于0)
+								CQ.sendGroupMsg(groupId, convertCardResult); //发送卡片信息
+							}
+							return;
+						} else {
+							CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+									"您输入的视频链接格式不正确,请重新输入");
+						}
+					} else {
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+								"您输入的视频链接格式不正确,请重新输入");
+					}
+				}catch (IndexOutOfBoundsException e) {
+					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+							"您输入的指令格式有误,请重新输入\n" + 
+							"格式:!bavid [视频链接]\n" + 
+							"如:!bavid https://www.bilibili.com/av2");
+				} catch (Exception e) {
+					CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n" + 
+							"获取失败(" + e.getClass().getName() + ")");
+					CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+							"详细信息:\n" +
+							ExceptionHelper.getStackTrace(e));
+				} finally {
+					return; //返回
+				}
+			}
+
 		}
+
+
 	}
 	/**
 	 * 其它功能（注意与"特殊模块"区分开）
@@ -1379,19 +1696,19 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 */
 		public static void FuncO_About(CoolQ CQ,long groupId,long qqId,String msg)
 		{
-			// 创建"关于"字符串生成器（可变字符串）对象
-			StringBuilder aboutStrBuilder = new StringBuilder();
-			/*
-			 * "关于"内容:
-			 * 123 SduBotR
-			 * 版本 [版本]
-			 * 当前登录账号:[昵称]([QQ])
-			 */
-			aboutStrBuilder.append("123 SduBotR\n")
-			.append("版本 ").append(Global.Version).append("\n")
-			.append("当前登录账号:").append(CQ.getLoginNick()).append("(").append(String.valueOf(CQ.getLoginQQ())).append(")");
-			// 发送消息
-			CQ.sendGroupMsg(groupId, aboutStrBuilder.toString());
+			try {
+				String result = PicsGenerateUtility.getAboutPic();
+				if ((result == null) || (result.equals(""))) {
+					CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+					return;
+				}  else { //其它（返回的是文件路径）
+					CQImage image = new CQImage(new File(result)); // 获取图片CQ码并发送
+					CQ.sendGroupMsg(groupId, new CQCode().image(image)); //发送图片消息
+					new File(result).delete();
+				}
+			} catch (Exception e) {
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+			}
 			return;
 		}
 		/**
@@ -1404,30 +1721,37 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		 */
 		public static void FuncO_Menu(CoolQ CQ,long groupId,long qqId,String msg)
 		{
-			int result = CQ.sendPrivateMsg(qqId, menuStr); //私聊发送功能菜单
-			switch (result) //判断功能菜单发送结果
-			{
-			case -36: //群主禁止临时会话
-				CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
-						"群主设置禁止临时会话了……去https://github.com/Misaka12456/123SduBotR/blob/master/README.md看菜单吧(501:-36)");
-				break;
-			case -35: //权限不足，可能解除了与对方的好友关系
-				CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-						"bot被屏蔽了呀……怎么发功能菜单啊QAQ(500:-35)");
-				break;
-			case -30: //消息被服务器拒绝
-				CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
-						"TX拒绝了bot发送消息的请求……我也没办法啊(500:-30)");
-				break;
-			default: //其它情况
-				if (String.valueOf(result).startsWith("-")) { //发送消息失败，未知原因
-					CQ.sendGroupMsg(groupId, FriendlyName + "\n" +
-							"TX又炸了，功能发不出去orz(500:" + String.valueOf(result) + ")");
+			try {
+				if (msg.split(" ",2).length == 2) {
+					String funcNo = msg.split(" ",2)[1];
+					String result = ""; //定义返回的图片路径变量
+					if (!funcNo.equals("")) { //如果主功能序号参数存在
+						result = PicsGenerateUtility.getMenuPic(funcNo);
+						if ((result == null) || (result.equals(""))) {
+							CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
+							return;
+						} else { //其它（返回的是文件路径）
+							CQImage image = new CQImage(new File(result)); // 获取图片CQ码并发送
+							CQ.sendGroupMsg(groupId, new CQCode().image(image)); //发送图片消息
+							new File(result).delete();
+							return;
+						}
+					} else { //如果主功能序号参数不存在
+						String resultPath = PicsGenerateUtility.getMainMenuPic();
+						CQImage image = new CQImage(new File(resultPath)); // 获取图片CQ码并发送
+						CQ.sendGroupMsg(groupId, new CQCode().image(image)); //发送图片消息
+						new File(resultPath).delete();
+						return;
+					}
 				} else {
-				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-						"功能菜单已发送至私聊(若接收不到请尝试重新发送指令)");
+					String resultPath = PicsGenerateUtility.getMainMenuPic();
+					CQImage image = new CQImage(new File(resultPath)); // 获取图片CQ码并发送
+					CQ.sendGroupMsg(groupId, new CQCode().image(image)); //发送图片消息
+					new File(resultPath).delete();
+					return;
 				}
-				break;
+			} catch (Exception e) {
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败");
 			}
 			return;
 		}
@@ -1487,7 +1811,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						File abusedFile = new File(Global.appDirectory + "/protect/group/abuse/" + groupId + "/" + qqId + ".abused");
 						// 定义读取到的文件中的验证码
 						String realOtp = IOHelper.ReadToEnd(otpFile);
-						if (inputOtp.equals(realOtp)) { //如果验证码输入正确
+						if (inputOtp.toLowerCase().equals(realOtp)) { //如果验证码输入正确
 							if (otpFile.exists()) otpFile.delete(); //删除验证码文件(.unlocking)
 							if (usingFile.exists()) usingFile.delete(); //删除执行中标志文件(.using)
 							if (abusedFile.exists()) abusedFile.delete(); //删除已滥用标志文件(.abused)
@@ -1508,7 +1832,14 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						ExceptionHelper.getStackTrace(e));
 			}
 		}
-	
+		/**
+		 * 功能O-4:反馈
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源成员QQ号
+		 * @param msg 消息内容
+		 * @author 御坂12456
+		 */
 		public static void FuncO_Report(CoolQ CQ,long groupId,long qqId,String msg)
 		{
 			try {
@@ -1602,7 +1933,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			System.gc(); //执行垃圾收集器
 			return;
 		}
-	
-		
+
+
 	}
 }
