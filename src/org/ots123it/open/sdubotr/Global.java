@@ -14,14 +14,8 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.TimerTask;
 import java.util.regex.Pattern;
@@ -38,7 +32,6 @@ import org.ots123it.jhlper.UserInterfaceHelper;
 import org.ots123it.jhlper.ZipFileHelper;
 import org.ots123it.jhlper.util.LinkedHashTable;
 import org.ots123it.jhlper.UserInterfaceHelper.MsgBoxButtons;
-import org.ots123it.open.sdubotr.Utils.ListFileHelper;
 
 /**
  * 
@@ -68,7 +61,7 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.5.0-Test";
+	public final static String Version = "0.5.0";
 	/**
 	 * 发布版本编号（从1开始）
 	 */

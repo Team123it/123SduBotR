@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.naming.OperationNotSupportedException;
+import javax.swing.JOptionPane;
 
 import org.meowy.cqp.jcq.entity.CoolQ;
+import org.ots123it.jhlper.CommonHelper;
 import org.ots123it.jhlper.DBHelper;
 import org.ots123it.jhlper.ExceptionHelper;
 import org.ots123it.jhlper.IOHelper;
@@ -22,7 +24,6 @@ import org.ots123it.jhlper.UserInterfaceHelper.MsgBoxButtons;
 import org.ots123it.jhlper.UserInterfaceHelper.confirmingBoxButtons;
 import org.ots123it.open.sdubotr.Global.GlobalDatabases;
 
-import sun.util.resources.cldr.fr.CalendarData_fr_CF;
 
 import static org.ots123it.jhlper.DBHelper.*;
 import static org.ots123it.open.sdubotr.Global.AppName;
@@ -47,28 +48,42 @@ public class Initialization
 	public static int NormalStart(CoolQ CQ,String appDirectory) throws FileNotFoundException, NullPointerException,SQLException,OperationNotSupportedException
 	{
 		CQ.logInfo(Global.AppName, "获取应用数据目录成功:\n" + "设置目录:" + appDirectory);
-		  // [start] 初始化数据库DBHelper实例并打开数据库(同时检查数据库完整性)
-		  dbsystem_syssettings = new DBHelper(appDirectory + "/data/system/syssettings.db",
-					 SQLite, "SQLite");
-		  dbgroup_custom = new DBHelper(appDirectory + "/data/group/custom.db", SQLite , "SQLite");
-		  dbgroup_list = new DBHelper(appDirectory + "/data/group/list.db", SQLite, "SQLite");
-		  dbgroup_ranking_speaking = new DBHelper(appDirectory + "/data/group/ranking/speaking.db",SQLite,"SQLite");
-		  dbsystem_syssettings.Open();
-		  dbgroup_custom.Open();
-		  dbgroup_list.Open();
-		  dbgroup_ranking_speaking.Open();
-		  checkDbIntegrity(CQ, appDirectory);
-		  // [end]
         if(!(new File(appDirectory + "/firstopen.stat")).exists()) //若无firstopen.stat文件（即首次打开）
         {
         	CQ.logInfo(Global.AppName, "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
-        	Initialize(CQ); //调用初始化方法
+        	Initialize(CQ,appDirectory); //调用初始化方法
+         // [start] 初始化数据库DBHelper实例并打开数据库(同时检查数据库完整性)
+ 		  dbsystem_syssettings = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/system/syssettings.db",
+ 					 SQLite, "SQLite");
+ 		  dbgroup_custom = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/custom.db", SQLite , "SQLite");
+ 		  dbgroup_list = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/list.db", SQLite, "SQLite");
+ 		  dbgroup_ranking_speaking = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/ranking/speaking.db",SQLite,"SQLite");
+ 		  dbsystem_syssettings.Open();
+ 		  dbgroup_custom.Open();
+ 		  dbgroup_list.Open();
+ 		  dbgroup_ranking_speaking.Open();
+ 		  checkDbIntegrity(CQ, appDirectory);
+ 		  // [end]
         	ResultSet sysSettingsSet = GlobalDatabases.dbsystem_syssettings.executeQuery("SELECT Value FROM Common WHERE Name='MasterQQ'");
-        	Global.masterQQ = sysSettingsSet.getLong("MasterQQ");
+        	Global.masterQQ = Long.parseLong(sysSettingsSet.getString("Value"));
         	CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" +
         				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，可以正常使用了\n");
         	return 0;
-        } else { //存在firstopen.stat文件（非首次打开）
+        } else { //存在firstopen.stat文件（非首次打开） 
+      		// [start] 初始化数据库DBHelper实例并打开数据库(同时检查数据库完整性)
+    		  dbsystem_syssettings = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/system/syssettings.db",
+   					 SQLite, "SQLite");
+   		  dbgroup_custom = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/custom.db", SQLite , "SQLite");
+   		  dbgroup_list = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/list.db", SQLite, "SQLite");
+   		  dbgroup_ranking_speaking = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/ranking/speaking.db",SQLite,"SQLite");
+   		  dbsystem_syssettings.Open();
+   		  dbgroup_custom.Open();
+   		  dbgroup_list.Open();
+   		  dbgroup_ranking_speaking.Open();
+   		  checkDbIntegrity(CQ, appDirectory);
+   		  // [end]
+           	ResultSet sysSettingsSet = GlobalDatabases.dbsystem_syssettings.executeQuery("SELECT Value FROM Common WHERE Name='MasterQQ'");
+           	Global.masterQQ = Long.parseLong(sysSettingsSet.getString("Value"));
         	// [start] 机器人文件夹检测
       		if (!(new File(appDirectory + "/data/pics")).exists()) {
       			CQ.logFatal(Global.AppName, "读取图片信息文件数据失败\n请删除数据目录下的firstopen.stat然后重启酷Q以初始化图片信息文件");
@@ -144,7 +159,7 @@ public class Initialization
 	}
 	
 	
-	public static void Initialize(CoolQ CQ)
+	public static void Initialize(CoolQ CQ,String appDirectory)
 	{
 		try {
 			// 初始化准备:删除数据目录所有文件夹
@@ -194,11 +209,27 @@ public class Initialization
 					IOHelper.extractFileFromJar(Global.class, 
 							  "/data/databases/group/group_list.db", new File(Global.appDirectory + "/group/list.db"));
 					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/group/group_list.db_shm", new File(Global.appDirectory + "/group/list.db_shm"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/group/group_list.db_wal", new File(Global.appDirectory + "/group/list.db_wal"));
+					IOHelper.extractFileFromJar(Global.class, 
 							  "/data/databases/group/group_custom.db", new File(Global.appDirectory + "/group/custom.db"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/group/group_custom.db_shm", new File(Global.appDirectory + "/group/custom.db_shm"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/group/group_custom.db_wal", new File(Global.appDirectory + "/group/custom.db_wal"));
 					IOHelper.extractFileFromJar(Global.class, 
 							  "/data/databases/group/ranking/group_ranking_speaking.db", new File(Global.appDirectory + "/group/ranking/speaking.db"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/system/system_syssettings..db", new File(Global.appDirectory + "/system/syssettings.db"));
+							  "/data/databases/group/ranking/group_ranking_speaking.db_shm", new File(Global.appDirectory + "/group/ranking/speaking.db_shm"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/group/ranking/group_ranking_speaking.db_wal", new File(Global.appDirectory + "/group/ranking/speaking.db_wal"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/system/system_syssettings.db", new File(Global.appDirectory + "/system/syssettings.db"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/system/system_syssettings.db_shm", new File(Global.appDirectory + "/system/syssettings.db_shm"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/system/system_syssettings.db_wal", new File(Global.appDirectory + "/system/syssettings.db_wal"));
 					
 			// [end]
 			// [start] 初始化图片文件数据
@@ -210,6 +241,7 @@ public class Initialization
 			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/2.png").toURI());
 			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/3.png").toURI());
 			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/4.png").toURI());
+			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/5.png").toURI());
 			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/menu/o.png").toURI());
 			// 获取关于图片URL
 			picsUrls.add(Global.class.getClass().getResource("/data/pictures/GroupMsgPics/about.png").toURI());
@@ -234,6 +266,18 @@ public class Initialization
 			if (!announcement.exists()) { //如果公告文件不存在
 				announcement.createNewFile(); //创建公告文件
 				CQ.logDebug(AppName, "初始化:建立文件:" + announcement.toString());
+			}
+			while (true) {
+				 String inputMasterQQ = JOptionPane.showInputDialog(null, "请设置bot主人的QQ号,设置后不可更改", AppName, JOptionPane.INFORMATION_MESSAGE);
+				 if ((inputMasterQQ != null) && (!inputMasterQQ.isEmpty()) && (!CommonHelper.isInteger(inputMasterQQ))) { //如果输入的是有效数字
+					 DBHelper db_tempSystem = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/system/syssettings.db",
+		   					 SQLite, "SQLite");
+					 db_tempSystem.executeNonQuerySync("INSERT OR REPLACE INTO Common ('Name','Value') VALUES ('MasterQQ','" + inputMasterQQ + "');");
+					 /* 执行插入或更新语句
+					  * INSERT OR REPLACE INTO Common ('Name','Value') VALUES ('MasterQQ','[inputMasterQQ]');
+					  */
+					 break;
+				 }
 			}
 			CQ.logInfo(Global.AppName, "初始化完成");
 		} catch (IOException e) {

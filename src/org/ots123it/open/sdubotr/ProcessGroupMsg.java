@@ -40,7 +40,6 @@ import org.ots123it.jhlper.ExceptionHelper;
 import org.ots123it.jhlper.IOHelper;
 import org.ots123it.jhlper.JsonHelper;
 import org.ots123it.jhlper.OTPHelper;
-import org.ots123it.jhlper.util.LinkedHashTable;
 import org.ots123it.open.sdubotr.picModeUtils.PicsGenerateUtility;
 
 import com.alibaba.fastjson.JSONArray;
@@ -78,13 +77,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			// 获取今日日期（格式:yyyyMMdd)
 			Date todayDate = Calendar.getInstance().getTime();
 			String today = new SimpleDateFormat("yyyyMMdd").format(todayDate).split(" ",2)[0];
-			ResultSet thisGroupAllDaysSet = GlobalDatabases.dbgroup_list.
-					  executeQuery("SELECT COUNT(*) FROM sqlite_master WHERE type='table' and name='" + String.valueOf(groupId) + ":" + today + "';");
+			ResultSet thisGroupAllDaysSet = GlobalDatabases.dbgroup_ranking_speaking.
+					  executeQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + String.valueOf(groupId) + ":" + today + "';");
 			/* 获取当前表名为"[当前群群号]:[今日日期]"的数据表的表名列表
 			 * SELECT name FROM sqlite_master WHERE type='table' and name='[groupId]:[today]';
 			 */
 			if (thisGroupAllDaysSet.next() == false) { //如果当前群今日排行榜不存在（功能3-1）
-				 GlobalDatabases.dbgroup_list.
+				 GlobalDatabases.dbgroup_ranking_speaking.
 				 executeNonQuerySync("CREATE TABLE '" + String.valueOf(groupId) + ":" + today + 
 							"' (QQId INTEGER PRIMARY KEY NOT NULL ON CONFLICT FAIL UNIQUE ON CONFLICT REPLACE," + 
 							" SpeakTime INTEGER NOT NULL ON CONFLICT FAIL UNIQUE ON CONFLICT REPLACE);");
@@ -98,13 +97,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			 *	);
 			 */
 			}
-			ResultSet thisGroupDayPerson = GlobalDatabases.dbgroup_list.
+			ResultSet thisGroupDayPerson = GlobalDatabases.dbgroup_ranking_speaking.
 					  executeQuery("SELECT SpeakTime FROM '" + String.valueOf(groupId) + ":" + today + "' WHERE QQId=" + qqId + ";");
 			/* 获取今日当前群当前成员的发言次数行数据
 			 * SELECT SpeakTime FROM '[groupId]:[today]' WHERE QQId=[qqId];
 			 */
 			if (thisGroupDayPerson.next() == false) { //如果该成员今日还未发过言(无该成员今日发言数据)
-				GlobalDatabases.dbgroup_list.
+				GlobalDatabases.dbgroup_ranking_speaking.
 						 executeNonQuerySync("INSERT OR REPLACE INTO '" + String.valueOf(groupId) + ":" + today + "' ('QQId','SpeakTime') VALUES " + 
 						 "(" + String.valueOf(qqId) + ",1);");
 				/* 添加该成员今日发言数据(次数为1)
@@ -113,7 +112,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		   } else { //如果该成员今日发过言了
 				int currentSpeakTimes = thisGroupDayPerson.getInt("SpeakTime"); //获取当前发言次数
 				currentSpeakTimes++; //发言次数+1
-				GlobalDatabases.dbgroup_list.
+				GlobalDatabases.dbgroup_ranking_speaking.
 						 executeNonQuerySync("INSERT OR REPLACE INTO '" + String.valueOf(groupId) + ":" + today + "' ('QQId','SpeakTime') VALUES " + 
 						 "(" + String.valueOf(qqId) + "," + currentSpeakTimes + ");");
 				/* 更新该成员今日发言数据 
@@ -211,7 +210,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				/* 主功能5:娱乐功能 */
 				case "gm": // 主功能5:娱乐功能
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
- 				   Part4.Func4_2(CQ, groupId, qqId, msg);
+ 				   Part5.Func5_Main(CQ, groupId, qqId, msg);
 				   new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 				   break;
 			   /* 其它功能 */
@@ -2271,6 +2270,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 							Games.Game5_1(CQ, groupId, qqId, msg);
 							break;
 						case "list": //游戏列表
+							 Func5_GameList(CQ, groupId, qqId, msg);
+							 break;
 						default: //不存在的黑名单参数2
 							throw new IndexOutOfBoundsException("Unknown Func5(Games) Argument 2:" + arg2);
 						}
@@ -2378,7 +2379,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 													.append("现在你在 F:\\Universe\\Network\\Programs\\Unused\\1275\\1495.iso.\n")
 													.append("过了一会你发现你现在所在的位置并不是DVD镜像文件,而是一个实实在在的文件夹.\n")
 													.append("这个文件夹没受保护!你可以直接前往上级目录。\n")
-													.append("输入 '!gm 1 parent' 尝试进入上一级目录。")
+													.append("输入 '!gm 1 next' 尝试进入上一级目录。")
 													.toString());
 											break;
 											// [end]
@@ -2399,9 +2400,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 													.append("与此同时,这里还有一个提示牌.\n")
 													.append("输入 '!gm 1 parent' 尝试进入上一级目录。\n")
 													.append("输入 '!gm 1 sign' 查看提示牌内容。\n")
-													.append("注意:你只有10秒的时间!")
+													.append("注意:你只有20秒的时间!")
 													.toString());
-											Thread.sleep(10000);
+											Thread.sleep(20000);
 											if (IOHelper.ReadToEnd(thisGroupProgressFile).equals("3")) {
 												IOHelper.DeleteAllFiles(new File(Global.appDirectory + "/group/games/1/" + groupId));
 												CQ.sendGroupMsg(groupId, new StringBuilder(FriendlyName).append("\n")
@@ -2450,8 +2451,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 													.append("然而,这里有一个病毒 WannaCrypt0r v4.1 正在你背后晃悠.\n")
 													.append("你必须回答几个问题来增加自己逃跑的速度从而逃出这个病毒的魔掌.\n")
 													.append("输入 '!gm 1 parent' 尝试逃进上一级目录。\n")
-													.append("你只有30秒的时间.").toString());
-											Thread.sleep(30000);
+													.append("你只有60秒的时间.").toString());
+											Thread.sleep(60000);
 											if (IOHelper.ReadToEnd(thisGroupProgressFile).equals("6")) {
 												IOHelper.DeleteAllFiles(new File(Global.appDirectory + "/group/games/1/" + groupId));
 												CQ.sendGroupMsg(groupId, new StringBuilder(FriendlyName).append("\n")
@@ -2520,10 +2521,10 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 													.append("000.exe苏醒了!\n")
 													.append("他将会把整个计算机给破坏个一干二净!\n")
 													.append("你急需援助才能阻止他的行为!\n")
-													.append("你 只 有 3 分 钟.\n")
+													.append("你 只 有 2 0 0 秒.\n")
 													.append("输入 'gm 1 next' 继续.")
 													.toString());
-											Thread.sleep(180000);
+											Thread.sleep(200000);
 											if (!new File(Global.appDirectory + "/group/games/1/" + groupId).exists()) {
 												return;
 											}
@@ -2681,11 +2682,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 														CQ.sendGroupMsg(groupId, new StringBuilder(FriendlyName).append("\n")
 																.append("回答正确!")
 																.append("问题 3/3: 下列代码的执行结果是什么?\n")
-																.append("String test = \"[CQ:face,id=178][CQ:emoji,id=128166]emmm...\";\n")
-																.append("String outstr = test.replaceAll(\"\\\\[CQ:(face|emoji),id=\\\\d{1,}\\\\]?\", \"Hi!\");\n")
+																.append("String test = \"&#91;CQ:face,id=178&#93;&#91;CQ:emoji,id=128166&#93;emmm...\";\n")
+																.append("String outstr = test.replaceAll(\"&#91;CQ:(face|emoji),id=\\d{1,}&#93;?\",\"Hi!\");\n")
 																.append("System.out.println(outstr);\n")
 																.append("输入 '!gm 1 ans [你的答案]' 回答问题.")
 																.toString());
+														break;
 													case "Hi!emmm...":
 														IOHelper.WriteStr(Global.appDirectory + "/group/games/1/" + groupId + "/progress.txt", 
 																Long.toString(Long.valueOf(progress) + 1));

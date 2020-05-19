@@ -6,10 +6,7 @@ import org.meowy.cqp.jcq.message.CQCode;
 import org.ots123it.jhlper.CommonHelper;
 import org.ots123it.jhlper.DBHelper;
 import org.ots123it.jhlper.ExceptionHelper;
-import org.ots123it.jhlper.IOHelper;
 import org.ots123it.open.sdubotr.Global;
-import org.ots123it.open.sdubotr.Utils.ListFileException;
-import org.ots123it.open.sdubotr.Utils.ListFileHelper;
 
 import static org.ots123it.open.sdubotr.Global.*;
 import static org.ots123it.open.sdubotr.Global.GlobalDatabases.*;
