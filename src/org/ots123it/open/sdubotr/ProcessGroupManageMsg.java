@@ -21,6 +21,7 @@ import org.meowy.cqp.jcq.entity.IRequest;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
 import org.ots123it.jhlper.ExceptionHelper;
+import org.ots123it.jhlper.IOHelper;
 import org.ots123it.open.sdubotr.Global;
 import org.ots123it.open.sdubotr.Utils.*;
 /**
@@ -35,6 +36,8 @@ import org.ots123it.open.sdubotr.Utils.*;
 @SuppressWarnings("deprecation")
 public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IMsg,IRequest
 {
+	 
+	public static boolean cleaning = false;
 	/**
 	 * 主调用处理方法
 	 * @param CQ CQ实例，详见本类注释
@@ -68,6 +71,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 			case "bandel": //功能M-3-2:机器人黑名单删除
 				Standalone_Funcs.allBan.delBanPerson(CQ, groupId, qqId, arguments );
 				break;
+			case "clean": //功能M-4:清理垃圾文件
+				 Standalone_Funcs.cleanTrash(CQ, groupId, qqId, arguments);
+				 break;
 			default:
 				break;
 			}
@@ -386,5 +392,27 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 			}
 		}
 
+		/**
+		 * 功能M-6:垃圾清理功能
+		 * @author 御坂12456 a.k.a. Sugar 404
+		 */
+		public static void cleanTrash(CoolQ CQ,long groupId,long qqId, String msg)
+		{
+			 try {
+				  long start = System.currentTimeMillis();
+				if (cleaning) {
+					 CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n已在清理中，不要重复开启进程哦");
+				} else {
+						IOHelper.DeleteAllFiles(new File("data/image"));
+						IOHelper.DeleteAllFiles(new File("data/record"));
+						IOHelper.DeleteAllFiles(new File("data/show"));
+						long end = System.currentTimeMillis();
+						cleaning = false;
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n清理完成,共用时" + Long.toString(end - start) + "ms");
+				}
+		  } catch (Exception e) {
+				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n清理失败(" + e.getClass().getName() + ")");
+		  }
+		}
 	}
 }

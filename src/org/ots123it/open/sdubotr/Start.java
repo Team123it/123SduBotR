@@ -35,6 +35,11 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 	 */
 	public static String appDirectory;
 	public static Timer timer = new Timer(false);
+	
+	/**
+	 * 是否处于调试模式标志
+	 */
+	public static boolean isDebug = false;
     /**
      * 使用新的方式加载CQ （建议使用这种方式）
      *
@@ -63,8 +68,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
         // 要测试主类就先实例化一个主类对象
         Start test = new Start();
         // 获取当前酷Q操作对象
-        @SuppressWarnings("unused")
-		CoolQ CQ = test.getCoolQ();
+        CoolQ CQ = test.getCoolQ();
         // test.startup();// 程序运行开始 调用应用初始化方法
         // test.enable();// 程序初始化完成后，启用应用，让应用正常工作
         // [start] 123 SduBotR Debug Terminator Initialization
@@ -72,6 +76,9 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
     	System.out.println("Welcome to use 123 SduBotR Debug Terminator.");
     	System.out.println("(C)Copyright 2009-2020 123IT Corporation. All rights reserved.");
     	System.out.println("Tip:If you wants to close the terminator, input 'stop' when you need to input the group number.");
+    	isDebug = true;
+      Initialization.main(CQ, CQ.getAppDirectory());
+      Global.appDirectory = CQ.getAppDirectory();
     	Thread.sleep(2000);
     	System.out.println();
     	// [end]

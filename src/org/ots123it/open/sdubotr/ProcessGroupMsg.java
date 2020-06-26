@@ -10,7 +10,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -35,7 +40,9 @@ import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
+import org.meowy.cqp.jcq.message.CoolQCode;
 import org.ots123it.jhlper.CommonHelper;
+import org.ots123it.jhlper.DBHelper;
 import org.ots123it.jhlper.ExceptionHelper;
 import org.ots123it.jhlper.IOHelper;
 import org.ots123it.jhlper.JsonHelper;
@@ -44,6 +51,8 @@ import org.ots123it.open.sdubotr.picModeUtils.PicsGenerateUtility;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.xml.internal.ws.api.model.wsdl.editable.EditableWSDLBoundFault;
 /**
  * 123 SduBotR 群聊消息处理类<br>
  * 注意:本类中任何方法前的CQ参数请在Start类中直接用CQ即可<br>
@@ -211,6 +220,17 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				case "gm": // 主功能5:娱乐功能
 					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
  				   Part5.Func5_Main(CQ, groupId, qqId, msg);
+				   new protectAbuse().doProtAbuse(CQ, groupId, qqId);
+				   break;
+				/* 主功能6:音游相关功能 */
+				case "todaymug": //主功能6-1:今日音游推荐功能
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
+	 				  Part6.Func6_1(CQ, groupId, qqId, msg);
+				   new protectAbuse().doProtAbuse(CQ, groupId, qqId);
+				   break;
+				case "arc": //主功能6-2:韵律源点Arcaea查分功能
+					if (protectAbuse.doExeProtAbuse(CQ, groupId, qqId)) return;
+	 				Part6.Part6_2.Func6_2_Main(CQ, groupId, qqId, msg);
 				   new protectAbuse().doProtAbuse(CQ, groupId, qqId);
 				   break;
 			   /* 其它功能 */
@@ -679,9 +699,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				try {
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
-							ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+							ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 							if (thisGroupBListSet.next() == false) { //如果黑名单未开启（文件夹不存在）
-								GlobalDatabases.dbgroup_list.executeNonQuerySync("INSERT INTO BList ('GroupId') VALUES (" + groupId + "');");
+								GlobalDatabases.dbgroup_list.executeNonQuerySync("INSERT INTO BList (GroupId) VALUES (" + groupId + ");");
 								/* 执行插入语句
 								 * INSERT INTO BList ('GroupId') VALUES ([groupId]);
 								 */
@@ -727,7 +747,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				try {
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
-							ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+							ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 							if (thisGroupBListSet.next()) { //如果黑名单未关闭（表存在）
 								GlobalDatabases.dbgroup_list.executeNonQuerySync("DELETE FROM BList WHERE GroupId=" + groupId + ";");
 								CQ.sendGroupMsg(groupId,FriendlyName + "\n" + 
@@ -769,7 +789,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				try {
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
-							ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+							ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 							if (thisGroupBListSet.next()) { //如果黑名单是开启状态
 								String[] gotStr = msg.split(" ", 3)[2].trim().split(" ");
 								if (gotStr.toString().equals("[]")) { //如果要添加的人员为空
@@ -876,7 +896,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						  if (Global.isGroupAdmin(CQ, groupId, qqId)) { // 如果消息发送人员是管理组成员
 								if (Global.isGroupAdmin(CQ, groupId)) { // 如果机器人是管理组成员
 									 ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list
-												.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+												.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 									 if (thisGroupBListSet.next()) { // 如果黑名单是开启状态
 										  String[] gotStr = msg.split(" ", 3)[2].trim().split(" ");
 										  if (gotStr.equals(null)) { // 如果要移除的人员为空
@@ -966,7 +986,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
 							 ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list
-										.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+										.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 							 if (thisGroupBListSet.next()) { // 如果黑名单是开启状态
 								String page = "1";
 								if (msg.split(" ",3).length == 3) {
@@ -1051,7 +1071,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
 							 ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list
-										.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+										.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 							 if (thisGroupBListSet.next()) { // 如果黑名单是开启状态
 								boolean isNoPrompt = thisGroupBListSet.getBoolean("RefusePromptStat");
 								if (!isNoPrompt) { //如果当前为提醒状态
@@ -1110,7 +1130,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					if (Global.isGroupAdmin(CQ, groupId, qqId)){ // 如果消息发送人员是管理组成员
 						if (Global.isGroupAdmin(CQ, groupId)) { //如果机器人是管理组成员
 							 ResultSet thisGroupBListSet = GlobalDatabases.dbgroup_list
-										.executeQuery("SELECT * FROM BList WHERE GroupId='" + groupId + "';");
+										.executeQuery("SELECT * FROM BList WHERE GroupId=" + groupId + ";");
 							 if (thisGroupBListSet.next()) { // 如果黑名单是开启状态
 								boolean isExitAutoAdd = thisGroupBListSet.getBoolean("ExitAutoAddStat");
 								if (!isExitAutoAdd) { //如果当前为退群不加黑状态
@@ -1180,13 +1200,15 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		  try {
 				// 判断违禁词列表是否为空
 				ResultSet iMGBanResultSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT KeyWord FROM iMGBan");
+				
+				ArrayList<String> iMGBans = new ArrayList<String>(); //定义iMGBans数组集合
 				if(iMGBanResultSet.next() == false)
 				{
 					return;
+				} else {
+					 iMGBans.add(iMGBanResultSet.getString("KeyWord"));
 				} // 否则
 				System.gc(); //通知Java进行垃圾收集
-				ArrayList<String> iMGBans = new ArrayList<String>(); //定义iMGBans数组集合
-				iMGBanResultSet.beforeFirst(); //移动指针到开头
 				while (iMGBanResultSet.next()) { //遍历iMGBanResultSet
 					 iMGBans.add(iMGBanResultSet.getString("KeyWord")); //添加违禁关键词到iMGBans中
 				}
@@ -1292,9 +1314,14 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
               *              (SELECT PromoteAdminStr FROM Prompt WHERE GroupId = [groupId]),
               *              (SELECT CancelAdminStr FROM Prompt WHERE GroupId = [groupId]));
 				  */
-				 GlobalDatabases.dbgroup_list.executeNonQuerySync(restoreQueryStr);
-				 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-						"已恢复成默认迎新提示内容");
+				 try {
+					  GlobalDatabases.dbgroup_list.executeNonQuerySync(restoreQueryStr);
+
+						 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"已恢复成默认迎新提示内容");
+				} catch (SQLException e2) {
+					 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + "设置失败(" + e2.getClass().getName() + ")");
+				}
 			} catch (Exception e) {
 				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + "设置失败(" + e.getClass().getName() + ")");
 			}
@@ -1364,9 +1391,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				  *              (SELECT PromoteAdminStr FROM Prompt WHERE GroupId = [groupId]),
 				  *              (SELECT CancelAdminStr FROM Prompt WHERE GroupId = [groupId]));
 				  */
-				 GlobalDatabases.dbgroup_list.executeNonQuerySync(restoreQueryStr);
-				 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
-						"已恢复默认成员退群提示内容");
+				 try {
+						 GlobalDatabases.dbgroup_list.executeNonQuerySync(restoreQueryStr);
+						 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
+								"已恢复默认成员退群提示内容");
+				} catch (Exception e2) {
+					 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + "设置失败(" + e2.getClass().getName() + ")");
+				}
 			} catch (Exception e) {
 				CQ.sendGroupMsg(groupId, FriendlyName + "\n" + "设置失败(" + e.getClass().getName() + ")");
 			}
@@ -1397,7 +1428,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					String today = new SimpleDateFormat("yyyyMMdd").format(todayDate).split(" ",2)[0];
 					CQ.logDebug(Global.AppName, "今日日期:" + new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(todayDate));
 					ResultSet todaySpeakRanking = GlobalDatabases.dbgroup_ranking_speaking
-							  .executeQuery("SELECT name FROM sqlite_master WHERE type='table' and name='" + groupId + ":" + today + "';");
+							  .executeQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + groupId + ":" + today + "';");
 					/* 获取今日的群聊日发言排行榜数据表名集合
 					 * SELECT name FROM sqlite_master WHERE type='table' and name='[groupId]:[today]';
 					 */
@@ -1410,7 +1441,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						  * SELECT * FROM '[groupId]:[today]';
 						  */
 						if (todaySpeakPersonsSet.next()) { //如果今日有人发过言（数据表中有指定项）
-							todaySpeakPersonsSet.beforeFirst(); //移动指针到开头
+								todaySpeakPersons.add(String.valueOf(todaySpeakPersonsSet.getLong("QQId"))); //添加首行中的QQ号到todaySpeakPersons中
+								todaySpeakTimes.add(todaySpeakPersonsSet.getInt("SpeakTime")); //添加首行中的该QQ号发言次数到todaySpeakTimes中
 							while (todaySpeakPersonsSet.next()) { //遍历todaySpeakPersonsSet
 								todaySpeakPersons.add(String.valueOf(todaySpeakPersonsSet.getLong("QQId"))); //添加当前行中的QQ号到todaySpeakPersons中
 								todaySpeakTimes.add(todaySpeakPersonsSet.getInt("SpeakTime")); //添加当前行中的该QQ号发言次数到todaySpeakTimes中
@@ -1638,7 +1670,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								"今日本群的群聊日发言排行榜为空~");
 					}
 			} catch (Exception e) {
-				// TODO: handle exception
+				CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+				CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败(" + e.getClass().getName() + ")");
 		  }
 		}
 		/**
@@ -2766,6 +2799,1315 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 		  
 		  
 	}
+
+	/**
+	 * 主功能6:音游相关功能
+	 * @since 0.5.1
+	 * @author 御坂12456
+	 *
+	 */
+	static class Part6{
+		 
+		/**
+		 * 功能6-1:音游推荐
+		 * @param CQ CQ实例，详见本大类注释
+		 * @param groupId 消息来源群号
+		 * @param qqId 消息来源成员QQ号
+		 * @param msg 消息内容
+		 * @see ProcessGroupMsg
+		 * @author 御坂12456
+		 */
+		 public static void Func6_1(CoolQ CQ,long groupId,long qqId,String msg)
+		 {
+				try {
+					 DBHelper mugsHelper = new DBHelper(CQ.getAppDirectory() + "/group/mug/mugs.db", DBHelper.SQLite,"SQLite");
+					 mugsHelper.Open();
+					 ResultSet mugsListSet = mugsHelper.executeQuery("SELECT * FROM muglist ORDER BY RANDOM() limit 1;");
+					 String mugName,mugFriendlyName;
+					 StringBuilder recommendMugStr = new StringBuilder(FriendlyName).append("\n").append("推荐音游:");
+					 mugsListSet.next();
+					 mugName = mugsListSet.getString("Name");
+					 mugFriendlyName = mugsListSet.getString("FriendlyName");
+					 recommendMugStr.append(mugName);
+					 if (mugFriendlyName != null) {
+						  recommendMugStr.append("(").append(mugFriendlyName).append(")");
+					 }
+					 CQ.sendGroupMsg(groupId, recommendMugStr.toString());
+				} catch (Exception e) {
+					 CQ.sendGroupMsg(groupId, FriendlyName + "\n获取失败(" + e.getClass().getName() + ")");
+						CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
+								"详细信息:\n" +
+								ExceptionHelper.getStackTrace(e));
+				}
+		 }
+		 
+		 /**
+		  * 功能6-2:Arcaea查分相关功能
+		  * @author 御坂12456 vs TheSnowfield
+		  *
+		  */
+		 static class Part6_2{
+			  public static void Func6_2_Main(CoolQ CQ,long groupId,long qqId,String msg)
+			  {
+					try {
+					 String[] arguments = msg.trim().split(" ");
+					 String arg2 = arguments[1];
+					 switch (arg2.toLowerCase())
+					 {
+					 case "bind": //功能6-2-1:绑定Arc账号
+						  Func6_2_1(CQ, groupId, qqId, msg);
+						  break;
+					 case "info": //功能6-2-2:查询最近成绩
+						  Func6_2_2(CQ,groupId,qqId,msg);
+						  break;
+					 case "b30": //功能6-2-3:查询Best30地板
+						  Func6_2_3(CQ, groupId, qqId, msg);
+						  break;
+					 case "connect": //功能6-2-4:查询连接密码
+						  Func6_2_4(CQ, groupId, qqId, msg);
+						  break;
+					 case "help": //功能6-2-Help:查看功能6-2完整帮助
+						  Func6_2_Help(CQ, groupId, qqId, msg);
+						  break;
+					 default: //功能6-2-2:查询最近成绩
+							 switch (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg))
+							 {
+							 case 1: case 2:
+									 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc [bind|info|b30|connect|help]");
+									 break;
+								default:
+									 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc [bind|info|b30|help]");
+							 }						  
+							 break;
+					 }
+				} catch (Exception e) {
+					 if (msg.trim().toLowerCase().equals("arc")) {
+						  Func6_2_2(CQ, groupId, qqId, msg);
+					 } else {
+							 switch (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg))
+							 {
+							 case 1: case 2:
+									 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc [bind|info|b30|connect|help]");
+									 break;
+								default:
+									 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc [bind|info|b30|help]");
+							 }
+					 }
+				}
+			 }
+			 /**
+			  * 功能6-2-1:绑定Arc账号
+			  * @param CQ CQ实例，详见本大类注释
+			  * @param groupId 消息来源群号
+			  * @param qqId 消息来源成员QQ号
+			  * @param msg 消息内容
+			  * @see ProcessGroupMsg
+			  * @author 御坂12456
+			  */
+			 public static void Func6_2_1(CoolQ CQ,long groupId,long qqId,String msg)
+				{
+					 try {
+						  if (checkDependency(CQ)) { //如果依赖项已安装
+								String[] arguments = msg.split(" ");
+								String arg3 = arguments[2]; //获取参数3(玩家id)
+								if (CommonHelper.isInteger(arg3)) { // 如果玩家id参数是数字
+									 StringBuilder playerIdBuilder = new StringBuilder("http://127.0.0.1:61666/v2/userinfo?usercode=")
+												.append(arg3);
+									 String result = JsonHelper.loadJson(playerIdBuilder.toString());
+									 JSONObject resultObject = JSONObject.parseObject(result);
+									 int status = resultObject.getIntValue("status");
+									 switch (status)
+									 {
+									 case 0:
+										  String name = resultObject.getJSONObject("content").getString("name");
+										  Global.GlobalDatabases.dbgroup_mug_arcaea.executeNonQuerySync("INSERT OR REPLACE INTO Players ('QQId','Aid') VALUES ('" + qqId + "','" + arg3 + "');");
+										  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "绑定成功:" + name);
+										  break;
+									 case -1: //Invalid Usercode
+											 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "输入的玩家id不正确,应为9位数字id(暂不支持昵称反查id功能),如000000001");
+											 break;
+									 default:
+											 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "绑定失败，未知错误(" + status + ")");
+											 break;
+									 }
+								} else {
+									 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "输入的玩家id不正确,应为9位数字id(暂不支持昵称反查id功能),如000000001");
+								}
+						  } else {
+								CQ.logError(AppName,
+										  "尝试执行Func6_2_1时出错: 'BotArcApi' 未运行" + "\n" + "缺少必需的依赖项: Node.js (路径"
+													 + CQ.getAppDirectory() + "system\\dependency\\nodejs)" + "\n"
+													 + "请使用123SduBotR Installer安装依赖项后重启Bot程序.");
+								CQ.sendGroupMsg(groupId,
+											 FriendlyName + "\n" + new CQCode().at(qqId) + " 绑定失败(Internal:Require dependency: Node.js)");
+						  }
+					 } catch (SocketTimeoutException e) {
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_1时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n" + new CQCode().at(qqId) + " 绑定失败(Internal:BotArcApi isn't running)");
+					 } catch (IOException e) {
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_1时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n" + new CQCode().at(qqId) + " 绑定失败(Internal:BotArcApi isn't running)");
+					 } catch (IndexOutOfBoundsException e) {
+						  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "指令格式不正确,格式:!arc bind [玩家9位数字id]"); 
+					 } catch (Exception e) {
+						  CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+						  CQ.sendGroupMsg(groupId,
+									 FriendlyName + "\n" + new CQCode().at(qqId) + " 绑定失败(" + e.getClass().getName() + ")");
+					 }
+				}
+		
+
+			 /**
+			  * 功能6-2-2:查询最近成绩
+			  * @param CQ CQ实例，详见本大类注释
+			  * @param groupId 消息来源群号
+			  * @param qqId 消息来源成员QQ号
+			  * @param msg 消息内容
+			  * @see ProcessGroupMsg
+			  * @author 御坂12456
+			  */
+			 public static void Func6_2_2(CoolQ CQ,long groupId,long qqId,String msg)
+			 {
+					 try {
+						  if (checkDependency(CQ)) { //如果依赖项已安装
+								ResultSet playerSet = GlobalDatabases.dbgroup_mug_arcaea.executeQuery("SELECT Aid FROM Players WHERE QQId=" + qqId + ";");
+								if (playerSet.next()) {
+									 int playerId = playerSet.getInt("Aid");
+									 StringBuilder playerIdBuilder = new StringBuilder("http://127.0.0.1:61666/v2/userinfo?usercode=")
+												.append(playerId).append("&recent=true");
+									 String result = JsonHelper.loadJson(playerIdBuilder.toString());
+									 JSONObject resultObject = JSONObject.parseObject(result);
+									 int status = resultObject.getIntValue("status");
+									 switch (status)
+									 {
+									 case 0:
+										  int argsCount = msg.trim().split(" ").length;
+										  if (argsCount > 2) { //玩家查询的不是最近游玩成绩而是指定的曲目及难度的最好游玩成绩
+												JSONObject singleSongResultObject = null;
+												if ((msg.toLowerCase().contains("ftr")) | (msg.toLowerCase().contains("future"))
+															 | (msg.toLowerCase().contains("byn")) | (msg.toLowerCase().contains("byd")) | (msg.toLowerCase().contains("beyond"))
+															 | (msg.toLowerCase().contains("prs")) | (msg.toLowerCase().contains("present"))
+															 | (msg.toLowerCase().contains("pst")) | (msg.toLowerCase().contains("past"))) { //玩家指定了要查询的曲目的难度
+													 String songDiff;
+													 if ((msg.toLowerCase().contains("ftr")) | (msg.toLowerCase().contains("future"))) {
+														  songDiff = "2";
+														  msg = msg.toLowerCase().replace("ftr","").replace("future", "");
+													 } else if ((msg.toLowerCase().contains("byn")) | (msg.toLowerCase().contains("byd")) | (msg.toLowerCase().contains("beyond"))) {
+														  songDiff = "3";
+														  msg = msg.toLowerCase().replace("byn","").replace("byd", "").replace("beyond", "");
+													 } else if ((msg.toLowerCase().contains("prs")) | (msg.toLowerCase().contains("present")))
+													 {
+														  songDiff = "1";
+														  msg = msg.toLowerCase().replace("prs","").replace("present", "");
+													 } else if ((msg.toLowerCase().contains("pst")) | (msg.toLowerCase().contains("past"))) {
+														  songDiff = "0";
+														  msg = msg.toLowerCase().replace("pst","").replace("past", "");
+													 } else {
+														  songDiff = "2";
+													 }
+													 String songName = msg.split(" ",3)[2];
+													 String singleSongresult = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest?usercode=" + playerId 
+																+ "&songname=" + URLEncoder.encode(songName) + "&difficulty=" + songDiff);
+													 singleSongResultObject = JSONObject.parseObject(singleSongresult);
+												} else { //玩家没有指定难度(默认Future)
+													 String songName = msg.split(" ",3)[2];
+													 String singleSongresult = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest?usercode=" + playerId 
+																+ "&songname=" + URLEncoder.encode(songName)  + "&difficulty=2");
+													 singleSongResultObject = JSONObject.parseObject(singleSongresult);
+												}
+												int status1 = singleSongResultObject.getIntValue("status");
+												switch (status1)
+												{
+												case 0: //Everything is OK
+														String name = resultObject.getJSONObject("content").getString("name"); //玩家昵称
+														double potential = resultObject.getJSONObject("content").getBigDecimal("rating").divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); //玩家潜力值
+														JSONObject selectedScore = singleSongResultObject.getJSONObject("content");
+														String selected_songid = selectedScore.getString("song_id");
+														String selected_songname;
+														String selected_difficulty = "[";
+														switch (selectedScore.getIntValue("difficulty"))
+														{
+														case 0:
+															 selected_difficulty += "Past ";
+															 break;
+														case 1:
+															 selected_difficulty += "Present ";
+															 break;
+														case 2:
+															 selected_difficulty += "Future ";
+															 break;
+														case 3:
+															 selected_difficulty += "Beyond ";
+															 break;
+														}
+														int selected_bigpure = selectedScore.getIntValue("shiny_perfect_count");
+														int selected_pure = selectedScore.getIntValue("perfect_count");
+														int selected_far = selectedScore.getIntValue("near_count"); 
+														int selected_lost = selectedScore.getIntValue("miss_count");
+														String selected_cleartype = ""; //成绩回忆条类型(评级:PM/FR/HC/NC/EC/TL)
+														switch (selectedScore.getIntValue("clear_type"))
+														{
+														case 0: //Track Lost
+															 selected_cleartype = "L";
+															 break;
+														case 4: //Easy Clear
+															 selected_cleartype = "EC";
+															 break;
+														case 1: //Normal Clear
+															 selected_cleartype = "NC";
+															 break;
+														case 5: //Hard Clear
+															 selected_cleartype = "HC";
+															 break;
+														case 2: //Full Recall
+															 selected_cleartype = "F";
+															 break;
+														case 3: //Pure Memory
+															 selected_cleartype = "P";
+															 break;
+														default:
+															 break;
+														}
+														Date selected_timeplayed_date = new Date(selectedScore.getLongValue("time_played")); //游玩日期时间
+														Calendar selected_timeplayed = Calendar.getInstance();
+														selected_timeplayed.setTime(selected_timeplayed_date);
+														int selected_diffrating = 0; //曲目难度定级
+														BigDecimal selected_rating_bigdec = new BigDecimal(selectedScore.getString("rating")); //实际潜力值
+														double selected_rating = selected_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); //实际潜力值(四舍五入保留两位小数)
+														String selected_level = ""; //成绩评级(EX+/EX/AA/A/B/C/D)
+														long selected_score = selectedScore.getLongValue("score"); //成绩得分(如10001540)
+														if (selected_score >= 9900000) { //EX+评级(990w+)
+															 selected_level = "EX+";
+														} else if ((selected_score >= 9800000) & (selected_score < 9900000)) { //EX评级(980w-9899999)
+															 selected_level = "EX";
+														} else if ((selected_score >= 9500000) & (selected_score < 9800000)) { //AA评级(950w-9799999)
+															 selected_level = "AA";
+														} else if ((selected_score >= 9200000) & (selected_score < 9500000)) { //A评级(920w-9499999)
+															 selected_level = "A";
+														} else if ((selected_score >= 8900000) & (selected_score < 9200000)) { //B评级(890w-9199999)
+															 selected_level = "B";
+														} else if ((selected_score >= 8600000) & (selected_score < 8900000)) { //C评级(860w-8899999)
+															 selected_level = "C";
+														} else if (selected_score < 8600000) { //D评级(8599999-)
+															 selected_level = "D";
+														}
+														String songdetails = JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + selected_songid);
+														JSONObject songDetailsObject = JSONObject.parseObject(songdetails);
+														selected_songname = songDetailsObject.getJSONObject("content").getJSONObject("title_localized").getString("en");
+														switch (selectedScore.getIntValue("difficulty"))
+														{
+														case 0: //Past
+															 selected_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(0).getIntValue("rating");
+															 selected_difficulty = selected_difficulty + selected_diffrating;
+																	if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(0).containsKey("ratingPlus")) {
+																	 selected_difficulty = selected_difficulty +  "+";
+																}
+															 break;
+														case 1: //Present
+															 selected_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(1).getIntValue("rating");
+															 selected_difficulty = selected_difficulty + selected_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(1).containsKey("ratingPlus")) {
+																	 selected_difficulty = selected_difficulty +  "+";
+																}
+															 break;
+														case 2: //Future
+															 selected_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(2).getIntValue("rating");
+															 selected_difficulty = selected_difficulty + selected_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(2).containsKey("ratingPlus")) {
+																	 selected_difficulty = selected_difficulty +  "+";
+																}
+															 break;
+														case 3: //Beyond
+															 selected_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(3).getIntValue("rating");
+															 selected_difficulty = selected_difficulty + selected_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(3).containsKey("ratingPlus")) {
+																	 selected_difficulty = selected_difficulty +  "+";
+																}
+															 break;
+														default:
+															 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "查询失败，未知错误(" + status + ")");
+															 break;
+														}
+														selected_difficulty += "]";
+														/* 指定曲目最佳成绩相关变量
+														 * name 玩家昵称
+														 * potential 玩家潜力值
+														 * selected_songname 游玩曲目名
+														 * selected_difficulty 难度名(如Beyond 11)
+														 * selected_cleartype 回忆条类型(PM/FR/HC/NC/EC/TL)
+														 * selected_level 成绩评级(EX+/EX/AA/A/B/C/D)
+														 * selected_score 成绩分数
+														 * selected_bigpure 大P数
+														 * selected_pure P数
+														 * selected_far F数
+														 * selected_lost L数
+														 * selected_timeplayed 游玩日期时间
+														 * selected_rating 实际游玩定数(保留两位小数)
+														 */
+														StringBuilder selectedStr = new StringBuilder(FriendlyName).append("\n")
+																  .append("Arcaea - 最佳游玩成绩\n")
+																  .append("用户名: ").append(name).append(" (").append(potential).append(")\n")
+																  .append("曲名: ").append(selected_songname).append(" ").append(selected_difficulty).append("\n")
+																  .append("分数: ").append(selected_score).append(" ").append("(").append(selected_level).append("/").append(selected_cleartype).append(")\n")
+																  .append("Pure: ").append(selected_pure).append(" (+").append(selected_bigpure).append(")\n")
+																  .append("Far: ").append(selected_far).append("\n")
+																  .append("Lost: ").append(selected_lost).append("\n")
+																  .append("Potential: ").append(selected_rating).append("\n")
+																  .append("Time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(selected_timeplayed.getTime()));
+													 CQ.sendGroupMsg(groupId, selectedStr.toString());
+														break;
+												case -1: //Invalid Usercode
+													 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "绑定的账号无效,请使用!arc bind [玩家id]重新绑定");
+													 break;
+												case -2: //Invalid Songname
+													 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "未找到对应曲目信息,请检查曲目名称输入是否正确");
+													 break;
+												case -3:
+												case -4: //Invalid Song Difficulty
+													  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "未找到对应难度信息,请检查难度是否键入正确(支持的难度名:Past/Present/Future/Beyond)");
+													 break;
+												case -5: //The song isnot recorded in the database
+													 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "未找到对应曲目信息,可能暂未收录进数据库");
+													 break;
+												case -8: //The song has no Beyond level
+													  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "该曲目不存在Beyond难度");
+													 break;
+												case -14: //Not played yet
+													  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "您还没有游玩过这个难度呢");
+													 break;
+												default: //Other Error
+													 break;
+												}
+										  } else {
+												  if (result.contains("recent_score")) { //如果存在最近游玩成绩
+														String name = resultObject.getJSONObject("content").getString("name"); //玩家昵称
+														double potential = resultObject.getJSONObject("content").getBigDecimal("rating").divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); //玩家潜力值
+														JSONObject recentScore = resultObject.getJSONObject("content").getJSONObject("recent_score"); //最近游玩成绩
+														String recent_songid = recentScore.getString("song_id"); //最近游玩曲目id
+														String recent_songname; //最近游玩曲目名
+														String recent_difficulty = "["; //最近游玩曲目难度
+														switch (recentScore.getIntValue("difficulty"))
+														{
+														case 0:
+															 recent_difficulty += "Past ";
+															 break;
+														case 1:
+															 recent_difficulty += "Present ";
+															 break;
+														case 2:
+															 recent_difficulty += "Future ";
+															 break;
+														case 3:
+															 recent_difficulty += "Beyond ";
+															 break;
+														}
+														int recent_bigpure = recentScore.getIntValue("shiny_perfect_count"); //最近游玩成绩大P数
+														int recent_pure = recentScore.getIntValue("perfect_count"); //最近游玩成绩Pure数
+														int recent_far = recentScore.getIntValue("near_count"); //最近游玩成绩Far数
+														int recent_lost = recentScore.getIntValue("miss_count"); //最近游玩成绩Lost数
+														String recent_cleartype = ""; //最近游玩成绩回忆条类型(评级:PM/FR/HC/NC/EC/TL)
+														switch (recentScore.getIntValue("clear_type"))
+														{
+														case 0: //Track Lost
+															 recent_cleartype = "L";
+															 break;
+														case 4: //Easy Clear
+															 recent_cleartype = "EC";
+															 break;
+														case 1: //Normal Clear
+															 recent_cleartype = "NC";
+															 break;
+														case 5: //Hard Clear
+															 recent_cleartype = "HC";
+															 break;
+														case 2: //Full Recall
+															 recent_cleartype = "F";
+															 break;
+														case 3: //Pure Memory
+															 recent_cleartype = "P";
+															 break;
+														default:
+															 break;
+														}
+														Date recent_timeplayed_date = new Date(recentScore.getLongValue("time_played")); //最近游玩日期时间
+														Calendar recent_timeplayed = Calendar.getInstance();
+														recent_timeplayed.setTime(recent_timeplayed_date);
+														int recent_diffrating = 0; //最近游玩曲目难度定级
+														BigDecimal recent_rating_bigdec = new BigDecimal(recentScore.getString("rating")); //最近游玩成绩实际潜力值
+														double recent_rating = recent_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); //最近游玩成绩实际潜力值(四舍五入保留两位小数)
+														String recent_level = ""; //最近游玩成绩评级(EX+/EX/AA/A/B/C/D)
+														long recent_score = recentScore.getLongValue("score"); //最近游玩成绩得分(如10001540)
+														if (recent_score >= 9900000) { //EX+评级(990w+)
+															 recent_level = "EX+";
+														} else if ((recent_score >= 9800000) & (recent_score < 9900000)) { //EX评级(980w-9899999)
+															 recent_level = "EX";
+														} else if ((recent_score >= 9500000) & (recent_score < 9800000)) { //AA评级(950w-9799999)
+															 recent_level = "AA";
+														} else if ((recent_score >= 9200000) & (recent_score < 9500000)) { //A评级(920w-9499999)
+															 recent_level = "A";
+														} else if ((recent_score >= 8900000) & (recent_score < 9200000)) { //B评级(890w-9199999)
+															 recent_level = "B";
+														} else if ((recent_score >= 8600000) & (recent_score < 8900000)) { //C评级(860w-8899999)
+															 recent_level = "C";
+														} else if (recent_score < 8600000) { //D评级(8599999-)
+															 recent_level = "D";
+														}
+														String songdetails = JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + recent_songid);
+														JSONObject songDetailsObject = JSONObject.parseObject(songdetails);
+														recent_songname = songDetailsObject.getJSONObject("content").getJSONObject("title_localized").getString("en");
+														switch (recentScore.getIntValue("difficulty"))
+														{
+														case 0: //Past
+															 recent_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(0).getIntValue("rating");
+																recent_difficulty = recent_difficulty + recent_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(0).containsKey("ratingPlus")) {
+																	 recent_difficulty = recent_difficulty +  "+";
+																}
+																break;
+														case 1: //Present
+															 recent_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(1).getIntValue("rating");
+															 recent_difficulty = recent_difficulty + recent_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(1).containsKey("ratingPlus")) {
+																	 recent_difficulty = recent_difficulty +  "+";
+																}
+															 break;
+														case 2: //Future
+															 recent_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(2).getIntValue("rating");
+															 recent_difficulty = recent_difficulty + recent_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(2).containsKey("ratingPlus")) {
+																	 recent_difficulty = recent_difficulty +  "+";
+																}
+															 break;
+														case 3: //Beyond
+															 recent_diffrating = songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(3).getIntValue("rating");
+															 recent_difficulty = recent_difficulty + recent_diffrating;
+																if (songDetailsObject.getJSONObject("content").getJSONArray("difficulties").getJSONObject(3).containsKey("ratingPlus")) {
+																	 recent_difficulty = recent_difficulty +  "+";
+																}
+															 break;
+														default:
+															 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "查询失败，未知错误(" + status + ")");
+															 break;
+														}
+														recent_difficulty = recent_difficulty + "]";
+														/* 最近成绩相关变量
+														 * name 玩家昵称
+														 * potential 玩家潜力值
+														 * recent_songname 最近游玩曲目名
+														 * recent_difficulty 难度名(如Beyond 11)
+														 * recent_cleartype 回忆条类型(PM/FR/HC/NC/EC/TL)
+														 * recent_level 成绩评级(EX+/EX/AA/A/B/C/D)
+														 * recent_score 成绩分数
+														 * recent_bigpure 大P数
+														 * recent_pure P数
+														 * recent_far F数
+														 * recent_lost L数
+														 * recent_timeplayed 游玩日期时间
+														 * recent_rating 实际游玩定数(保留两位小数)
+														 */
+														StringBuilder recentStr = new StringBuilder(FriendlyName).append("\n")
+																  .append("Arcaea - 最近游玩成绩\n")
+																  .append("用户名: ").append(name).append("(").append(potential).append(")\n")
+																  .append("曲名: ").append(recent_songname).append(" ").append(recent_difficulty).append("\n")
+																  .append("分数: ").append(recent_score).append(" ").append("(").append(recent_level).append("/").append(recent_cleartype).append(")\n")
+																  .append("Pure: ").append(recent_pure).append(" (+").append(recent_bigpure).append(")\n")
+																  .append("Far: ").append(recent_far).append("\n")
+																  .append("Lost: ").append(recent_lost).append("\n")
+																  .append("Potential: ").append(recent_rating).append("\n")
+																  .append("Time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(recent_timeplayed.getTime()));
+														/* 示例
+														 * 【123 SduBotR 1.0.0】
+														 * Arcaea - 最近游玩成绩
+														 * 用户名: Misaka12456 (11.07)
+														 * 曲名: Maze No.9 (Future 8)
+														 * 分数: 10000841
+														 * Pure: 841 (+841)
+														 * Far: 0
+														 * Lost: 0
+														 * Potential: 10.90
+														 * Time: 2020-05-01 15:26:24
+														 */
+														CQ.sendGroupMsg(groupId, recentStr.toString());
+														Part6_2EasterEgg.Func6_2_UnlockConnect(CQ, groupId, recent_songid, recent_diffrating
+																  ,recentScore.getIntValue("clear_type"), recent_bigpure, null);
+												  } else {
+														 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "您还没有游玩过任何一个曲目呢!");
+												  }
+										  }
+										  break;
+									 case -1:
+										  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "绑定的账号无效,请使用!arc bind [玩家id]重新绑定");
+									 default:
+											 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "查询失败，未知错误(" + status + ")");
+											 break;
+									 }
+								} else {
+									 CQ.sendGroupMsg(groupId,
+												 FriendlyName + "\n" + new CQCode().at(qqId) + "您还未绑定您的Arcaea帐号,请使用!arc bind [玩家9位数字id]进行绑定");
+								}
+						  } else {
+								CQ.logError(AppName,
+										  "尝试执行Func6_2_2时出错: 'BotArcApi' 未运行" + "\n" + "缺少必需的依赖项: Node.js (路径"
+													 + CQ.getAppDirectory() + "system\\dependency\\nodejs)" + "\n"
+													 + "请使用123SduBotR Installer安装依赖项后重启Bot程序.");
+								CQ.sendGroupMsg(groupId,
+											 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(Internal:Require dependency: Node.js)");
+						  }
+					 } catch (SocketTimeoutException e) {
+						  e.printStackTrace();
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_2时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(Internal:BotArcApi isn't running)");
+					 } catch (IOException e) {
+						  e.printStackTrace();
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_2时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(Internal:BotArcApi isn't running)");
+					 } catch (IndexOutOfBoundsException e) {
+						  e.printStackTrace();
+						  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "指令格式不正确,格式:!arc info {曲名}"); 
+					 } catch (Exception e) {
+						  CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+						  CQ.sendGroupMsg(groupId,
+									 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(" + e.getClass().getName() + ")");
+					 }
+				}
+
+			 /**
+			  * 功能6-2-3:查询Best30地板
+			  * @param CQ CQ实例，详见本大类注释
+			  * @param groupId 消息来源群号
+			  * @param qqId 消息来源成员QQ号
+			  * @param msg 消息内容
+			  * @see ProcessGroupMsg
+			  * @author 御坂12456
+			  */
+			 public static void Func6_2_3(CoolQ CQ,long groupId,long qqId,String msg)
+			 {
+
+					 try {
+						  if (checkDependency(CQ)) { //如果依赖项已安装
+								ResultSet playerSet = GlobalDatabases.dbgroup_mug_arcaea.executeQuery("SELECT Aid FROM Players WHERE QQId=" + qqId + ";");
+								if (playerSet.next()) {
+									 int playerId = playerSet.getInt("Aid");
+									 String result = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest30?usercode=" + playerId); //获取B30数据
+									 JSONObject b30Object = JSONObject.parseObject(result);
+									 int status = b30Object.getIntValue("status");
+									 switch (status)
+									 {
+									 case 0:
+										  double b30_avg = b30Object.getJSONObject("content").getDoubleValue("best30_avg"); //B30平均值
+										  double r10_avg = b30Object.getJSONObject("content").getDoubleValue("recent10_avg"); //R10平均值
+										  JSONArray b30_list = b30Object.getJSONObject("content").getJSONArray("best30_list"); //B30列表
+										  int b30_lastcount = b30_list.size() - 1; //B30最后一项编号
+										  int b30_floorStartCount = b30_lastcount - 4; //B30地板第一项编号
+										  if (b30_floorStartCount < 0) {
+												CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "您的Best30数据不完整,请先游玩几首曲目后再尝试执行查询操作.");
+										  } else {
+												// [start] B30Floor1
+												BigDecimal b30Floor1_rating_bigdec = new BigDecimal( b30_list.getJSONObject(b30_floorStartCount).getString("rating")); 
+												double b30Floor1_rating = b30Floor1_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); 
+												String b30Floor1_songid = b30_list.getJSONObject(b30_floorStartCount).getString("song_id");
+												String b30Floor1_difficulty = "";
+												switch (b30_list.getJSONObject(b30_floorStartCount).getIntValue("difficulty"))
+												{
+												case 0: //Past
+													 b30Floor1_difficulty = "[PST]";
+													 break;
+												case 1: //Present
+													 b30Floor1_difficulty = "[PRS]";
+													 break;
+												case 2: //Future
+													 b30Floor1_difficulty = "[FTR]";
+													 break;
+												case 3: //Beyond
+													 b30Floor1_difficulty = "[BYD]";
+													 break;
+												}
+												long b30Floor1_score = b30_list.getJSONObject(b30_floorStartCount).getLongValue("score");
+												String b30Floor1_level = "";
+												if (b30Floor1_score >= 9900000) { //EX+评级(990w+)
+													 b30Floor1_level = "EX+";
+												} else if ((b30Floor1_score >= 9800000) & (b30Floor1_score < 9900000)) { //EX评级(980w-9899999)
+													 b30Floor1_level = "EX";
+												} else if ((b30Floor1_score >= 9500000) & (b30Floor1_score < 9800000)) { //AA评级(950w-9799999)
+													 b30Floor1_level = "AA";
+												} else if ((b30Floor1_score >= 9200000) & (b30Floor1_score < 9500000)) { //A评级(920w-9499999)
+													 b30Floor1_level = "A";
+												} else if ((b30Floor1_score >= 8900000) & (b30Floor1_score < 9200000)) { //B评级(890w-9199999)
+													 b30Floor1_level = "B";
+												} else if ((b30Floor1_score >= 8600000) & (b30Floor1_score < 8900000)) { //C评级(860w-8899999)
+													 b30Floor1_level = "C";
+												} else if (b30Floor1_score < 8600000) { //D评级(8599999-)
+													 b30Floor1_level = "D";
+												}
+												String b30Floor1_clearType = ""; 
+												switch (b30_list.getJSONObject(b30_floorStartCount).getIntValue("clear_type"))
+												{
+												case 0: //Track Lost
+													 b30Floor1_clearType = "L";
+													 break;
+												case 4: //Easy Clear
+													 b30Floor1_clearType = "EC";
+													 break;
+												case 1: //Normal Clear
+													 b30Floor1_clearType = "NC";
+													 break;
+												case 5: //Hard Clear
+													 b30Floor1_clearType = "HC";
+													 break;
+												case 2: //Full Recall
+													 b30Floor1_clearType = "F";
+													 break;
+												case 3: //Pure Memory
+													 b30Floor1_clearType = "P";
+													 break;
+												default:
+													 break;
+												}
+												int b30Floor1_far = b30_list.getJSONObject(b30_floorStartCount).getIntValue("near_count");
+												int b30Floor1_lost = b30_list.getJSONObject(b30_floorStartCount).getIntValue("miss_count");
+												// [end]
+												// [start] B30Floor2
+												BigDecimal b30Floor2_rating_bigdec = new BigDecimal( b30_list.getJSONObject(b30_floorStartCount + 1).getString("rating")); 
+												double b30Floor2_rating = b30Floor2_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); 
+												String b30Floor2_songid = b30_list.getJSONObject(b30_floorStartCount + 1).getString("song_id");
+												String b30Floor2_difficulty = "";
+												switch (b30_list.getJSONObject(b30_floorStartCount + 1).getIntValue("difficulty"))
+												{
+												case 0: //Past
+													 b30Floor2_difficulty = "[PST]";
+													 break;
+												case 1: //Present
+													 b30Floor2_difficulty = "[PRS]";
+													 break;
+												case 2: //Future
+													 b30Floor2_difficulty = "[FTR]";
+													 break;
+												case 3: //Beyond
+													 b30Floor2_difficulty = "[BYD]";
+													 break;
+												}
+												long b30Floor2_score = b30_list.getJSONObject(b30_floorStartCount + 1).getLongValue("score");
+												String b30Floor2_level = "";
+												if (b30Floor2_score >= 9900000) { //EX+评级(990w+)
+													 b30Floor2_level = "EX+";
+												} else if ((b30Floor2_score >= 9800000) & (b30Floor2_score < 9900000)) { //EX评级(980w-9899999)
+													 b30Floor2_level = "EX";
+												} else if ((b30Floor2_score >= 9500000) & (b30Floor2_score < 9800000)) { //AA评级(950w-9799999)
+													 b30Floor2_level = "AA";
+												} else if ((b30Floor2_score >= 9200000) & (b30Floor2_score < 9500000)) { //A评级(920w-9499999)
+													 b30Floor2_level = "A";
+												} else if ((b30Floor2_score >= 8900000) & (b30Floor2_score < 9200000)) { //B评级(890w-9199999)
+													 b30Floor2_level = "B";
+												} else if ((b30Floor2_score >= 8600000) & (b30Floor2_score < 8900000)) { //C评级(860w-8899999)
+													 b30Floor2_level = "C";
+												} else if (b30Floor2_score < 8600000) { //D评级(8599999-)
+													 b30Floor2_level = "D";
+												}
+												String b30Floor2_clearType = ""; 
+												switch (b30_list.getJSONObject(b30_floorStartCount + 1).getIntValue("clear_type"))
+												{
+												case 0: //Track Lost
+													 b30Floor2_clearType = "L";
+													 break;
+												case 4: //Easy Clear
+													 b30Floor2_clearType = "EC";
+													 break;
+												case 1: //Normal Clear
+													 b30Floor2_clearType = "NC";
+													 break;
+												case 5: //Hard Clear
+													 b30Floor2_clearType = "HC";
+													 break;
+												case 2: //Full Recall
+													 b30Floor2_clearType = "F";
+													 break;
+												case 3: //Pure Memory
+													 b30Floor2_clearType = "P";
+													 break;
+												default:
+													 break;
+												}
+												int b30Floor2_far = b30_list.getJSONObject(b30_floorStartCount + 1).getIntValue("near_count");
+												int b30Floor2_lost = b30_list.getJSONObject(b30_floorStartCount + 1).getIntValue("miss_count");
+												// [end]
+												// [start] B30Floor3
+												BigDecimal b30Floor3_rating_bigdec = new BigDecimal( b30_list.getJSONObject(b30_floorStartCount + 2).getString("rating")); 
+												double b30Floor3_rating = b30Floor3_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); 
+												String b30Floor3_songid = b30_list.getJSONObject(b30_floorStartCount + 2).getString("song_id");
+												String b30Floor3_difficulty = "";
+												switch (b30_list.getJSONObject(b30_floorStartCount + 2).getIntValue("difficulty"))
+												{
+												case 0: //Past
+													 b30Floor3_difficulty = "[PST]";
+													 break;
+												case 1: //Present
+													 b30Floor3_difficulty = "[PRS]";
+													 break;
+												case 2: //Future
+													 b30Floor3_difficulty = "[FTR]";
+													 break;
+												case 3: //Beyond
+													 b30Floor3_difficulty = "[BYD]";
+													 break;
+												}
+												long b30Floor3_score = b30_list.getJSONObject(b30_floorStartCount + 2).getLongValue("score");
+												String b30Floor3_level = "";
+												if (b30Floor3_score >= 9900000) { //EX+评级(990w+)
+													 b30Floor3_level = "EX+";
+												} else if ((b30Floor3_score >= 9800000) & (b30Floor3_score < 9900000)) { //EX评级(980w-9899999)
+													 b30Floor3_level = "EX";
+												} else if ((b30Floor3_score >= 9500000) & (b30Floor3_score < 9800000)) { //AA评级(950w-9799999)
+													 b30Floor3_level = "AA";
+												} else if ((b30Floor3_score >= 9200000) & (b30Floor3_score < 9500000)) { //A评级(920w-9499999)
+													 b30Floor3_level = "A";
+												} else if ((b30Floor3_score >= 8900000) & (b30Floor3_score < 9200000)) { //B评级(890w-9199999)
+													 b30Floor3_level = "B";
+												} else if ((b30Floor3_score >= 8600000) & (b30Floor3_score < 8900000)) { //C评级(860w-8899999)
+													 b30Floor3_level = "C";
+												} else if (b30Floor3_score < 8600000) { //D评级(8599999-)
+													 b30Floor3_level = "D";
+												}
+												String b30Floor3_clearType = ""; 
+												switch (b30_list.getJSONObject(b30_floorStartCount + 2).getIntValue("clear_type"))
+												{
+												case 0: //Track Lost
+													 b30Floor3_clearType = "L";
+													 break;
+												case 4: //Easy Clear
+													 b30Floor3_clearType = "EC";
+													 break;
+												case 1: //Normal Clear
+													 b30Floor3_clearType = "NC";
+													 break;
+												case 5: //Hard Clear
+													 b30Floor3_clearType = "HC";
+													 break;
+												case 2: //Full Recall
+													 b30Floor3_clearType = "F";
+													 break;
+												case 3: //Pure Memory
+													 b30Floor3_clearType = "P";
+													 break;
+												default:
+													 break;
+												}
+												int b30Floor3_far = b30_list.getJSONObject(b30_floorStartCount + 2).getIntValue("near_count");
+												int b30Floor3_lost = b30_list.getJSONObject(b30_floorStartCount + 2).getIntValue("miss_count");
+												// [end]
+												// [start] B30Floor4
+												BigDecimal b30Floor4_rating_bigdec = new BigDecimal( b30_list.getJSONObject(b30_floorStartCount + 3).getString("rating")); 
+												double b30Floor4_rating = b30Floor4_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); 
+												String b30Floor4_songid = b30_list.getJSONObject(b30_floorStartCount + 3).getString("song_id");
+												String b30Floor4_difficulty = "";
+												switch (b30_list.getJSONObject(b30_floorStartCount + 3).getIntValue("difficulty"))
+												{
+												case 0: //Past
+													 b30Floor4_difficulty = "[PST]";
+													 break;
+												case 1: //Present
+													 b30Floor4_difficulty = "[PRS]";
+													 break;
+												case 2: //Future
+													 b30Floor4_difficulty = "[FTR]";
+													 break;
+												case 3: //Beyond
+													 b30Floor4_difficulty = "[BYD]";
+													 break;
+												}
+												long b30Floor4_score = b30_list.getJSONObject(b30_floorStartCount + 3).getLongValue("score");
+												String b30Floor4_level = "";
+												if (b30Floor4_score >= 9900000) { //EX+评级(990w+)
+													 b30Floor4_level = "EX+";
+												} else if ((b30Floor4_score >= 9800000) & (b30Floor4_score < 9900000)) { //EX评级(980w-9899999)
+													 b30Floor4_level = "EX";
+												} else if ((b30Floor4_score >= 9500000) & (b30Floor4_score < 9800000)) { //AA评级(950w-9799999)
+													 b30Floor4_level = "AA";
+												} else if ((b30Floor4_score >= 9200000) & (b30Floor4_score < 9500000)) { //A评级(920w-9499999)
+													 b30Floor4_level = "A";
+												} else if ((b30Floor4_score >= 8900000) & (b30Floor4_score < 9200000)) { //B评级(890w-9199999)
+													 b30Floor4_level = "B";
+												} else if ((b30Floor4_score >= 8600000) & (b30Floor4_score < 8900000)) { //C评级(860w-8899999)
+													 b30Floor4_level = "C";
+												} else if (b30Floor4_score < 8600000) { //D评级(8599999-)
+													 b30Floor4_level = "D";
+												}
+												String b30Floor4_clearType = ""; 
+												switch (b30_list.getJSONObject(b30_floorStartCount + 3).getIntValue("clear_type"))
+												{
+												case 0: //Track Lost
+													 b30Floor4_clearType = "L";
+													 break;
+												case 4: //Easy Clear
+													 b30Floor4_clearType = "EC";
+													 break;
+												case 1: //Normal Clear
+													 b30Floor4_clearType = "NC";
+													 break;
+												case 5: //Hard Clear
+													 b30Floor4_clearType = "HC";
+													 break;
+												case 2: //Full Recall
+													 b30Floor4_clearType = "F";
+													 break;
+												case 3: //Pure Memory
+													 b30Floor4_clearType = "P";
+													 break;
+												default:
+													 break;
+												}
+												int b30Floor4_far = b30_list.getJSONObject(b30_floorStartCount + 3).getIntValue("near_count");
+												int b30Floor4_lost = b30_list.getJSONObject(b30_floorStartCount + 3).getIntValue("miss_count");
+												// [end]
+												// [start] B30Floor5
+												BigDecimal b30Floor5_rating_bigdec = new BigDecimal( b30_list.getJSONObject(b30_lastcount).getString("rating")); 
+												double b30Floor5_rating = b30Floor5_rating_bigdec.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue(); 
+												String b30Floor5_songid = b30_list.getJSONObject(b30_lastcount).getString("song_id");
+												String b30Floor5_difficulty = "";
+												switch (b30_list.getJSONObject(b30_lastcount).getIntValue("difficulty"))
+												{
+												case 0: //Past
+													 b30Floor5_difficulty = "[PST]";
+													 break;
+												case 1: //Present
+													 b30Floor5_difficulty = "[PRS]";
+													 break;
+												case 2: //Future
+													 b30Floor5_difficulty = "[FTR]";
+													 break;
+												case 3: //Beyond
+													 b30Floor5_difficulty = "[BYD]";
+													 break;
+												}
+												long b30Floor5_score = b30_list.getJSONObject(b30_lastcount).getLongValue("score");
+												String b30Floor5_level = "";
+												if (b30Floor5_score >= 9900000) { //EX+评级(990w+)
+													 b30Floor5_level = "EX+";
+												} else if ((b30Floor5_score >= 9800000) & (b30Floor5_score < 9900000)) { //EX评级(980w-9899999)
+													 b30Floor5_level = "EX";
+												} else if ((b30Floor5_score >= 9500000) & (b30Floor5_score < 9800000)) { //AA评级(950w-9799999)
+													 b30Floor5_level = "AA";
+												} else if ((b30Floor5_score >= 9200000) & (b30Floor5_score < 9500000)) { //A评级(920w-9499999)
+													 b30Floor5_level = "A";
+												} else if ((b30Floor5_score >= 8900000) & (b30Floor5_score < 9200000)) { //B评级(890w-9199999)
+													 b30Floor5_level = "B";
+												} else if ((b30Floor5_score >= 8600000) & (b30Floor5_score < 8900000)) { //C评级(860w-8899999)
+													 b30Floor5_level = "C";
+												} else if (b30Floor5_score < 8600000) { //D评级(8599999-)
+													 b30Floor5_level = "D";
+												}
+												String b30Floor5_clearType = ""; 
+												switch (b30_list.getJSONObject(b30_lastcount).getIntValue("clear_type"))
+												{
+												case 0: //Track Lost
+													 b30Floor5_clearType = "L";
+													 break;
+												case 4: //Easy Clear
+													 b30Floor5_clearType = "EC";
+													 break;
+												case 1: //Normal Clear
+													 b30Floor5_clearType = "NC";
+													 break;
+												case 5: //Hard Clear
+													 b30Floor5_clearType = "HC";
+													 break;
+												case 2: //Full Recall
+													 b30Floor5_clearType = "F";
+													 break;
+												case 3: //Pure Memory
+													 b30Floor5_clearType = "P";
+													 break;
+												default:
+													 break;
+												}
+												int b30Floor5_far = b30_list.getJSONObject(b30_lastcount).getIntValue("near_count");
+												int b30Floor5_lost = b30_list.getJSONObject(b30_lastcount).getIntValue("miss_count");
+												// [end]
+												String b30Floor1_songname = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + b30Floor1_songid))
+														  .getJSONObject("content").getJSONObject("title_localized").getString("en");
+												String b30Floor2_songname = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + b30Floor2_songid))
+														  .getJSONObject("content").getJSONObject("title_localized").getString("en");
+												String b30Floor3_songname = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + b30Floor3_songid))
+														  .getJSONObject("content").getJSONObject("title_localized").getString("en");
+												String b30Floor4_songname = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + b30Floor4_songid))
+														  .getJSONObject("content").getJSONObject("title_localized").getString("en");
+												String b30Floor5_songname = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/songinfo?songname=" + b30Floor5_songid))
+														  .getJSONObject("content").getJSONObject("title_localized").getString("en");
+												if (b30Floor1_songname.length() > 10) {
+													 b30Floor1_songname = CommonHelper.subStringByByte(b30Floor1_songname, 9) + "...";
+												}
+												if (b30Floor2_songname.length() > 10) {
+													 b30Floor2_songname = CommonHelper.subStringByByte(b30Floor2_songname, 9) + "...";
+												}
+												if (b30Floor3_songname.length() > 10) {
+													 b30Floor3_songname = CommonHelper.subStringByByte(b30Floor3_songname, 9) + "...";
+												}
+												if (b30Floor4_songname.length() > 10) {
+													 b30Floor4_songname = CommonHelper.subStringByByte(b30Floor4_songname, 9) + "...";
+												}
+												if (b30Floor5_songname.length() > 10) {
+													 b30Floor5_songname = CommonHelper.subStringByByte(b30Floor5_songname, 9) + "...";
+												}
+												StringBuilder b30floorStr = new StringBuilder(FriendlyName).append("\n")
+														  .append("Arcaea - Best30地板查询\n")
+														  .append("Best30 平均值:").append(b30_avg).append("\n")
+														  .append("Recent10 平均值:").append(r10_avg).append("\n")
+														  .append("Best30 地板(倒五成绩):\n")
+														  .append(b30Floor1_songname).append(" ").append(b30Floor1_difficulty).append(" ").append(b30Floor1_level).append("/").append(b30Floor1_clearType).append("\n")
+														  .append(b30Floor1_score).append(" ").append(b30Floor1_rating).append(" ").append("F").append(b30Floor1_far).append(" L").append(b30Floor1_lost).append("\n")
+														  .append(b30Floor2_songname).append(" ").append(b30Floor2_difficulty).append(" ").append(b30Floor2_level).append("/").append(b30Floor2_clearType).append("\n")
+														  .append(b30Floor2_score).append(" ").append(b30Floor2_rating).append(" ").append("F").append(b30Floor2_far).append(" L").append(b30Floor2_lost).append("\n")
+														  .append(b30Floor3_songname).append(" ").append(b30Floor3_difficulty).append(" ").append(b30Floor3_level).append("/").append(b30Floor3_clearType).append("\n")
+														  .append(b30Floor3_score).append(" ").append(b30Floor3_rating).append(" ").append("F").append(b30Floor3_far).append(" L").append(b30Floor3_lost).append("\n")
+														  .append(b30Floor4_songname).append(" ").append(b30Floor4_difficulty).append(" ").append(b30Floor4_level).append("/").append(b30Floor4_clearType).append("\n")
+														  .append(b30Floor4_score).append(" ").append(b30Floor4_rating).append(" ").append("F").append(b30Floor4_far).append(" L").append(b30Floor4_lost).append("\n")
+														  .append(b30Floor5_songname).append(" ").append(b30Floor5_difficulty).append(" ").append(b30Floor5_level).append("/").append(b30Floor5_clearType).append("\n")
+														  .append(b30Floor5_score).append(" ").append(b30Floor5_rating).append(" ").append("F").append(b30Floor5_far).append(" L").append(b30Floor5_lost).append("\n");
+												CQ.sendGroupMsg(groupId, b30floorStr.toString());
+										  }
+										  break;
+									 case -1:
+										  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "绑定的账号无效,请使用!arc bind [玩家id]重新绑定");
+										  break;
+									 case -6:
+										  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "您还没有游玩过任何一个曲目呢!");
+									 default:
+										  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "查询失败，未知错误(" + status + ")");
+											 break;
+									 }
+								} else {
+									 CQ.sendGroupMsg(groupId,
+												 FriendlyName + "\n" + new CQCode().at(qqId) + "您还未绑定您的Arcaea帐号,请使用!arc bind [玩家9位数字id]进行绑定");
+								}
+						  } else {
+								CQ.logError(AppName,
+										  "尝试执行Func6_2_3时出错: 'BotArcApi' 未运行" + "\n" + "缺少必需的依赖项: Node.js (路径"
+													 + CQ.getAppDirectory() + "system\\dependency\\nodejs)" + "\n"
+													 + "请使用123SduBotR Installer安装依赖项后重启Bot程序.");
+								CQ.sendGroupMsg(groupId,
+											 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(Internal:Require dependency: Node.js)");
+						  }
+					 } catch (SocketTimeoutException e) {
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_3时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(Internal:BotArcApi isn't running)");
+					 } catch (IOException e) {
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_3时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(Internal:BotArcApi isn't running)");
+					 } catch (IndexOutOfBoundsException e) {
+						  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "指令格式不正确,格式:!arc info {曲名}"); 
+					 } catch (Exception e) {
+						  CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+						  CQ.sendGroupMsg(groupId,
+									 FriendlyName + "\n" + new CQCode().at(qqId) + " 查询失败(" + e.getClass().getName() + ")");
+					 }
+			 }
+			 
+			 public static void Func6_2_4(CoolQ CQ,long groupId,long qqId,String msg)
+			 {
+				  try {
+						if (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) == 2) {
+							 String arg3 = msg.trim().split(" ",3)[2];
+							 Part6_2EasterEgg.Func6_2_UnlockConnect(CQ, groupId, null, 0, 0, 0, arg3);
+							 return;
+						} else {
+						  if (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) == 1) {
+								 JSONObject connResultObject = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/connect"));
+								 String connStr = connResultObject.getJSONObject("content").getString("key").toLowerCase();
+								 String returnStr = FriendlyName + "\n今日连接密码为[" + connStr + "]";
+								 CQ.sendGroupMsg(groupId, returnStr);
+						  } else {
+								 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc [bind|info|b30|help]");
+						  }
+					 }
+				 } catch (IndexOutOfBoundsException e) {
+					 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc connect [String]");
+				 } catch (Exception e) {
+						CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+						CQ.sendGroupMsg(groupId,
+									 FriendlyName + "\n出现异常(" + e.getClass().getName() + ")");
+				 }
+			 }
+			 
+			 /**
+			  * 功能6-2-Help:查看Arcaea查分模块(功能6-2)文字帮助
+			  * @param CQ CQ实例，详见本大类注释
+			  * @param groupId 消息来源群号
+			  * @param qqId 消息来源成员QQ号
+			  * @param msg 消息内容
+			  * @see ProcessGroupMsg
+			  * @author 御坂12456
+			  */
+			 public static void Func6_2_Help(CoolQ CQ,long groupId,long qqId,String msg)
+			 {
+				  try {
+					 StringBuilder helpStrBuilder = new StringBuilder(FriendlyName).append("\n")
+								.append("功能6-2:Arcaea查分模块帮助\n")
+								.append("以下指令中[]代表必填指令,{}代表选填指令\n")
+								.append("绑定账号: !arc bind [9位玩家id]\n")
+								.append("查最近成绩: !arc 或 !arc info\n")
+								.append("查最佳成绩: !arc info [曲名] {难度,默认Ftr}\n")
+								.append("查Best30地板: !arc b30");
+					 switch (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg))
+					 {
+					 case 1: //Unlocked Connect Module
+						  helpStrBuilder.append("\n获取今日连接字符串: !arc connect");
+						  break;
+					 case 2: //Completed Prerequisites for unlocking connect module
+						  helpStrBuilder.append("\nᵾnłøȼꝁ sŧħ: !aɍȼ ȼønnɇȼŧ [Sŧɍɨnǥ]");
+					 default: //Locked
+						  break;
+					 }
+					 CQ.sendGroupMsg(groupId, helpStrBuilder.toString());
+				} catch (Exception e) {
+					  CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+					  CQ.sendGroupMsg(groupId,
+								 FriendlyName + "\n获取失败(" + e.getClass().getName() + ")");
+				}
+			 }
+
+			 
+			 static class Part6_2EasterEgg{
+				  /**
+				   * 解锁Connect模块
+				   * @param CQ CQ实例，详见本大类注释
+				   * @param groupId 消息来源群号
+				   * @param songName 完成曲目名
+				   * @param songdiff 完成曲目难度
+				   * @param clearType 完成状态(0-TL/4-EC/1-NC/5-HC/2-FR/3-PM)
+				   * @param bigPure 大Pure数
+				   * @param connPass 连接密码
+				   * @author 御坂12456
+				   */
+				  public static void Func6_2_UnlockConnect(CoolQ CQ,long groupId,String songName,int songdiff,int clearType,int bigPure,String connPass)
+				  {
+						try {
+							 File thisGroupUnlockData = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId);
+							 if (thisGroupUnlockData.exists()) {
+								File thisGroupUnlocked = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/unlocked.stat");
+								if (thisGroupUnlocked.exists()) {
+									 return;
+								} else {
+									 if (songName == null) {
+										  songName = "notnull";
+									 }
+									  switch (songName)
+									  {
+									  case "equilibrium": //前置条件1:以HC及以上状态完成Equilibrium[FTR]
+									   	File preCondition3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
+											switch (clearType)
+										   {
+										   case 5: case 2: case 3:
+										   	 File Condition1 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat");
+										   	 if ((!Condition1.exists()) & (songdiff == 9)) {
+													 Condition1.createNewFile();
+													 CQ.sendGroupMsg(groupId, "Ŧħɇ ǥɨɍł ɨn wħɨŧɇ Ⱥnđ ŧħɇ ǥɨɍł ɨn ƀłȺȼꝁ ȼȺnnøŧ ɍɇȼønȼɨłɇ.");
+												 }
+										   case 1: case 4:
+										   	 IOHelper.WriteStr(preCondition3, "1");
+										   case 0:
+										   	 preCondition3.delete();
+										   }
+											break;
+									  case "antagonism": //前置条件2:以700及以上大Pure数完成Antagonism[FTR]
+											if (bigPure >= 700) {
+												File Condition2  = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat");
+										   	if (!Condition2.exists()  & (songdiff == 9)) {
+													 Condition2.createNewFile();
+													 CQ.sendGroupMsg(groupId, "Sħɇ ønȼɇ møɍɇ fȺȼɇs ŧħɇ ǥɨɍł sħɇ wɨsħɇs sħɇ ȼøᵾłđ ƀɇfɍɨɇnđ.");
+												}
+										   	break;
+										  }
+									     File preCondition3_2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
+										  if (clearType != 0) {
+										   	 if (IOHelper.ReadToEnd(preCondition3_2).equals("1")) {
+										   		  IOHelper.WriteStr(preCondition3_2, "2");
+												 } else {
+													  preCondition3_2.delete();
+												 }
+										  } else {
+												  preCondition3_2.delete();
+										  }
+										  break;
+									  case "dantalion": //前置条件3:依次按照Equilibrium[FTR]->Antagonism[FTR]->Dantalion[FTR]顺序通关
+										   File preCondition3_3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
+											if (clearType != 0) {
+										   	 if (IOHelper.ReadToEnd(preCondition3_3).equals("2")  & (songdiff == 10)) {
+										   		  preCondition3_3.delete();
+										   		  new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat").createNewFile();
+										   		  CQ.sendGroupMsg(groupId, "Ⱥnđ ŧħᵾs ɨŧ ɨs ŦȺɨɍɨŧsᵾ's ŧᵾɍn ŧø ǥȺɨn ŧħɇ ᵾᵽᵽɇɍ ħȺnđ.");
+												 } else {
+													  preCondition3_3.delete();
+												 }
+										   } else {
+												preCondition3_3.delete();
+										  }
+											break;
+									  default:
+											if (connPass != null) { //前置条件4:输入正确的连接密码
+												 JSONObject connResultObject = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1:61666/v2/connect"));
+												 String connStr = connResultObject.getJSONObject("content").getString("key").toLowerCase();
+												 if (connStr.equals(connPass.toLowerCase())) {
+													 new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").createNewFile();
+													 CQ.sendGroupMsg(groupId, "Sħɇ sᵽȺɍɇs nø ħɇsɨŧȺŧɨøn. Ŧħɇ sŧɍɨꝁɇ ȼømɇs ɨn Ⱥn ɨnsŧȺnŧ.");
+												 }
+											}
+											break;
+									  }
+									  if ((new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat").exists()) &
+										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat").exists()) &
+										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat").exists()) &
+										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").exists()))
+									  {
+											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat").delete();
+											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat").delete();
+											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat").delete();
+											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").delete();
+											thisGroupUnlocked.createNewFile();
+											CQ.sendGroupMsg(groupId, "Anomaly Function Unlocked");
+									 }
+								}
+							 } else {
+								  thisGroupUnlockData.mkdirs();
+								  switch (songName)
+								  {
+								  case "equilibrium": //前置条件1:以HC及以上状态完成Equilibrium[FTR]
+								   	File preCondition3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
+										switch (clearType)
+									   {
+									   case 5: case 2: case 3:
+									   	 File Condition1 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat");
+									   	 if (!Condition1.exists()  & (songdiff == 9)) {
+												 Condition1.createNewFile();
+												 CQ.sendGroupMsg(groupId, "Ŧħɇ ǥɨɍł ɨn wħɨŧɇ Ⱥnđ ŧħɇ ǥɨɍł ɨn ƀłȺȼꝁ ȼȺnnøŧ ɍɇȼønȼɨłɇ.");
+											 }
+									   case 1: case 4:
+									   	 IOHelper.WriteStr(preCondition3, "1");
+									   case 0:
+									   	 preCondition3.delete();
+									   }
+										break;
+								  case "antagonism": //前置条件2:以700及以上大Pure数完成Antagonism[FTR]
+										if (bigPure >= 700) {
+											File Condition2  = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat");
+									   	if (!Condition2.exists()  & (songdiff == 9)) {
+												 Condition2.createNewFile();
+												 CQ.sendGroupMsg(groupId, "Sħɇ ønȼɇ møɍɇ fȺȼɇs ŧħɇ ǥɨɍł sħɇ wɨsħɇs sħɇ ȼøᵾłđ ƀɇfɍɨɇnđ.");
+											}
+									   	break;
+									  }
+								     File preCondition3_2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
+									  if (clearType != 0) {
+									   	 if (IOHelper.ReadToEnd(preCondition3_2).equals("1")) {
+									   		  IOHelper.WriteStr(preCondition3_2, "2");
+											 } else {
+												  preCondition3_2.delete();
+											 }
+									  } else {
+											  preCondition3_2.delete();
+									  }
+									  break;
+								  default:
+										if (connPass != null) { //前置条件4:输入正确的连接密码
+											 JSONObject connResultObject = JSONObject.parseObject(JsonHelper.loadJson("http://127.0.0.1/v2/connect"));
+											 String connStr = connResultObject.getJSONObject("content").getString("key").toLowerCase();
+											 if (connStr.equals(connPass.toLowerCase())) {
+												 new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").createNewFile();
+												 CQ.sendGroupMsg(groupId, "Sħɇ sᵽȺɍɇs nø ħɇsɨŧȺŧɨøn. Ŧħɇ sŧɍɨꝁɇ ȼømɇs ɨn Ⱥn ɨnsŧȺnŧ.");
+											 }
+										}
+										break;
+								  }
+							 }
+					 } catch (SocketTimeoutException e) {
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_UnlockConnect时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n发生异常(Internal:BotArcApi isn't running)");
+					 } catch (IOException e) {
+							CQ.logError(AppName,
+									  "尝试执行Func6_2_UnlockConnect时出错: 'BotArcApi' 未运行" + "\n" + 
+									  "请在" + CQ.getAppDirectory() + "system\\dependency\\nodejs\\node_modules\\BotArcApi下执行npm start启动BotArcApi服务.");
+							CQ.sendGroupMsg(groupId,
+										 FriendlyName + "\n发生异常(Internal:BotArcApi isn't running)");
+					 } catch (Exception e) {
+						  CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
+						  CQ.sendGroupMsg(groupId,
+									 FriendlyName + "\n发生异常(" + e.getClass().getName() + ")");
+			 }
+				  }
+
+					 /**
+					  * 检查Connect模块解锁状态
+					  * 
+					  * @param CQ
+					  * @param groupId
+					  * @param qqId
+					  * @param msg
+					  * @return 该群已解锁返回1,已完成前置条件返回2,未解锁返回0
+					  */
+					 public static int Func6_2_CheckConnectStat(CoolQ CQ, long groupId, long qqId, String msg)
+					 {
+						  try {
+								File thisGroupUnlocked = new File(
+										  CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/unlocked.stat");
+								if (thisGroupUnlocked.exists()) {
+									 return 1;
+								} else {
+									 File Condition1 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat");
+									 File Condition2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat");
+									 File Condition3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat");
+									 if ((Condition1.exists()) & (Condition2.exists()) & (Condition3.exists())) {
+										  return 2;
+									 } else {
+										  return 0;
+									 }
+								}
+						  } catch (Exception e) {
+								return 0;
+						  }
+					 }
+				}
+		  }
+
+		  /**
+		   * 检查依赖项(Node.js)是否安装
+		   * 
+		   * @return 已安装返回true，未安装返回false
+		   */
+		 public static boolean checkDependency(CoolQ CQ)
+		 {
+			  try {
+					File dpdcJar = new File(CQ.getAppDirectory() + "/system/dependency/nodejs");
+					if (dpdcJar.exists()) {
+						 return true;
+					} else {
+					 return false;
+				}
+			  } catch (Exception e) {
+					e.printStackTrace();
+					return false;
+			  }
+		 }
+	}
+
 	/**
 	 * 其它功能（注意与"特殊模块"区分开）
 	 * @author 御坂12456
@@ -2971,7 +4313,6 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					if (funnyWhiteListSet.next())
 					{
 						 ArrayList<Long> funnyWhiteList = new ArrayList<Long>();
-						 funnyWhiteListSet.beforeFirst(); //移动到开头
 						 while (funnyWhiteListSet.next()) { //遍历funnyWhilteListSet
 							  funnyWhiteList.add(funnyWhiteListSet.getLong("GroupId")); //添加到funnyWhiteList中
 						 }

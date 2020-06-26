@@ -61,11 +61,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.5.0";
+	public final static String Version = "0.5.1";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Build 32";
+	public final static String AppVersionNumber = "Build 33";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】
@@ -74,7 +74,7 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 123 SduBotR 数据存放路径
 	 */
-	public final static String appDirectory = Start.appDirectory;
+	public static String appDirectory = Start.appDirectory;
 	/**
 	 * 防滥用功能缓冲秒数
 	 */
@@ -492,6 +492,12 @@ public static void RestoreData(CoolQ CQ)
 		  * 文件路径:/group/ranking/speaking.db
 		  */
 		 public static DBHelper dbgroup_ranking_speaking;
+		 
+		 /**
+		  * 音游:Arcaea玩家绑定数据库。<br>
+		  * 文件路径:/group/mug/arcaea.db
+		  */
+		 public static DBHelper dbgroup_mug_arcaea;
 		 
 		 /**
 		  * 123 SduBotR 公用数据库DBHelper实例集合。<br>

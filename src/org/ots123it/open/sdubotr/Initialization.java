@@ -45,13 +45,16 @@ public class Initialization
 		  }
 	 }
 
-	public static int NormalStart(CoolQ CQ,String appDirectory) throws FileNotFoundException, NullPointerException,SQLException,OperationNotSupportedException
+public static int NormalStart(CoolQ CQ,String appDirectory) throws FileNotFoundException, NullPointerException,SQLException,OperationNotSupportedException
 	{
 		CQ.logInfo(Global.AppName, "获取应用数据目录成功:\n" + "设置目录:" + appDirectory);
         if(!(new File(appDirectory + "/firstopen.stat")).exists()) //若无firstopen.stat文件（即首次打开）
         {
-        	CQ.logInfo(Global.AppName, "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
+      		UserInterfaceHelper.MsgBox("提示", "初始化模块正在升级中,请等待新版本升级完成后再使用", UserInterfaceHelper.MsgBoxButtons.Info);
+      	/* 123 SduBotR 旧版初始化方法(正在升级中,新版将使用123SduBotR Installer初始化)
+        	 CQ.logInfo(Global.AppName, "检测到无firstopen.stat文件，判断为首次启动，正在初始化");
         	Initialize(CQ,appDirectory); //调用初始化方法
+        	
          // [start] 初始化数据库DBHelper实例并打开数据库(同时检查数据库完整性)
  		  dbsystem_syssettings = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/system/syssettings.db",
  					 SQLite, "SQLite");
@@ -68,6 +71,7 @@ public class Initialization
         	Global.masterQQ = Long.parseLong(sysSettingsSet.getString("Value"));
         	CQ.sendPrivateMsg(masterQQ, FriendlyName + "\n" +
         				"这是一条测试消息,如果接收到了该消息代表已初始化完毕，可以正常使用了\n");
+        				*/
         	return 0;
         } else { //存在firstopen.stat文件（非首次打开） 
       		// [start] 初始化数据库DBHelper实例并打开数据库(同时检查数据库完整性)
@@ -76,10 +80,12 @@ public class Initialization
    		  dbgroup_custom = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/custom.db", SQLite , "SQLite");
    		  dbgroup_list = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/list.db", SQLite, "SQLite");
    		  dbgroup_ranking_speaking = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/ranking/speaking.db",SQLite,"SQLite");
+   		  dbgroup_mug_arcaea = new DBHelper(appDirectory.replace("\\", "/").toLowerCase() + "/group/mug/arcaea.db",SQLite,"SQLite");
    		  dbsystem_syssettings.Open();
    		  dbgroup_custom.Open();
    		  dbgroup_list.Open();
    		  dbgroup_ranking_speaking.Open();
+   		  dbgroup_mug_arcaea.Open();
    		  checkDbIntegrity(CQ, appDirectory);
    		  // [end]
            	ResultSet sysSettingsSet = GlobalDatabases.dbsystem_syssettings.executeQuery("SELECT Value FROM Common WHERE Name='MasterQQ'");
@@ -89,7 +95,7 @@ public class Initialization
       			CQ.logFatal(Global.AppName, "读取图片信息文件数据失败\n请删除数据目录下的firstopen.stat然后重启酷Q以初始化图片信息文件");
             	return 1;
 			} 
-        	 if (new File(appDirectory + "/running.stat").exists()) { //如果“正在运行中”文件已存在
+        	 if ((!Start.isDebug) && (new File(appDirectory + "/running.stat").exists())) { //如果“正在运行中”文件已存在
         		 CQ.logInfo(AppName, "上次应用的关闭是意外的。");
         		File autoSaveData = new File(appDirectory + "/temp/autosave.zip"); //新建自动备份数据文件实例
         		if (autoSaveData.exists()) { //如果自动备份数据文件存在
@@ -163,73 +169,77 @@ public class Initialization
 	{
 		try {
 			// 初始化准备:删除数据目录所有文件夹
-			File initReady1 = new File(Start.appDirectory + "/group");
+			File initReady1 = new File(appDirectory + "/group");
 			if (initReady1.exists())
 			{
 				IOHelper.DeleteAllFiles(initReady1);
 				initReady1.delete();
 			}
-			File initReady2 = new File(Start.appDirectory + "/private");
+			File initReady2 = new File(appDirectory + "/private");
 			if (initReady2.exists()) {
 				IOHelper.DeleteAllFiles(initReady2);
 				initReady2.delete();
 			}
-			File initReady3 = new File(Start.appDirectory + "/data");
+			File initReady3 = new File(appDirectory + "/data");
 			if (initReady3.exists()) {
 				IOHelper.DeleteAllFiles(initReady3);
 				initReady3.delete();
 			}
-			File initReady4 = new File(Start.appDirectory + "/system");
+			File initReady4 = new File(appDirectory + "/system");
 			if (initReady4.exists()) {
 				IOHelper.DeleteAllFiles(initReady4);
 				initReady4.delete();
 			}
-			File initReady5 = new File(Start.appDirectory + "/protect");
+			File initReady5 = new File(appDirectory + "/protect");
 			if (initReady5.exists()) {
 				IOHelper.DeleteAllFiles(initReady5);
 				initReady5.delete();
 			}
 			String[] files = {"/system","/temp","/data", "/group","/private","/protect",
 					"/data/pic","/data/pics/menu",
-					"/group/ranking",
+					"/group/mug","/group/ranking",
 					"/protect/group","/protect/group/abuse","/firstopen.stat"};
 			for (String f:files) {
-				File init = new File(Start.appDirectory + f);
+				File init = new File(appDirectory + f);
 				if (f.contains(".")) {
 					init.createNewFile();
-					CQ.logDebug(Global.AppName , "初始化:建立文件:" + Start.appDirectory + f);
+					CQ.logDebug(Global.AppName , "初始化:建立文件:" + appDirectory + f);
 				}else {
 					init.mkdir();
-					CQ.logDebug(Global.AppName,  "初始化:创建路径:" + Start.appDirectory+ f);
+					CQ.logDebug(Global.AppName,  "初始化:创建路径:" + appDirectory+ f);
 				}
 				System.gc();
 			}
 			// [start] 初始化数据库文件
 			//提取数据库文件
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/group_list.db", new File(Global.appDirectory + "/group/list.db"));
+							  "/data/databases/group/group_list.db", new File(appDirectory + "/group/list.db"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/group_list.db_shm", new File(Global.appDirectory + "/group/list.db_shm"));
+							  "/data/databases/group/group_list.db-shm", new File(appDirectory + "/group/list.db-shm"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/group_list.db_wal", new File(Global.appDirectory + "/group/list.db_wal"));
+							  "/data/databases/group/group_list.db-wal", new File(appDirectory + "/group/list.db-wal"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/group_custom.db", new File(Global.appDirectory + "/group/custom.db"));
+							  "/data/databases/group/group_custom.db", new File(appDirectory + "/group/custom.db"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/group_custom.db_shm", new File(Global.appDirectory + "/group/custom.db_shm"));
+							  "/data/databases/group/group_custom.db-shm", new File(appDirectory + "/group/custom.db-shm"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/group_custom.db_wal", new File(Global.appDirectory + "/group/custom.db_wal"));
+							  "/data/databases/group/group_custom.db-wal", new File(appDirectory + "/group/custom.db-wal"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/ranking/group_ranking_speaking.db", new File(Global.appDirectory + "/group/ranking/speaking.db"));
+							  "/data/databases/group/mug/group_mug_mugs.db", new File(appDirectory + "/group/mug/mugs.db"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/ranking/group_ranking_speaking.db_shm", new File(Global.appDirectory + "/group/ranking/speaking.db_shm"));
+							  "/data/databases/group/mug/group_mug_arcaea.db", new File(appDirectory + "/group/mug/arcaea.db"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/group/ranking/group_ranking_speaking.db_wal", new File(Global.appDirectory + "/group/ranking/speaking.db_wal"));
+							  "/data/databases/group/ranking/group_ranking_speaking.db", new File(appDirectory + "/group/ranking/speaking.db"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/system/system_syssettings.db", new File(Global.appDirectory + "/system/syssettings.db"));
+							  "/data/databases/group/ranking/group_ranking_speaking.db-shm", new File(appDirectory + "/group/ranking/speaking.db-shm"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/system/system_syssettings.db_shm", new File(Global.appDirectory + "/system/syssettings.db_shm"));
+							  "/data/databases/group/ranking/group_ranking_speaking.db-wal", new File(appDirectory + "/group/ranking/speaking.db-wal"));
 					IOHelper.extractFileFromJar(Global.class, 
-							  "/data/databases/system/system_syssettings.db_wal", new File(Global.appDirectory + "/system/syssettings.db_wal"));
+							  "/data/databases/system/system_syssettings.db", new File(appDirectory + "/system/syssettings.db"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/system/system_syssettings.db-shm", new File(appDirectory + "/system/syssettings.db-shm"));
+					IOHelper.extractFileFromJar(Global.class, 
+							  "/data/databases/system/system_syssettings.db-wal", new File(appDirectory + "/system/syssettings.db-wal"));
 					
 			// [end]
 			// [start] 初始化图片文件数据
@@ -254,15 +264,15 @@ public class Initialization
 			// 遍历图片文件集合，提取图片文件
 			for (File singleFile : picsFiles) {
 				if (singleFile.getName().toLowerCase().contains("menu")) { //如果是功能菜单图片
-					IOHelper.copyFile(singleFile.toString(), Global.appDirectory + "/data/pics/menu/" + singleFile.getName()); //提取图片文件
-					CQ.logDebug(AppName, "初始化:抽取:" +Global.appDirectory + "/data/pics/menu/" + singleFile.getName());
+					IOHelper.copyFile(singleFile.toString(), appDirectory + "/data/pics/menu/" + singleFile.getName()); //提取图片文件
+					CQ.logDebug(AppName, "初始化:抽取:" +appDirectory + "/data/pics/menu/" + singleFile.getName());
 				} else { //如果不是功能菜单图片
-					IOHelper.copyFile(singleFile.toString(), Global.appDirectory + "/data/pics/" + singleFile.getName()); //提取图片文件
-					CQ.logDebug(AppName, "初始化:抽取:" +Global.appDirectory + "/data/pics/" + singleFile.getName());
+					IOHelper.copyFile(singleFile.toString(), appDirectory + "/data/pics/" + singleFile.getName()); //提取图片文件
+					CQ.logDebug(AppName, "初始化:抽取:" +appDirectory + "/data/pics/" + singleFile.getName());
 				}
 			}
 			// [end]
-			File announcement = new File(Global.appDirectory + "/data/pics/ancment.txt"); //定义公告文件
+			File announcement = new File(appDirectory + "/data/pics/ancment.txt"); //定义公告文件
 			if (!announcement.exists()) { //如果公告文件不存在
 				announcement.createNewFile(); //创建公告文件
 				CQ.logDebug(AppName, "初始化:建立文件:" + announcement.toString());
@@ -286,7 +296,10 @@ public class Initialization
 		} catch (URISyntaxException e) {
 			CQ.logFatal(Global.AppName, "初始化时出现严重错误,详细信息:\n" + 
 					ExceptionHelper.getStackTrace(e));
-		} finally {
+		} catch (SQLException e) {
+			 CQ.logFatal(Global.AppName, "初始化时出现严重错误,详细信息:\n" + 
+						ExceptionHelper.getStackTrace(e));
+	 } finally {
 		}
 		return; //返回
 	}
