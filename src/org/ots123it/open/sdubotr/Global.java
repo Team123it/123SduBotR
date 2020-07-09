@@ -50,9 +50,9 @@ public abstract class Global extends JcqAppAbstract
 	public static long masterQQ;
 	
 	/**
-	 * 腾讯系统QQ号集合(通常用于提醒主人私聊消息时忽略掉系统QQ号时)
+	 * 腾讯系统QQ昵称集合(通常用于提醒主人私聊消息时忽略掉系统QQ号时)
 	 */
-	public final static Long[] tencentSysAccounts = {2062433139L};
+	public final static String tencentSysAccount = "mpqqnickname";
 	
 	/**
 	 * 123 SduBotR 程序名（若自定义机器人请务必更改此名称）
@@ -61,11 +61,11 @@ public abstract class Global extends JcqAppAbstract
 	/**
 	 * 版本
 	 */
-	public final static String Version = "0.5.1";
+	public final static String Version = "0.6.0";
 	/**
 	 * 发布版本编号（从1开始）
 	 */
-	public final static String AppVersionNumber = "Build 33";
+	public final static String AppVersionNumber = "Build 34";
 	/**
 	 * 123 SduBotR 友好名称(实际运行时在QQ中显示)<br>
 	 * 效果:【123 SduBotR {Version}】

@@ -254,7 +254,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
                } else { //如果不是主人私聊机器人
               	// [start] 读取机器人黑名单数据表(功能M-3)
       			ResultSet AllBanSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM AllBan");
-      			ArrayList<Long> AllBanList = new ArrayList<Long>(Arrays.asList(tencentSysAccounts)); //使用腾讯系统QQ号数组初始化AllBanList(忽略掉系统QQ号的私聊消息)
+      			ArrayList<Long> AllBanList = new ArrayList<Long>(); //使用腾讯系统QQ号数组初始化AllBanList(忽略掉系统QQ号的私聊消息)
       			if (AllBanSet.next()) { //如果黑名单数据表不为空
       				 AllBanSet.beforeFirst(); //移动指针到开头
       				 while (AllBanSet.next()) { //遍历AllBanSet
@@ -268,6 +268,9 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
       				 }
       			}
       			// [end]
+      			if (new QQInfo(fromQQ).getNick().equals(tencentSysAccount)) {
+      				 return MSG_IGNORE;
+      			}
       			StringBuilder callMasterStr = new StringBuilder(FriendlyName).append("\n") 
       					.append("有人私聊机器人,请处理\n") 
       					.append("来源QQ:").append(CQ.getStrangerInfo(fromQQ).getNick()).append("(").append(fromQQ).append(")\n")
@@ -708,17 +711,19 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
       	  // 这里处理消息
         	// 读取机器人黑名单列表文件(功能M-3)
        	  ResultSet AllBanSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM AllBan");
-    			ArrayList<Long> AllBanList = new ArrayList<Long>(Arrays.asList(tencentSysAccounts)); //使用腾讯系统QQ号数组初始化AllBanList(忽略掉系统QQ号的私聊消息)
+    			ArrayList<Long> AllBanList = new ArrayList<Long>(); //使用腾讯系统QQ号数组初始化AllBanList(忽略掉系统QQ号的私聊消息)
     			if (AllBanSet.next()) { //如果黑名单数据表不为空
     				 AllBanSet.beforeFirst(); //移动指针到开头
     				 while (AllBanSet.next()) { //遍历AllBanSet
     					  AllBanList.add(AllBanSet.getLong("QQId")); //将当前遍历到的QQ号添加到AllBanList中
     				 }
     				 for (Long BanPerson : AllBanList) { //遍历AllBanList
-    					  if (fromQQ == BanPerson.longValue()) //如果消息来源成员为机器人黑名单人员
+    					  if ((fromQQ == BanPerson.longValue())) //如果消息来源成员为机器人黑名单人员
     					  {
     							return MSG_INTERCEPT; //不多废话，直接返回（拜拜了您嘞）
-    					  }
+    					  } else if (new QQInfo(fromQQ).getNick().equals(tencentSysAccount)) {
+								return MSG_IGNORE;
+						  }
     				 }
     			}
     		// 判断消息来源群聊是否已被临时或永久屏蔽(功能M-4)
@@ -900,7 +905,7 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 					}
 			    	// [start] 读取机器人黑名单列表文件(功能M-3)
 			    	 ResultSet AllBanSet = GlobalDatabases.dbgroup_list.executeQuery("SELECT * FROM AllBan");
-		  			ArrayList<Long> AllBanList = new ArrayList<Long>(Arrays.asList(tencentSysAccounts)); //使用腾讯系统QQ号数组初始化AllBanList(忽略掉系统QQ号的私聊消息)
+		  			ArrayList<Long> AllBanList = new ArrayList<Long>(); //使用腾讯系统QQ号数组初始化AllBanList(忽略掉系统QQ号的私聊消息)
 		  			if (AllBanSet.next()) { //如果黑名单数据表不为空
 		  				 AllBanSet.beforeFirst(); //移动指针到开头
 		  				 while (AllBanSet.next()) { //遍历AllBanSet
@@ -912,7 +917,9 @@ public class Start extends JcqAppAbstract implements ICQVer, IMsg, IRequest {
 		  						// 拒绝邀请
 		  							CQ.setGroupAddRequest(responseFlag, REQUEST_GROUP_INVITE, REQUEST_REFUSE, "您是机器人黑名单人员，无法邀请机器人入群!");
 		  							return 1;
-		  						}
+		  					  } else if (new QQInfo(fromQQ).getNick().equals(tencentSysAccount)) {
+								
+						  }
 		  				 }
 		  			}
 					// [end]

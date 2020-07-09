@@ -1281,7 +1281,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								  .append("(SELECT ExitStr FROM Prompt WHERE GroupId = ").append(groupId).append("),")
 								  .append("(SELECT PromoteAdminStr FROM Prompt WHERE GroupId = ").append(groupId).append("),")
 								  .append("(SELECT CancelAdminStr FROM Prompt WHERE GroupId = ").append(groupId).append("));").toString();
-						 GlobalDatabases.dbgroup_list.executeNonQuerySync(queryStr);
+						 GlobalDatabases.dbgroup_custom.executeNonQuerySync(queryStr);
 						 /* 执行插入语句
 						 * INSERT OR REPLACE INTO Prompt ('GroupId','WelcomeStr','ExitStr', 'PromoteAdminStr','CancelAdminStr')
                    *       VALUES (
@@ -1315,7 +1315,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
               *              (SELECT CancelAdminStr FROM Prompt WHERE GroupId = [groupId]));
 				  */
 				 try {
-					  GlobalDatabases.dbgroup_list.executeNonQuerySync(restoreQueryStr);
+					  GlobalDatabases.dbgroup_custom.executeNonQuerySync(restoreQueryStr);
 
 						 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 								"已恢复成默认迎新提示内容");
@@ -1358,7 +1358,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									  .append("'").append(inputStr).append("',")
 									  .append("(SELECT PromoteAdminStr FROM Prompt WHERE GroupId = ").append(groupId).append("),")
 									  .append("(SELECT CancelAdminStr FROM Prompt WHERE GroupId = ").append(groupId).append("));").toString();
-							GlobalDatabases.dbgroup_list.executeNonQuerySync(queryStr);
+							GlobalDatabases.dbgroup_custom.executeNonQuerySync(queryStr);
 							/* 执行插入语句
 							 * INSERT OR REPLACE INTO Prompt ('GroupId','WelcomeStr','ExitStr', 'PromoteAdminStr','CancelAdminStr')
 	                   *       VALUES (
@@ -1392,7 +1392,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 				  *              (SELECT CancelAdminStr FROM Prompt WHERE GroupId = [groupId]));
 				  */
 				 try {
-						 GlobalDatabases.dbgroup_list.executeNonQuerySync(restoreQueryStr);
+						 GlobalDatabases.dbgroup_custom.executeNonQuerySync(restoreQueryStr);
 						 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + 
 								"已恢复默认成员退群提示内容");
 				} catch (Exception e2) {
@@ -3160,7 +3160,15 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 																  .append("Lost: ").append(selected_lost).append("\n")
 																  .append("Potential: ").append(selected_rating).append("\n")
 																  .append("Time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(selected_timeplayed.getTime()));
-													 CQ.sendGroupMsg(groupId, selectedStr.toString());
+														String selectedString = selectedStr.toString()
+																  .replace("(-0.01)", "(--)");
+														if (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) != 1) {
+															 selectedString = selectedString.replace("Tempestissimo [Past 6]", "? [Past ?]")
+																		.replace("Tempestissimo [Present 9]", "? [Present ?]")
+																		.replace("Tempestissimo [Future 10]", "? [Future ?]")
+																		.replace("Tempestissimo [Beyond 11]", "? [Beyond ?]");
+														}
+														 	 CQ.sendGroupMsg(groupId, selectedString);
 														break;
 												case -1: //Invalid Usercode
 													 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "绑定的账号无效,请使用!arc bind [玩家id]重新绑定");
@@ -3174,6 +3182,9 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 													 break;
 												case -5: //The song isnot recorded in the database
 													 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "未找到对应曲目信息,可能暂未收录进数据库");
+													 break;
+												case -6: //The song alias is the aliases of many songs
+													 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "查询结果过多,请提供更准确的曲名");
 													 break;
 												case -8: //The song has no Beyond level
 													  CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "该曲目不存在Beyond难度");
@@ -3333,7 +3344,15 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 														 * Potential: 10.90
 														 * Time: 2020-05-01 15:26:24
 														 */
-														CQ.sendGroupMsg(groupId, recentStr.toString());
+														if (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) == 0) {
+															 String recentString = recentStr.toString().replace("Tempestissimo[Past 6]", "? [Past ?]")
+																		.replace("Tempestissimo [Present 9]", "? [Present ?]")
+																		.replace("Tempestissimo [Future 10]", "? [Future ?]")
+																		.replace("Tempestissimo [Beyond 11]", "? [Beyond ?]");
+															 CQ.sendGroupMsg(groupId, recentString);
+														} else {
+															 CQ.sendGroupMsg(groupId, recentStr.toString());
+														}
 														Part6_2EasterEgg.Func6_2_UnlockConnect(CQ, groupId, recent_songid, recent_diffrating
 																  ,recentScore.getIntValue("clear_type"), recent_bigpure, null);
 												  } else {
@@ -3399,6 +3418,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 						  if (checkDependency(CQ)) { //如果依赖项已安装
 								ResultSet playerSet = GlobalDatabases.dbgroup_mug_arcaea.executeQuery("SELECT Aid FROM Players WHERE QQId=" + qqId + ";");
 								if (playerSet.next()) {
+									 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "Best30数据正在查询中,由于数据量大,请耐心等待;请不要尝试在bot处理过程中让bot执行任何指令。");
 									 int playerId = playerSet.getInt("Aid");
 									 String result = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest30?usercode=" + playerId); //获取B30数据
 									 JSONObject b30Object = JSONObject.parseObject(result);
@@ -3822,7 +3842,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			 public static void Func6_2_4(CoolQ CQ,long groupId,long qqId,String msg)
 			 {
 				  try {
-						if (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) == 2) {
+						if ((Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) == 2) || (Part6_2EasterEgg.Func6_2_CheckConnectStat(CQ, groupId, qqId, msg) == 3)) {
 							 String arg3 = msg.trim().split(" ",3)[2];
 							 Part6_2EasterEgg.Func6_2_UnlockConnect(CQ, groupId, null, 0, 0, 0, arg3);
 							 return;
@@ -3833,11 +3853,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								 String returnStr = FriendlyName + "\n今日连接密码为[" + connStr + "]";
 								 CQ.sendGroupMsg(groupId, returnStr);
 						  } else {
-								 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc [bind|info|b30|help]");
+								 Part6_2EasterEgg.Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, null);
 						  }
 					 }
 				 } catch (IndexOutOfBoundsException e) {
-					 CQ.sendGroupMsg(groupId, FriendlyName + "\n指令格式错误,格式:!arc connect [String]");
+					  Part6_2EasterEgg.Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, null);
 				 } catch (Exception e) {
 						CQ.logError(AppName, "发生异常,请及时处理\n详细信息:\n" + ExceptionHelper.getStackTrace(e));
 						CQ.sendGroupMsg(groupId,
@@ -3869,7 +3889,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					 case 1: //Unlocked Connect Module
 						  helpStrBuilder.append("\n获取今日连接字符串: !arc connect");
 						  break;
-					 case 2: //Completed Prerequisites for unlocking connect module
+					 case 2: case 3: //Completed Prerequisites for unlocking connect module
 						  helpStrBuilder.append("\nᵾnłøȼꝁ sŧħ: !aɍȼ ȼønnɇȼŧ [Sŧɍɨnǥ]");
 					 default: //Locked
 						  break;
@@ -3918,9 +3938,13 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 										   	 if ((!Condition1.exists()) & (songdiff == 9)) {
 													 Condition1.createNewFile();
 													 CQ.sendGroupMsg(groupId, "Ŧħɇ ǥɨɍł ɨn wħɨŧɇ Ⱥnđ ŧħɇ ǥɨɍł ɨn ƀłȺȼꝁ ȼȺnnøŧ ɍɇȼønȼɨłɇ.");
+													 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, null);
 												 }
+										   	 IOHelper.WriteStr(preCondition3, "1");
+										   	 break;
 										   case 1: case 4:
 										   	 IOHelper.WriteStr(preCondition3, "1");
+										   	 break;
 										   case 0:
 										   	 preCondition3.delete();
 										   }
@@ -3931,8 +3955,8 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 										   	if (!Condition2.exists()  & (songdiff == 9)) {
 													 Condition2.createNewFile();
 													 CQ.sendGroupMsg(groupId, "Sħɇ ønȼɇ møɍɇ fȺȼɇs ŧħɇ ǥɨɍł sħɇ wɨsħɇs sħɇ ȼøᵾłđ ƀɇfɍɨɇnđ.");
+													 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, "check");
 												}
-										   	break;
 										  }
 									     File preCondition3_2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
 										  if (clearType != 0) {
@@ -3948,15 +3972,26 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									  case "dantalion": //前置条件3:依次按照Equilibrium[FTR]->Antagonism[FTR]->Dantalion[FTR]顺序通关
 										   File preCondition3_3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/pre3.stat");
 											if (clearType != 0) {
-										   	 if (IOHelper.ReadToEnd(preCondition3_3).equals("2")  & (songdiff == 10)) {
+										   	 if ((IOHelper.ReadToEnd(preCondition3_3).equals("2"))  & (songdiff == 10)) {
 										   		  preCondition3_3.delete();
 										   		  new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat").createNewFile();
 										   		  CQ.sendGroupMsg(groupId, "Ⱥnđ ŧħᵾs ɨŧ ɨs ŦȺɨɍɨŧsᵾ's ŧᵾɍn ŧø ǥȺɨn ŧħɇ ᵾᵽᵽɇɍ ħȺnđ.");
+														 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, "check");
 												 } else {
 													  preCondition3_3.delete();
 												 }
 										   } else {
 												preCondition3_3.delete();
+										  }
+											break;
+									  case "tempestissimo": //解锁条件:满足所有前置条件后游玩Tempestissimo(任意难度)
+											 File Condition_1 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat");
+											 File Condition_2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat");
+											 File Condition_3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat");
+											 File Condition_4 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat");
+											if ((Condition_1.exists()) & (Condition_2.exists()) & (Condition_3.exists())
+													  & (Condition_4.exists())) {
+													new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/5.stat").createNewFile();
 										  }
 											break;
 									  default:
@@ -3966,21 +4001,26 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 												 if (connStr.equals(connPass.toLowerCase())) {
 													 new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").createNewFile();
 													 CQ.sendGroupMsg(groupId, "Sħɇ sᵽȺɍɇs nø ħɇsɨŧȺŧɨøn. Ŧħɇ sŧɍɨꝁɇ ȼømɇs ɨn Ⱥn ɨnsŧȺnŧ.");
-												 }
+													 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, "check");
+												 } else {
+													 CQ.sendGroupMsg(groupId, "Wrong Password");
+												}
 											}
 											break;
 									  }
 									  if ((new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat").exists()) &
 										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat").exists()) &
 										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat").exists()) &
-										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").exists()))
+										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").exists()) &
+										   (new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/5.stat").exists()))
 									  {
 											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat").delete();
 											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat").delete();
 											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat").delete();
 											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").delete();
+											new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/5.stat").delete();
 											thisGroupUnlocked.createNewFile();
-											CQ.sendGroupMsg(groupId, "Anomaly Function Unlocked");
+											CQ.sendGroupMsg(groupId, "Anomaly Song Unlocked\nAnomaly Function Unlocked");
 									 }
 								}
 							 } else {
@@ -3996,9 +4036,11 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									   	 if (!Condition1.exists()  & (songdiff == 9)) {
 												 Condition1.createNewFile();
 												 CQ.sendGroupMsg(groupId, "Ŧħɇ ǥɨɍł ɨn wħɨŧɇ Ⱥnđ ŧħɇ ǥɨɍł ɨn ƀłȺȼꝁ ȼȺnnøŧ ɍɇȼønȼɨłɇ.");
+												 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, "check");
 											 }
 									   case 1: case 4:
 									   	 IOHelper.WriteStr(preCondition3, "1");
+									   	 break;
 									   case 0:
 									   	 preCondition3.delete();
 									   }
@@ -4009,6 +4051,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 									   	if (!Condition2.exists()  & (songdiff == 9)) {
 												 Condition2.createNewFile();
 												 CQ.sendGroupMsg(groupId, "Sħɇ ønȼɇ møɍɇ fȺȼɇs ŧħɇ ǥɨɍł sħɇ wɨsħɇs sħɇ ȼøᵾłđ ƀɇfɍɨɇnđ.");
+												 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, "check");
 											}
 									   	break;
 									  }
@@ -4030,7 +4073,10 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 											 if (connStr.equals(connPass.toLowerCase())) {
 												 new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat").createNewFile();
 												 CQ.sendGroupMsg(groupId, "Sħɇ sᵽȺɍɇs nø ħɇsɨŧȺŧɨøn. Ŧħɇ sŧɍɨꝁɇ ȼømɇs ɨn Ⱥn ɨnsŧȺnŧ.");
-											 }
+												 Func6_2_ShowUnlockStat(CQ, groupId, 0L, null, "check");
+											 } else {
+													 CQ.sendGroupMsg(groupId, "Wrong Password");
+												}
 										}
 										break;
 								  }
@@ -4054,6 +4100,72 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 			 }
 				  }
 
+				  
+				  /**
+				   * 显示Connect模块解锁状态
+				   * @param CQ CQ实例，详见本大类注释
+				   * @param groupId 消息来源群号
+				   * @param qqId 消息来源成员QQ号
+				   * @param msg 消息内容
+				   * @see ProcessGroupMsg
+				   * @author 御坂12456
+				   */
+				  public static void Func6_2_ShowUnlockStat(CoolQ CQ,long groupId,long qqId,String msg,String tag)
+				  {
+						try {
+							 File thisGroupUnlockData = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId);
+							 if (!thisGroupUnlockData.exists()) { //如果完全未解锁
+								String resultStr = "[Locked]\n[Locked]\n[Main Locked]\n[Locked]\n[Locked]\n";
+								CQ.sendGroupMsg(groupId, resultStr);
+							
+						  } else { //如果至少解锁了一个条件
+								StringBuilder resultBuilder = new StringBuilder();
+								String resultStr = null;
+								 File Condition1 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat");
+								 File Condition2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat");
+								 File Condition3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat");
+								 File Condition4 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat");
+								 File Condition5 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/5.stat");
+								
+									 if (Condition1.exists()) {
+										  resultBuilder.append("[Equilibrium]使用包含“困难”技能的角色通关");
+									 } else {
+										  resultBuilder.append("[Locked]");
+									 }
+									 if (Condition2.exists()) {
+										  resultBuilder.append("\n[Antagonism]通关时大Pure数不低于700");
+									 } else {
+										  resultBuilder.append("\n[Locked]");
+									 }
+									 resultBuilder.append("\n[Main Locked]");
+									 if (Condition3.exists()) {
+										  resultBuilder.append("\n[Dantalion]依照如下顺序通关:Equilibrium, Antagonism, Dantalion");
+									 } else {
+										  resultBuilder.append("\n[Locked]");
+									 }
+									 if (Condition4.exists()) {
+										  resultBuilder.append("\n[#1f1e33]???");
+									 } else {
+										  resultBuilder.append("\n[Locked]");
+									 }
+									 if ((Condition1.exists()) & (Condition2.exists()) & (Condition3.exists())
+												& (Condition4.exists())){
+										  if ((tag != null) & (!Condition5.exists())) {
+												Thread.sleep(5000);
+												CQ.sendGroupMsg(groupId, resultBuilder.toString());
+										  }
+										 resultStr = new CQCode().image(new File(CQ.getAppDirectory() + "/data/pics/arcconnunlock.jpg"));
+									 } else {
+										  resultStr = resultBuilder.toString();
+									 }
+									 Thread.sleep(5000);
+									 CQ.sendGroupMsg(groupId, resultStr);
+						  }
+					 } catch (Exception e) {
+						  // TODO: handle exception
+					 }
+				  }
+				  
 					 /**
 					  * 检查Connect模块解锁状态
 					  * 
@@ -4061,7 +4173,7 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 					  * @param groupId
 					  * @param qqId
 					  * @param msg
-					  * @return 该群已解锁返回1,已完成前置条件返回2,未解锁返回0
+					  * @return 该群已解锁返回1,已完成前置条件返回2,已完成除前置条件4外前置条件返回3,未解锁返回0
 					  */
 					 public static int Func6_2_CheckConnectStat(CoolQ CQ, long groupId, long qqId, String msg)
 					 {
@@ -4073,10 +4185,16 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								} else {
 									 File Condition1 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/1.stat");
 									 File Condition2 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/2.stat");
-									 File Condition3 = new File(CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat");
-									 if ((Condition1.exists()) & (Condition2.exists()) & (Condition3.exists())) {
+									 File Condition3 = new File(
+												CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/3.stat");
+									 File Condition4 = new File(
+												CQ.getAppDirectory() + "/group/easteregg/arconnect/" + groupId + "/4.stat");
+									 if ((Condition1.exists()) & (Condition2.exists()) & (Condition3.exists())
+												& (Condition4.exists())) {
 										  return 2;
-									 } else {
+									 } else if ((Condition1.exists()) & (Condition2.exists()) & (Condition3.exists()) & (!Condition4.exists())) {
+										  return 3;
+									 }else {
 										  return 0;
 									 }
 								}

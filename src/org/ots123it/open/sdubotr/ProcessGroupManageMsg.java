@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileFilter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.Date;
@@ -74,6 +75,9 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 			case "clean": //功能M-4:清理垃圾文件
 				 Standalone_Funcs.cleanTrash(CQ, groupId, qqId, arguments);
 				 break;
+			case "check": //功能M-5:运行状态检测
+				 Standalone_Funcs.checkIsRunning(CQ, groupId, qqId, arguments);
+				 break;
 			default:
 				break;
 			}
@@ -82,8 +86,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 							  "指令类型:群管理（机器人主人专用）指令（前缀为#）\n" +
 							  "来源群号:" + Global.getGroupName(CQ, groupId) + "(" + groupId + ")\n" +
 							  "您输入的指令:" + msg);
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			CQ.logError(Global.AppName, "发生异常,请及时处理\n" +
 					"详细信息:\n" +
 					ExceptionHelper.getStackTrace(e));
@@ -393,7 +396,7 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 		}
 
 		/**
-		 * 功能M-6:垃圾清理功能
+		 * 功能M-4:垃圾清理功能
 		 * @author 御坂12456 a.k.a. Sugar 404
 		 */
 		public static void cleanTrash(CoolQ CQ,long groupId,long qqId, String msg)
@@ -403,15 +406,48 @@ public abstract class ProcessGroupManageMsg extends JcqAppAbstract implements IM
 				if (cleaning) {
 					 CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n已在清理中，不要重复开启进程哦");
 				} else {
+					 
+					 	long trashFileCounts =  IOHelper.getFileCounts(new File("data/image")) + 
+					 			 IOHelper.getFileCounts(new File("data/record")) +
+					 			 IOHelper.getFileCounts(new File("data/bface")) +
+					 			 IOHelper.getFileCounts(new File("data/show"));
 						IOHelper.DeleteAllFiles(new File("data/image"));
+						IOHelper.DeleteAllFiles(new File("data/bface"));
 						IOHelper.DeleteAllFiles(new File("data/record"));
 						IOHelper.DeleteAllFiles(new File("data/show"));
+						for (File tempFile : new File(Global.appDirectory + "/temp").listFiles(new FileFilter()
+					 {
+						 @Override
+					 	 public boolean accept(File pathname)
+					 	 {
+					 		  if (pathname.toString().toLowerCase().contains(".zip")) {
+					 				return false;
+					 		  } else {
+					 				return true;
+					 		  }
+					 	 }
+					 })) {
+							 trashFileCounts++;
+							 tempFile.delete();
+						}
 						long end = System.currentTimeMillis();
 						cleaning = false;
-						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n清理完成,共用时" + Long.toString(end - start) + "ms");
+						CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n清理完成,共用时" + Long.toString(end - start) + "ms,共清理" + trashFileCounts + "");
 				}
 		  } catch (Exception e) {
 				CQ.sendGroupMsg(groupId, Global.FriendlyName + "\n清理失败(" + e.getClass().getName() + ")");
+		  }
+		}
+		/**
+		 * 功能M-5:运行状态检测
+		 * @author 御坂12456 a.k.a. Sugar 404
+		 */
+		public static void checkIsRunning(CoolQ CQ,long groupId,long qqId,String msg)
+		{
+			 try {
+				CQ.sendGroupMsg(groupId, "123 SduBotR正在运行");
+		  } catch (Exception e) {
+				// TODO: handle exception
 		  }
 		}
 	}
