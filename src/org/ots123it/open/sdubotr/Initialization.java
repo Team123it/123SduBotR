@@ -27,9 +27,7 @@ import org.ots123it.open.sdubotr.Global.GlobalDatabases;
 
 import static org.ots123it.jhlper.DBHelper.*;
 import static org.ots123it.open.sdubotr.Global.AppName;
-import static org.ots123it.open.sdubotr.Global.FriendlyName;
 import static org.ots123it.open.sdubotr.Global.RestoreData;
-import static org.ots123it.open.sdubotr.Global.masterQQ;
 import static org.ots123it.open.sdubotr.Global.GlobalDatabases.*;
 
 public class Initialization

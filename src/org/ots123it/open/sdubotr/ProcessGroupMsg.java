@@ -10,12 +10,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -40,7 +38,6 @@ import org.meowy.cqp.jcq.entity.CoolQ;
 import org.meowy.cqp.jcq.entity.Member;
 import org.meowy.cqp.jcq.event.JcqAppAbstract;
 import org.meowy.cqp.jcq.message.CQCode;
-import org.meowy.cqp.jcq.message.CoolQCode;
 import org.ots123it.jhlper.CommonHelper;
 import org.ots123it.jhlper.DBHelper;
 import org.ots123it.jhlper.ExceptionHelper;
@@ -51,8 +48,6 @@ import org.ots123it.open.sdubotr.picModeUtils.PicsGenerateUtility;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import com.sun.xml.internal.ws.api.model.wsdl.editable.EditableWSDLBoundFault;
 /**
  * 123 SduBotR 群聊消息处理类<br>
  * 注意:本类中任何方法前的CQ参数请在Start类中直接用CQ即可<br>
@@ -2979,8 +2974,15 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								ResultSet playerSet = GlobalDatabases.dbgroup_mug_arcaea.executeQuery("SELECT Aid FROM Players WHERE QQId=" + qqId + ";");
 								if (playerSet.next()) {
 									 int playerId = playerSet.getInt("Aid");
+									 String playerIdStr = Integer.toString(playerId);
+									 if (playerIdStr.length() < 9) {
+										  int zeroTimes = 9 - playerIdStr.length();
+										  for (int i = 0; i < zeroTimes; i++) {
+												playerIdStr = "0" + playerIdStr;
+										  }
+									 }
 									 StringBuilder playerIdBuilder = new StringBuilder("http://127.0.0.1:61666/v2/userinfo?usercode=")
-												.append(playerId).append("&recent=true");
+												.append(playerIdStr).append("&recent=true");
 									 String result = JsonHelper.loadJson(playerIdBuilder.toString());
 									 JSONObject resultObject = JSONObject.parseObject(result);
 									 int status = resultObject.getIntValue("status");
@@ -3012,12 +3014,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 														  songDiff = "2";
 													 }
 													 String songName = msg.split(" ",3)[2];
-													 String singleSongresult = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest?usercode=" + playerId 
+													 String singleSongresult = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest?usercode=" + playerIdStr
 																+ "&songname=" + URLEncoder.encode(songName) + "&difficulty=" + songDiff);
 													 singleSongResultObject = JSONObject.parseObject(singleSongresult);
 												} else { //玩家没有指定难度(默认Future)
 													 String songName = msg.split(" ",3)[2];
-													 String singleSongresult = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest?usercode=" + playerId 
+													 String singleSongresult = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest?usercode=" + playerIdStr
 																+ "&songname=" + URLEncoder.encode(songName)  + "&difficulty=2");
 													 singleSongResultObject = JSONObject.parseObject(singleSongresult);
 												}
@@ -3348,10 +3350,12 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 															 String recentString = recentStr.toString().replace("Tempestissimo[Past 6]", "? [Past ?]")
 																		.replace("Tempestissimo [Present 9]", "? [Present ?]")
 																		.replace("Tempestissimo [Future 10]", "? [Future ?]")
-																		.replace("Tempestissimo [Beyond 11]", "? [Beyond ?]");
+																		.replace("Tempestissimo [Beyond 11]", "? [Beyond ?]")
+																		.replace("(-0.01)", "(--)");
 															 CQ.sendGroupMsg(groupId, recentString);
 														} else {
-															 CQ.sendGroupMsg(groupId, recentStr.toString());
+															 CQ.sendGroupMsg(groupId, recentStr.toString()
+																		.replace("(-0.01)", "(--)"));
 														}
 														Part6_2EasterEgg.Func6_2_UnlockConnect(CQ, groupId, recent_songid, recent_diffrating
 																  ,recentScore.getIntValue("clear_type"), recent_bigpure, null);
@@ -3420,7 +3424,14 @@ public abstract class ProcessGroupMsg extends JcqAppAbstract
 								if (playerSet.next()) {
 									 CQ.sendGroupMsg(groupId, FriendlyName + "\n" + new CQCode().at(qqId) + "Best30数据正在查询中,由于数据量大,请耐心等待;请不要尝试在bot处理过程中让bot执行任何指令。");
 									 int playerId = playerSet.getInt("Aid");
-									 String result = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest30?usercode=" + playerId); //获取B30数据
+									 String playerIdStr = Integer.toString(playerId);
+									 if (playerIdStr.length() < 9) {
+										  int zeroTimes = 9 - playerIdStr.length();
+										  for (int i = 0; i < zeroTimes; i++) {
+												playerIdStr = "0" + playerIdStr;
+										  }
+									 }
+									 String result = JsonHelper.loadJson("http://127.0.0.1:61666/v2/userbest30?usercode=" + playerIdStr); //获取B30数据
 									 JSONObject b30Object = JSONObject.parseObject(result);
 									 int status = b30Object.getIntValue("status");
 									 switch (status)
